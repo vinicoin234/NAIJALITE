@@ -6,7 +6,7 @@
   <title>Naijalite Hub | Live & Earn</title>
   <meta name="theme-color" content="#008751">
 
-  <!-- Supabase JS - Using the latest stable CDN -->
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
   <!-- Paystack SDK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
@@ -33,17 +33,30 @@
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* AUTH SCREEN */
-    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
-    .auth-card { background: var(--card); padding: 32px; border-radius: 24px; width: 100%; max-width: 350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
-    .auth-card h2 { margin-bottom: 8px; font-size: 1.5rem; }
-    .auth-card p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 24px; }
-    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 16px; font-size: 1rem; }
-    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-    .auth-switch { margin-top: 20px; font-size: 0.85rem; color: var(--text-dim); cursor: pointer; }
-    .auth-switch span { color: var(--accent); font-weight: bold; }
+    /* --- TIKTOK AUTH SCREEN --- */
+    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .auth-container { width: 100%; max-width: 380px; text-align: center; }
+    .auth-logo { font-size: 3.5rem; margin-bottom: 10px; animation: bounceIn 1s; }
+    .auth-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: white; }
+    .auth-subtitle { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 32px; }
+    
+    .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 10px; font-weight: 600; font-size: 0.9rem; transition: 0.3s; color: var(--text-dim); }
+    .auth-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0,135,81,0.3); }
 
-    /* MAIN HUB */
+    .auth-card { background: var(--card); padding: 28px; border-radius: 24px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4); border: 1px solid var(--border); }
+    .auth-input-group { position: relative; margin-bottom: 16px; text-align: left; }
+    .auth-input-group label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px; margin-left: 4px; }
+    .auth-input { width: 100%; padding: 14px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; font-size: 1rem; transition: 0.3s; }
+    .auth-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,135,81,0.2); }
+    
+    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 10px; transition: 0.3s; }
+    .btn-auth:active { transform: scale(0.98); background: var(--primary-dark); }
+    
+    .auth-footer { margin-top: 24px; font-size: 0.85rem; color: var(--text-dim); }
+    .auth-footer span { color: var(--accent); font-weight: bold; cursor: pointer; }
+
+    /* --- MAIN HUB --- */
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
     .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .header-top h1 { font-size: 1.3rem; font-weight: 800; }
@@ -93,18 +106,39 @@
     <p>Loading Naijalite Hub...</p>
   </div>
 
+  <!-- TIKTOK AUTH SCREEN -->
   <div id="authScreen">
-    <div class="auth-card">
-      <div style="font-size: 3rem; margin-bottom: 10px;">🇳🇬</div>
-      <h2 id="authTitle">Welcome to Naijalite</h2>
-      <p id="authDesc">Join the hub, stream and earn coins!</p>
-      <div id="authForm">
-        <input type="email" id="authEmail" class="auth-input" placeholder="Email Address">
-        <input type="password" id="authPass" class="auth-input" placeholder="Password">
-        <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+    <div class="auth-container">
+      <div class="auth-logo">🇳🇬</div>
+      <h2 class="auth-title">Naijalite Hub</h2>
+      <p class="auth-subtitle">The home of African creators</p>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
+        <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
       </div>
-      <div class="auth-switch" id="toggleAuth" onclick="switchAuthMode()">
-        Don't have an account? <span style="color:var(--accent); font-weight:bold;">Sign Up</span>
+
+      <div class="auth-card">
+        <!-- Dynamic inputs based on mode -->
+        <div id="inputGroup">
+          <div class="auth-input-group">
+            <label>Email or Phone</label>
+            <input type="text" id="authEmail" class="auth-input" placeholder="email@example.com or 080...">
+          </div>
+          <div class="auth-input-group">
+            <label>Password</label>
+            <input type="password" id="authPass" class="auth-input" placeholder="Enter password">
+          </div>
+        </div>
+        
+        <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+        
+        <div class="auth-footer">
+          <span id="forgotPass" style="display:block; margin-bottom:10px;">Forgot password?</span>
+          <div id="authFooterText">
+            By continuing, you agree to our <span style="color:var(--primary)">Terms of Service</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -124,6 +158,7 @@
   </header>
 
   <div class="container">
+    <!-- TAB 1: LIVE -->
     <div id="liveTab" class="tab-content active">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
@@ -157,6 +192,7 @@
       </div>
     </div>
 
+    <!-- TAB 2: EARN -->
     <div id="earnTab" class="tab-content">
       <div class="card">
         <span class="badge">🎁 Referral Bonus</span>
@@ -169,6 +205,7 @@
       </div>
     </div>
 
+    <!-- TAB 3: UTILS -->
     <div id="utilsTab" class="tab-content">
       <div class="card">
         <h3>WhatsApp Direct</h3>
@@ -178,6 +215,7 @@
       </div>
     </div>
 
+    <!-- TAB 4: PROFILE -->
     <div id="profileTab" class="tab-content">
       <div class="card" style="text-align: center;">
         <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
@@ -218,7 +256,6 @@
   </div>
 
   <script>
-    // --- CONFIG ---
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
     
@@ -229,10 +266,8 @@
     let userId = null;
     let agentId = '';
 
-    // Initialize Supabase safely
     async function initSupabase() {
       try {
-        // Using the global window.supabase object provided by the CDN
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         document.getElementById('loadingScreen').style.display = 'none';
         checkSession();
@@ -242,12 +277,11 @@
       }
     }
 
-    function switchAuthMode() {
-      isLoginMode = !isLoginMode;
-      document.getElementById('authTitle').textContent = isLoginMode ? 'Welcome to Naijalite' : 'Create Account';
-      document.getElementById('authDesc').textContent = isLoginMode ? 'Join the hub, stream and earn!' : 'Start your journey today!';
+    function setAuthMode(mode) {
+      isLoginMode = (mode === 'login');
+      document.getElementById('tabLogin').classList.toggle('active', isLoginMode);
+      document.getElementById('tabSignup').classList.toggle('active', !isLoginMode);
       document.getElementById('btnAuthAction').textContent = isLoginMode ? 'Login' : 'Sign Up';
-      document.getElementById('toggleAuth').innerHTML = isLoginMode ? 'Don\'t have an account? <span style="color:var(--accent); font-weight:bold;">Sign Up</span>' : 'Already have an account? <span style="color:var(--accent); font-weight:bold;">Login</span>';
     }
 
     async function handleAuth() {
@@ -263,7 +297,6 @@
           const { data, error } = await supabase.auth.signUp({ email, password });
           if (error) throw error;
         }
-        localStorage.setItem('naijalite_session', 'true');
         checkSession();
       } catch (error) {
         alert('Auth Error: ' + error.message);
@@ -283,7 +316,6 @@
 
     async function handleLogout() {
       await supabase.auth.signOut();
-      localStorage.removeItem('naijalite_session');
       location.reload();
     }
 
