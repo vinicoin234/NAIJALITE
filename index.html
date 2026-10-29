@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NAIJALITE | Live & Earn (DEBUG MODE)</title>
+  <title>NAIJALITE | Live & Earn</title>
   <meta name="theme-color" content="#008751">
 
   <!-- Supabase JS -->
@@ -15,73 +15,253 @@
 
   <style>
     :root {
-      --primary: #008751; --primary-dark: #006b40; --accent: #ffc107; --danger: #ff4757;
-      --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
+      --primary: #008751;
+      --primary-dark: #006b40;
+      --accent: #ffc107;
+      --danger: #ff4757;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: #334155;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
 
+    /* Loading Overlay */
     #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .auth-wrapper { width: 100%; max-width: 340px; text-align: center; animation: fadeIn 0.5s; }
-    .auth-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; }
-    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; }
+    /* --- COMPACT AUTH SCREEN --- */
+    #authScreen { 
+      position: fixed; inset: 0; background: var(--bg); z-index: 2000; 
+      display: none; flex-direction: column; align-items: center; justify-content: center; 
+      padding: 20px;
+    }
+    .auth-wrapper { 
+      width: 100%; max-width: 340px; text-align: center; 
+      animation: fadeIn 0.5s;
+    }
+    .auth-logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
+    .auth-logo { 
+      width: 80px; height: 80px; border-radius: 20px; 
+      object-fit: cover; 
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      animation: bounceIn 1s;
+      border: 2px solid var(--primary);
+      background: white;
+    }
+    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; letter-spacing: 1px; }
+    .auth-subtitle { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px; }
+    
     .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); }
-    .auth-tab.active { background: var(--primary); color: white; }
-    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); }
-    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; }
-    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+    .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: 0.3s; color: var(--text-dim); }
+    .auth-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,135,81,0.3); }
 
+    .auth-card { 
+      background: var(--card); padding: 24px; border-radius: 24px; width: 100%; 
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); border: 1px solid var(--border); 
+    }
+    .auth-input-group { position: relative; margin-bottom: 15px; text-align: left; }
+    .auth-input-group label { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px; margin-left: 4px; font-weight: 600; }
+    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; font-size: 0.95rem; transition: 0.3s; }
+    .auth-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,135,81,0.2); }
+    
+    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; transition: 0.3s; }
+    .btn-auth:active { transform: scale(0.97); background: var(--primary-dark); }
+    
+    .auth-footer { margin-top: 15px; font-size: 0.8rem; color: var(--text-dim); }
+    .auth-footer span { color: var(--accent); font-weight: bold; cursor: pointer; }
+
+    /* --- MAIN HUB --- */
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
-    .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-    .menu-dropdown { position: absolute; top: 60px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 200px; z-index: 1000; display: none; }
-    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .header-top h1 { font-size: 1.3rem; font-weight: 800; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+    .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0 5px; }
+
+    /* Header Menu Dropdown */
+    .menu-dropdown { position: absolute; top: 60px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 200px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000; display: none; overflow: hidden; }
+    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+    .menu-item:hover { background: var(--border); }
+    .menu-item:last-child { border-bottom: none; }
 
     .container { padding: 16px; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    /* TIKTOK LIVE */
+    .live-container { position: relative; width: 100%; height: 80vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
+    .main-video { width: 100%; height: 100%; object-fit: cover; }
+    .live-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+    .overlay-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
+    .live-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
+    .guest-slots { display: flex; gap: 10px; margin-top: 10px; }
+    .guest-slot { width: 50px; height: 50px; border-radius: 50%; background: #334155; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; }
+    .overlay-bottom { pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
+    .chat-area { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; mask-image: linear-gradient(transparent, black 20%); }
+    .chat-msg { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); animation: fadeInUp 0.3s; }
+    .action-bar { display: flex; align-items: center; gap: 12px; }
+    .gift-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; backdrop-filter: blur(10px); }
+
+    .gift-animation { position: absolute; bottom: 100px; right: -100px; font-size: 3rem; pointer-events: none; z-index: 1000; animation: giftFly 3s linear forwards; }
+    @keyframes giftFly { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(-300px, -400px) rotate(360deg); opacity: 0; } }
+
     .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
     .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
     .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; }
     .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; }
     .nav-item.active { color: var(--primary); }
+    .nav-item div { font-size: 1.3rem; margin-bottom: 4px; }
 
+    /* HOME FEED STYLES */
+    .home-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
+    .suggested-users-box { flex: 1; overflow-x: auto; display: flex; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
+    .suggested-users-box::-webkit-scrollbar { display: none; }
+    .suggested-user { background: var(--card); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+    .suggested-user:hover { background: var(--primary); }
+    .suggested-user span { font-weight: bold; }
+
+    .feed-container { display: flex; flex-direction: column; gap: 20px; }
+    .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+    .post-media { width: 100%; max-height: 500px; object-fit: cover; background: #000; }
+    .post-content { padding: 15px; }
+    .post-user { font-weight: bold; color: var(--primary); margin-bottom: 5px; display: block; }
+    .post-text { font-size: 0.9rem; color: var(--text); line-height: 1.4; }
+    .post-actions { display: flex; gap: 15px; padding: 10px 15px; border-top: 1px solid var(--border); }
+    .action-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+    .action-btn.active { color: var(--danger); }
+
+    /* INBOX STYLES */
+    .inbox-list { display: flex; flex-direction: column; gap: 10px; }
+    .chat-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
+    .chat-item:hover { background: #2d3a4f; }
+    .chat-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .chat-info { flex: 1; }
+    .chat-name { font-weight: bold; display: block; font-size: 0.9rem; }
+    .chat-preview { font-size: 0.75rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    
+    .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
+    .chat-header { background: var(--primary); padding: 15px; display: flex; align-items: center; gap: 15px; color: white; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; }
+    .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+    .msg.received { align-self: flex-start; background: var(--card); color: white; border-bottom-left-radius: 2px; }
+    .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
+    .chat-input-area input { flex: 1; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 20px; }
+
+    /* AUTH BUTTONS */
+    .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; transition: 0.3s; }
+    .btn-google:hover { background: #f8f8f8; }
+    
+    .floating-btn { 
+      position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; 
+      background: var(--primary); color: white; border-radius: 50%; 
+      display: flex; align-items: center; justify-content: center; 
+      font-size: 2rem; font-weight: bold; cursor: pointer; 
+      box-shadow: 0 8px 20px rgba(0,135,81,0.4); z-index: 1000; transition: 0.3s; 
+    }
+    .floating-btn:active { transform: scale(0.9); }
+
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
+    .modal-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 24px; padding: 24px; color: white; }
+
+    /* Profile Submenu */
     .profile-menu { display: flex; justify-content: space-around; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); }
-    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; color: var(--text-dim); }
+    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; transition: 0.2s; color: var(--text-dim); }
     .profile-menu-item.active { background: var(--primary); color: white; }
-    .profile-sub-tab { display: none; }
+    .profile-sub-tab { display: none; animation: fadeIn 0.3s; }
     .profile-sub-tab.active { display: block; }
 
-    .floating-btn { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; z-index: 1000; }
-    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
-    .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; }
+    /* Coin Dashboard */
+    .coin-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .stat-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
+    .stat-box span { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 5px; }
+    .stat-box strong { font-size: 1.1rem; color: var(--accent); }
+    .transaction-list { display: flex; flex-direction: column; gap: 10px; }
+    .transaction-item { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border: 1px solid var(--border); }
 
+    /* Settings Modal */
+    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
+    .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+    .settings-section { margin-bottom: 24px; }
+    .settings-section h4 { font-size: 1rem; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-info { flex: 1; padding-right: 10px; }
+    .settings-info span { display: block; font-size: 0.9rem; font-weight: 600; }
+    .settings-info small { font-size: 0.7rem; color: var(--text-dim); line-height: 1.3; }
+    
+    /* Custom Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #334155; transition: .4s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Dropdown Select */
+    .settings-select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 6px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+
+    /* Profile Social Stats */
+    .social-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+    .stat-item { text-align: center; }
+    .stat-count { display: block; font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+    .stat-label { font-size: 0.75rem; color: var(--text-dim); }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
 
-  <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <p>Loading NAIJALITE...</p>
+  </div>
 
+  <!-- TikTok-Style Auth Screen -->
   <div id="authScreen">
     <div class="auth-wrapper">
-      <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo">
+      <div class="auth-logo-container">
+        <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" alt="NAIJALITE Logo" class="auth-logo" onerror="this.src='https://flagcdn.com/w160/ng.png'">
+      </div>
       <h2 class="auth-title">NAIJALITE</h2>
+      <p class="auth-subtitle">Join the community and earn rewards!</p>
+
       <div class="auth-tabs">
         <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
         <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
       </div>
+
       <div class="auth-card">
-        <input type="text" id="authUsername" class="auth-input" style="display:none" placeholder="Username">
-        <input type="text" id="authEmail" class="auth-input" placeholder="Email">
-        <input type="password" id="authPass" class="auth-input" placeholder="Password">
+        <div class="auth-input-group" id="usernameGroup" style="display: none;">
+          <label>Username</label>
+          <input type="text" id="authUsername" class="auth-input" placeholder="Choose a unique username...">
+        </div>
+        <div class="auth-input-group">
+          <label>Email or Phone</label>
+          <input type="text" id="authEmail" class="auth-input" placeholder="Enter your details...">
+        </div>
+        <div class="auth-input-group">
+          <label>Password</label>
+          <input type="password" id="authPass" class="auth-input" placeholder="••••••••">
+        </div>
+        
         <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+        <button class="btn-google" onclick="signInWithGoogle()">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18"> Sign in with Google
+        </button>
+        
+        <div class="auth-footer">
+          <span id="forgotPass" style="display:block; margin-bottom:10px;">Forgot password?</span>
+          <div id="authFooterText">
+            By continuing, you agree to our <span style="color:var(--primary)">Terms of Service</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -90,7 +270,9 @@
     <div class="header-top">
       <h1>🇳🇬 NAIJALITE</h1>
       <div class="header-actions">
-        <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
+        <div class="wallet-mini">
+          <span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span>
+        </div>
         <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
       </div>
     </div>
@@ -107,51 +289,301 @@
 
   <div class="container">
     <div id="homeTab" class="tab-content active">
-      <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
+      <div class="home-header">
+        <div class="suggested-users-box" id="suggestedUsers">
+          <p style="font-size: 0.7rem; color: var(--text-dim);">Suggested Users...</p>
+        </div>
+      </div>
+      <div class="feed-container" id="homeFeed">
+        <p style="text-align:center; color:var(--text-dim); margin: 20px 0;">Loading feed...</p>
+      </div>
     </div>
-    <div id="liveTab" class="tab-content"><div class="card">Live Stream Area</div></div>
-    <div id="inboxTab" class="tab-content"><div class="card">Inbox Area</div></div>
-    <div id="earnTab" class="tab-content"><div class="card">Earn Area</div></div>
-    <div id="utilsTab" class="tab-content"><div class="card">Utils Area</div></div>
+
+    <div id="liveTab" class="tab-content">
+      <div class="live-container">
+        <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
+        <div class="live-overlay">
+          <div class="overlay-top">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="live-badge">🔴 LIVE</div>
+              <div class="guest-slots">
+                <div class="guest-slot">👤</div><div class="guest-slot">👤</div><div class="guest-slot">👤</div>
+              </div>
+            </div>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer;" onclick="openModal('coinModal')">+ Buy Coins</button>
+          </div>
+          <div class="overlay-bottom">
+            <div class="chat-area" id="chatArea">
+              <div class="chat-msg"><b style="color:var(--accent)">System:</b> Welcome to the room! 🚀</div>
+            </div>
+            <div class="action-bar">
+              <input type="text" id="chatInput" style="flex:1; padding:10px; border-radius:20px; border:none; background:rgba(255,255,255,0.2); color:white;" placeholder="Say something...">
+              <button class="gift-btn" onclick="sendGroupGift('Rose 🌹', 10)">🌹</button>
+              <button class="gift-btn" onclick="sendGroupGift('Crown 👑', 50)">👑</button>
+              <button class="gift-btn" onclick="sendGroupGift('Car 🏎️', 200)">🏎️</button>
+              <button class="gift-btn" onclick="sendGroupGift('Lion 🦁', 500)">🦁</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
+        <button class="btn-main" style="background: #3182ce;" onclick="joinAsCoHost()">Join Stage</button>
+      </div>
+    </div>
+
+    <div id="inboxTab" class="tab-content">
+      <div class="inbox-list" id="inboxList">
+        <p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No messages yet.</p>
+      </div>
+    </div>
+
+    <div id="earnTab" class="tab-content">
+      <div class="card">
+        <span class="badge">🎁 Referral Bonus</span>
+        <h3>Invite & Earn ₦200</h3>
+        <p>Get rewarded for every friend who joins!</p>
+        <div style="background:#0f172a; padding:15px; border-radius:12px; text-align:center; border:1px dashed var(--accent);">
+          <div id="userRefLink" style="font-weight:bold; margin-bottom:10px; word-break:break-all;">Generating...</div>
+          <button class="btn-main" onclick="copyRefLink()">Copy Link</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="utilsTab" class="tab-content">
+      <div class="card">
+        <h3>WhatsApp Direct</h3>
+        <p>Chat without saving contacts.</p>
+        <input type="tel" id="waPhone" class="auth-input" placeholder="080...">
+        <button class="btn-main" onclick="openWhatsApp()">Open Chat</button>
+      </div>
+    </div>
+
     <div id="profileTab" class="tab-content">
       <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem;">👤</div>
-        <h3 id="userNameDisplay">User</h3>
+        <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
+        <h3 id="userNameDisplay">User Account</h3>
+        <p id="userIdDisplay" style="color:var(--text-dim);">Agent ID: Loading...</p>
+        
+        <div class="social-stats">
+          <div class="stat-item"><span class="stat-count" id="followerCount">0</span><span class="stat-label">Followers</span></div>
+          <div class="stat-item"><span class="stat-count" id="followingCount">0</span><span class="stat-label">Following</span></div>
+        </div>
+
         <div class="profile-menu">
           <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
         </div>
-        <div id="profilePosts" class="profile-sub-tab active"><p>Your Posts</p></div>
-        <div id="profileInbox" class="profile-sub-tab"><p>Your Messages</p></div>
+
+        <div id="profilePosts" class="profile-sub-tab active">
+          <p style="font-size: 0.8rem; color: var(--text-dim);">Your shared posts will appear here.</p>
+        </div>
+        <div id="profileInbox" class="profile-sub-tab">
+          <p style="font-size: 0.8rem; color: var(--text-dim);">Your private messages.</p>
+        </div>
         <div id="profileCoins" class="profile-sub-tab">
-          <div id="coinDashboard">Coins: <span id="coinsCount">0</span></div>
-          <div style="margin-top:10px; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;">
-            <h4>🏦 Withdrawal</h4>
-            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number">
-            <button class="btn-main" onclick="submitWithdrawal()">Confirm</button>
+          <div class="coin-stats">
+            <div class="stat-box"><span>Earned</span><strong id="totalEarned">0</strong></div>
+            <div class="stat-box"><span>Spent</span><strong id="totalSpent">0</strong></div>
+          </div>
+          <div class="transaction-list" id="coinTxList">
+            <p style="font-size: 0.7rem; color: var(--text-dim); text-align:center;">No transactions yet.</p>
+          </div>
+          
+          <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 15px; border: 1px solid var(--border); text-align: left;">
+            <h4 style="font-size: 0.9rem; margin-bottom: 10px;">🏦 Bank Withdrawal</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <label style="font-size: 0.7rem; color: var(--text-dim);">Select Bank</label>
+              <select id="bankSelect" class="auth-input"><option value="OPay">OPay</option><option value="Moniepoint">Moniepoint</option><option value="Kuda">Kuda</option></select>
+              <label style="font-size: 0.7rem; color: var(--text-dim);">Account Number</label>
+              <input type="tel" id="accountNum" class="auth-input" maxlength="10" placeholder="Enter account number">
+              <button class="btn-main" style="margin-top: 10px;" onclick="submitWithdrawal()">Confirm Withdrawal</button>
+            </div>
           </div>
         </div>
+
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px;">
+          <input type="text" id="newUsernameInput" class="auth-input" placeholder="New username...">
+          <button class="btn-main" style="background: var(--primary);" onclick="updateUsername()">Update Username</button>
+        </div>
+
         <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
       </div>
     </div>
   </div>
 
+  <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="settings-modal">
     <div class="settings-card">
-      <h3 id="settingsTitle">Settings</h3>
-      <div id="settingsContent"><p>Setting content...</p></div>
-      <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 id="settingsTitle">Settings</h3>
+        <button onclick="closeModal('settingsModal')" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+
+      <div id="settingsAccount" class="settings-section" style="display:none;">
+        <h4>⚙️ Account Management</h4>
+        <div class="settings-row">
+          <div class="settings-info"><span>Change Email</span><small>Update your registered email address</small></div>
+          <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem;">Edit</button>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info"><span>Account Status</span><small>Currently Verified ✅</small></div>
+          <span style="color:var(--primary); font-weight:bold; font-size:0.8rem;">Active</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info"><span>Blocked Accounts</span><small>Manage users you've blocked</small></div>
+          <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem;">View List</button>
+        </div>
+      </div>
+
+      <div id="settingsPrivacy" class="settings-section" style="display:none;">
+        <h4>🔒 Privacy</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Private account</span>
+            <small>With a private account, only users you approve can follow you and watch your videos.</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="privateAccToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Interactions</span>
+            <small>Who can interact with your content</small>
+          </div>
+          <select class="settings-select">
+            <option>Everybody</option>
+            <option>Friends</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Comments</span>
+            <small>Who can comment on your posts</small>
+          </div>
+          <select class="settings-select">
+            <option>Everyone</option>
+            <option>Friends</option>
+            <option>No one</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Direct messages</span>
+            <small>Who can send you messages</small>
+          </div>
+          <select class="settings-select">
+            <option>Everyone</option>
+            <option>Friends</option>
+            <option>No one</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="settingsNotifications" class="settings-section" style="display:none;">
+        <h4>🔔 Notifications</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Push Notifications</span>
+            <small>Get instant alerts for likes and comments</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Email Alerts</span>
+            <small>Receive weekly summaries via email</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="settingsVerification" class="settings-section" style="display:none;">
+        <h4>✅ Verification</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Identity Check</span>
+            <small>Upload ID to get a verified badge</small>
+          </div>
+          <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem;">Upload</button>
+        </div>
+      </div>
+
+      <div id="settingsPrefs" class="settings-section" style="display:none;">
+        <h4>⚙️ Preferences</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Desktop notifications</span>
+            <small>Allow in browser. Stay on top of likes, comments, and more.</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.3); border-radius:12px;">
+          <span style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:5px;">Your preferences</span>
+          <small style="color:var(--text-dim);">Your preferences will be synced automatically: Likes, comments, new followers, mentions and tags.</small>
+        </div>
+      </div>
+
+      <div id="settingsAccessibility" class="settings-section" style="display:none;">
+        <h4>♿ Accessibility</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>High Contrast Mode</span>
+            <small>Increase visibility for easier reading</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Text Size</span>
+            <small>Adjust app font size</small>
+          </div>
+          <select class="settings-select">
+            <option>Normal</option>
+            <option>Large</option>
+            <option>Extra Large</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other Modals -->
+  <div id="coinModal" class="modal-bg">
+    <div class="modal-card">
+      <h3>🪙 Buy Coins</h3>
+      <select id="coinPack" class="auth-input"><option value="1000">100 Coins - ₦1,000</option><option value="2500">260 Coins - ₦2,500</option><option value="5000">550 Coins - ₦5,000</option></select>
+      <input type="email" id="userEmail" class="auth-input" placeholder="Email">
+      <button class="btn-main" onclick="payWithPaystack()">Pay with Paystack</button>
+      <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('coinModal')">Cancel</button>
     </div>
   </div>
 
   <div class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('homeTab', this)">🏠 Home</div>
-    <div class="nav-item" onclick="switchTab('liveTab', this)">🔴 Live</div>
-    <div class="nav-item" onclick="switchTab('inboxTab', this)">💬 Inbox</div>
-    <div class="nav-item" onclick="switchTab('earnTab', this)">🎯 Earn</div>
-    <div class="nav-item" onclick="switchTab('utilsTab', this)">🛠️ Utils</div>
-    <div class="nav-item" onclick="switchTab('profileTab', this)">⚙️ Profile</div>
+    <div class="nav-item active" onclick="switchTab('homeTab', this)"><div>🏠</div>Home</div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item" onclick="switchTab('inboxTab', this)"><div>💬</div>Inbox</div>
+    <div class="nav-item" onclick="switchTab('earnTab', this)"><div>🎯</div>Earn</div>
+    <div class="nav-item" onclick="switchTab('utilsTab', this)"><div>🛠️</div>Utils</div>
+    <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
   </div>
 
   <div class="floating-btn" onclick="triggerFileUpload()">+</div>
@@ -161,19 +593,11 @@
     const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
     
     let supabase;
+    let isLoginMode = true;
+    let currentBalance = 0;
+    let userCoins = 0;
     let userId = null;
-
-    // DEBUG WRAPPER: This catches every error and tells us what it is
-    async function safeCall(fnName, promise) {
-      try {
-        const result = await promise;
-        return result;
-      } catch (err) {
-        console.error(`Error in ${fnName}:`, err);
-        alert(`🚨 ERROR in ${fnName}:\n${err.message}\n\nSend this message to the AI!`);
-        throw err;
-      }
-    }
+    let agentId = '';
 
     async function initSupabase() {
       try {
@@ -181,39 +605,181 @@
         document.getElementById('loadingScreen').style.display = 'none';
         checkSession();
       } catch (e) {
-        alert("CRITICAL: Could not initialize Supabase. Check your internet.");
+        console.error('Supabase Init Error:', e);
+        document.getElementById('loadingScreen').innerHTML = '<p style="color:red">Failed to connect to database. Please refresh.</p>';
+      }
+    }
+
+    function setAuthMode(mode) {
+      isLoginMode = (mode === 'login');
+      document.getElementById('tabLogin').classList.toggle('active', isLoginMode);
+      document.getElementById('tabSignup').classList.toggle('active', !isLoginMode);
+      document.getElementById('btnAuthAction').textContent = isLoginMode ? 'Login' : 'Sign Up';
+      document.getElementById('usernameGroup').style.display = isLoginMode ? 'none' : 'block';
+    }
+
+    async function handleAuth() {
+      const username = document.getElementById('authUsername').value;
+      const identifier = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPass').value;
+      
+      if (isLoginMode) {
+        if (!identifier || !password) return alert('Please fill in all fields');
+      } else {
+        if (!username || !identifier || !password) return alert('Please fill in all fields');
+      }
+
+      try {
+        if (isLoginMode) {
+          const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
+          if (error) throw error;
+        } else {
+          const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
+          if (existing) return alert('Username already taken. Please choose another.');
+
+          const { data, error } = await supabase.auth.signUp({ email: identifier, password });
+          if (error) throw error;
+
+          const { error: profileError } = await supabase.from('profiles').upsert({ id: data.user.id, username: username });
+          if (profileError) throw profileError;
+        }
+        checkSession();
+      } catch (error) {
+        alert('Auth Error: ' + error.message);
+      }
+    }
+
+    async function signInWithGoogle() {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+        if (error) throw error;
+      } catch (error) {
+        alert('Google Auth Error: ' + error.message);
       }
     }
 
     async function checkSession() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        alert("Session Error: " + error.message);
-        return;
-      }
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         userId = session.user.id;
         document.getElementById('authScreen').style.display = 'none';
-        initHub();
+        await initHub();
       } else {
         document.getElementById('authScreen').style.display = 'flex';
       }
     }
 
-    async function initHub() {
-      await safeCall('initHub', supabase.from('profiles').select('*').eq('id', userId).single());
-    }
-
-    async function handleAuth() {
-      const email = document.getElementById('authEmail').value;
-      const pass = document.getElementById('authPass').value;
-      await safeCall('Auth', supabase.auth.signInWithPassword({ email, password: pass }));
-      location.reload();
-    }
-
     async function handleLogout() {
-      await safeCall('Logout', supabase.auth.signOut());
+      await supabase.auth.signOut();
       location.reload();
+    }
+
+    async function initHub() {
+      agentId = 'NL-' + Math.floor(100000 + Math.random() * 900000);
+      try {
+        const { data: profile } = await supabase.from('profiles').select('username').eq('id', userId).single();
+        await supabase.from('profiles').upsert({ id: userId, agent_id: agentId, username: profile?.username || 'User_' + agentId });
+        await fetchWallet();
+        document.getElementById('userNameDisplay').textContent = profile?.username || 'User_' + agentId;
+        document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
+        document.getElementById('userRefLink').textContent = window.location.origin + window.location.pathname + '?ref=' + agentId;
+        updateUI();
+        await loadSuggestedUsers();
+        await loadCoinDashboard();
+      } catch (err) { console.error(err); }
+    }
+
+    async function loadSuggestedUsers() {
+      const { data, error } = await supabase.from('profiles').select('username').neq('id', userId).limit(10);
+      if (error) return console.error(error);
+      const box = document.getElementById('suggestedUsers');
+      if (!data || data.length === 0) {
+        box.innerHTML = '<p style="font-size: 0.7rem; color: var(--text-dim);">No users found.</p>';
+        return;
+      }
+      box.innerHTML = data.map(u => `<div class="suggested-user" onclick="alert('Following ${u.username}...')">👤 <span>${u.username}</span></div>`).join('');
+    }
+
+    async function fetchWallet() {
+      const { data } = await supabase.from('wallets').select('*').eq('id', userId).single();
+      if (data) {
+        currentBalance = data.cash_balance;
+        userCoins = data.coin_balance;
+      } else {
+        await supabase.from('wallets').insert([{ id: userId, cash_balance: 1650, coin_balance: 100 }]);
+        currentBalance = 1650; userCoins = 100;
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('walletBalance').textContent = '₦' + currentBalance.toLocaleString();
+      document.getElementById('userCoins').textContent = userCoins;
+    }
+
+    async function loadCoinDashboard() {
+      const { data: txs, error } = await supabase.from('coin_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (error) return console.error(error);
+
+      let earned = 0, spent = 0;
+      const list = document.getElementById('coinTxList');
+      if (!txs || txs.length === 0) return;
+
+      txs.forEach(tx => {
+        if (tx.type === 'receive') earned += tx.amount;
+        else spent += tx.amount;
+      });
+
+      document.getElementById('totalEarned').textContent = earned;
+      document.getElementById('totalSpent').textContent = spent;
+
+      list.innerHTML = txs.map(tx => `
+        <div class="transaction-item">
+          <span>${tx.type === 'receive' ? '🟢 Received' : '🔴 Sent'}</span>
+          <strong>${tx.type === 'receive' ? '+' : '-'}${tx.amount} 🟡</strong>
+        </div>
+      `).join('');
+    }
+
+    async function sendGroupGift(name, cost) {
+      if (userCoins < cost) return alert('Insufficient coins!');
+      userCoins -= cost;
+      try {
+        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+        const anim = document.createElement('div');
+        anim.className = 'gift-animation animate__animated animate__fadeInUp';
+        anim.textContent = name.split(' ')[1] || name;
+        document.querySelector('.live-container').appendChild(anim);
+        addChatMessage(`Sent a ${name}! 🚀`, true);
+        setTimeout(() => anim.remove(), 3000);
+        updateUI();
+      } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    function addChatMessage(msg, isGift = false) {
+      const chat = document.getElementById('chatArea');
+      const div = document.createElement('div');
+      div.className = 'chat-msg';
+      div.innerHTML = isGift ? `<b style="color:var(--accent)">Gift:</b> ${msg}` : `<b style="color:var(--accent)">You:</b> ${msg}`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const video = document.getElementById('hostVideo');
+      if (btn.textContent === 'Start Live') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          video.srcObject = stream;
+          btn.textContent = 'End Live';
+          btn.style.background = 'var(--danger)';
+        } catch (err) { alert('Camera access required.'); }
+      } else {
+        if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+        btn.textContent = 'Start Live';
+        btn.style.background = 'var(--primary)';
+      }
     }
 
     function switchTab(id, el) {
@@ -231,46 +797,137 @@
     }
 
     function toggleHeaderMenu() {
-      const m = document.getElementById('headerMenu');
-      m.style.display = m.style.display === 'block' ? 'none' : 'block';
+      const menu = document.getElementById('headerMenu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     }
 
     function openSettings(type) {
-      document.getElementById('settingsTitle').textContent = type.toUpperCase();
-      document.getElementById('settingsModal').style.display = 'flex';
+      const modal = document.getElementById('settingsModal');
+      const sections = ['settingsAccount', 'settingsPrivacy', 'settingsNotifications', 'settingsVerification', 'settingsPrefs', 'settingsAccessibility'];
+      
+      sections.forEach(s => document.getElementById(s).style.display = 'none');
+      
+      if (type === 'account') {
+        document.getElementById('settingsTitle').textContent = 'Account Management';
+        document.getElementById('settingsAccount').style.display = 'block';
+      } else if (type === 'privacy') {
+        document.getElementById('settingsTitle').textContent = 'Privacy Settings';
+        document.getElementById('settingsPrivacy').style.display = 'block';
+      } else if (type === 'notifications') {
+        document.getElementById('settingsTitle').textContent = 'Notifications';
+        document.getElementById('settingsNotifications').style.display = 'block';
+      } else if (type === 'verification') {
+        document.getElementById('settingsTitle').textContent = 'Verification';
+        document.getElementById('settingsVerification').style.display = 'block';
+      } else if (type === 'prefs') {
+        document.getElementById('settingsTitle').textContent = 'Preferences';
+        document.getElementById('settingsPrefs').style.display = 'block';
+      } else if (type === 'accessibility') {
+        document.getElementById('settingsTitle').textContent = 'Accessibility';
+        document.getElementById('settingsAccessibility').style.display = 'block';
+      }
+      
+      modal.style.display = 'flex';
       document.getElementById('headerMenu').style.display = 'none';
     }
 
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function payWithPaystack() {
+      const email = document.getElementById('userEmail').value;
+      const amount = parseInt(document.getElementById('coinPack').value);
+      if (!email) return alert('Email required');
+
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+
+      PaystackPop.setup({
+        key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', 
+        email, 
+        amount: amount * 100, 
+        currency: "NGN",
+        callback: async () => {
+          userCoins += Math.floor(amount/10);
+          await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+          updateUI();
+          closeModal('coinModal');
+          alert('Payment successful! Your coins have been added.');
+        },
+        onClose: () => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      }).openIframe();
+    }
+
+    function openWhatsApp() {
+      let num = document.getElementById('waPhone').value.trim();
+      if (!num) return;
+      if (num.startsWith('0')) num = num.substring(1);
+      window.open('https://wa.me/234' + num, '_blank');
+    }
+
+    function copyRefLink() {
+      navigator.clipboard.writeText(document.getElementById('userRefLink').textContent);
+      alert('Link Copied!');
+    }
+
+    async function updateUsername() {
+      const newName = document.getElementById('newUsernameInput').value.trim();
+      if (!newName) return alert('Please enter a username');
+      
+      try {
+        const { error } = await supabase.from('profiles').update({ username: newName }).eq('id', userId);
+        if (error) throw error;
+        document.getElementById('userNameDisplay').textContent = newName;
+        alert('Username updated successfully!');
+      } catch (err) {
+        alert('Error updating username: ' + err.message);
+      }
+    }
 
     function triggerFileUpload() {
       const input = document.createElement('input');
       input.type = 'file';
+      input.accept = 'image/*,video/*';
       input.onchange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-          await safeCall('FileUpload', supabase.storage.from('posts').upload(`${userId}/${Date.now()}`, file));
-          alert("Uploaded!");
+          await handleFileUpload(file);
         }
       };
       input.click();
     }
 
-    async function submitWithdrawal() {
-      const acc = document.getElementById('bankAcc').value;
-      if (!acc) return alert("Enter account number");
-      await safeCall('Withdrawal', supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]));
-      alert("Withdrawal requested!");
+    async function handleFileUpload(file) {
+      try {
+        const fileName = `${userId}/${Date.now()}_${file.name}`;
+        const { data, error: uploadError } = await supabase.storage.from('posts').upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('posts').getPublicUrl(fileName);
+        const publicUrl = urlData.publicUrl;
+
+        const { error: dbError } = await supabase.from('posts').insert([{ 
+          user_id: userId, 
+          media_url: publicUrl, 
+          caption: 'Shared via NAIJALITE' 
+        }]);
+        if (dbError) throw dbError;
+
+        alert('Post uploaded successfully!');
+      } catch (err) {
+        console.error(err);
+        alert('Upload failed: ' + err.message);
+      }
     }
 
-    function setAuthMode(m) {
-      document.getElementById('tabLogin').classList.toggle('active', m==='login');
-      document.getElementById('tabSignup').classList.toggle('active', m==='signup');
-      document.getElementById('btnAuthAction').textContent = m==='login' ? 'Login' : 'Sign Up';
-      document.getElementById('authUsername').style.display = m==='signup' ? 'block' : 'none';
-    }
-
-    window.onload = initSupabase;
+    window.onload = () => {
+      initSupabase();
+    };
   </script>
 </body>
 </html>
