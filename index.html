@@ -37,13 +37,18 @@
     #authScreen { 
       position: fixed; inset: 0; background: var(--bg); z-index: 2000; 
       display: none; flex-direction: column; align-items: center; justify-content: center; 
-      padding: 40px 20px; /* More breathing room from the edges */
+      padding: 40px 20px;
     }
     .auth-wrapper { 
       width: 100%; max-width: 360px; text-align: center; 
       animation: fadeIn 0.5s;
     }
-    .auth-logo { font-size: 3.5rem; margin-bottom: 15px; display: block; }
+    .auth-logo-container { margin-bottom: 20px; }
+    .auth-logo { 
+      width: 80px; height: 80px; border-radius: 20px; 
+      object-fit: cover; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      animation: bounceIn 1s;
+    }
     .auth-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: white; }
     .auth-subtitle { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 30px; }
     
@@ -120,7 +125,9 @@
   <!-- TikTok-Style Auth Screen -->
   <div id="authScreen">
     <div class="auth-wrapper">
-      <div class="auth-logo">🇳🇬</div>
+      <div class="auth-logo-container">
+        <img src="https://cdn-icons-png.flaticon.com/512/2983/2983780.png" alt="Naijalite Logo" class="auth-logo">
+      </div>
       <h2 class="auth-title">Naijalite Hub</h2>
       <p class="auth-subtitle">Join the community and earn rewards!</p>
 
