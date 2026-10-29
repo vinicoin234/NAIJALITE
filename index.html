@@ -100,14 +100,14 @@
     .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
 
     /* Live Stream UI */
-    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; }
-    .main-video { width: 100%; height: 320px; object-fit: cover; background: #000; }
+    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 10px; }
+    .main-video { width: 100%; height: 300px; object-fit: cover; background: #000; }
     .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
     .live-overlay * { pointer-events: auto; }
     .overlay-top { display: flex; justify-content: space-between; align-items: center; }
     .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; }
     .overlay-bottom { display: flex; flex-direction: column; gap: 10px; }
-    .chat-area { max-height: 100px; overflow-y: auto; color: white; font-size: 0.8rem; }
+    .chat-area { max-height: 90px; overflow-y: auto; color: white; font-size: 0.8rem; }
     .action-bar { display: flex; gap: 8px; align-items: center; }
     .action-bar input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: white; font-size: 0.8rem; }
     .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
@@ -220,7 +220,7 @@
       <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
     </div>
     
-    <!-- Live Stream Tab -->
+    <!-- Live Stream Tab with Viewer Comment Box Below Video -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
@@ -232,12 +232,25 @@
           <div class="overlay-bottom">
             <div class="chat-area" id="liveChatArea"></div>
             <div class="action-bar">
-              <input type="text" id="liveChatInput" placeholder="Say something...">
+              <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
               <button class="gift-box-btn" onclick="openModal('giftCatalogModal')">🎁 Gifts</button>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Viewer Comment Box Section Below Video -->
+      <div class="card" style="padding:15px; margin-bottom:15px;">
+        <h4 style="font-size:0.9rem; margin-bottom:8px;">💬 Live Comments & Interaction</h4>
+        <div id="streamViewerCommentsList" style="max-height:120px; overflow-y:auto; margin-bottom:10px; font-size:0.85rem; display:flex; flex-direction:column; gap:6px;">
+          <p style="color:var(--text-dim); font-size:0.8rem;">No comments yet. Say something below!</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="viewerCommentInput" class="auth-input" style="margin-bottom:0;" placeholder="Type public comment...">
+          <button class="btn-main" style="width:auto; padding:10px 16px;" onclick="sendViewerComment()">Post</button>
+        </div>
+      </div>
+
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
         <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
       </div>
@@ -548,6 +561,7 @@
     let peerConnection = null;
     let currentUserProfile = null;
     let realtimeChannel = null;
+    let liveChatChannel = null;
     let incomingCallData = null;
     let ringtoneAudioContext = null;
     let callStartTime = null;
@@ -578,6 +592,7 @@
           setupRealtimeCalls();
           checkWeeklyClaimStatus();
           setupLiveStreamBroadcasting();
+          setupLiveChatChannel();
         } else {
           document.getElementById('authScreen').style.display = 'flex';
         }
@@ -717,11 +732,18 @@
       }
     }
 
-    // --- TikTok-Style Live Stream Broadcasting & Banner ---
+    // --- Live Stream & Viewer Comment System ---
     function setupLiveStreamBroadcasting() {
       const globalChannel = supabase.channel('global_live_streams');
       globalChannel.on('broadcast', { event: 'stream_status' }, payload => {
         renderLiveTopBanner(payload.payload);
+      }).subscribe();
+    }
+
+    function setupLiveChatChannel() {
+      liveChatChannel = supabase.channel('global_live_chat');
+      liveChatChannel.on('broadcast', { event: 'new_comment' }, payload => {
+        appendViewerComment(payload.payload.username, payload.payload.comment);
       }).subscribe();
     }
 
@@ -758,6 +780,46 @@
         `;
       } else if (!data.isLive) {
         container.innerHTML = '';
+      }
+    }
+
+    async function sendViewerComment() {
+      const input = document.getElementById('viewerCommentInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const username = currentUserProfile?.username || 'User';
+      appendViewerComment(username, text);
+
+      if (liveChatChannel) {
+        await liveChatChannel.send({
+          type: 'broadcast',
+          event: 'new_comment',
+          payload: { username, comment: text }
+        });
+      }
+      input.value = '';
+    }
+
+    function appendViewerComment(username, text) {
+      const list = document.getElementById('streamViewerCommentsList');
+      if (!list) return;
+      if (list.querySelector('p')) {
+        list.innerHTML = '';
+      }
+      const div = document.createElement('div');
+      div.innerHTML = `<b style="color:var(--accent);">${username}:</b> ${text}`;
+      list.appendChild(div);
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function handleLiveChatKey(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('liveChatInput');
+        if (input.value.trim()) {
+          appendViewerComment(currentUserProfile?.username || 'User', input.value.trim());
+          input.value = '';
+        }
       }
     }
 
@@ -1022,7 +1084,6 @@
       document.getElementById('callModal').style.display = 'flex';
       startOutgoingRingback();
 
-      // Ring out for 30 seconds if offline
       outgoingRingTimeout = setTimeout(() => {
         alert("Call unanswered or user offline.");
         endCall();
