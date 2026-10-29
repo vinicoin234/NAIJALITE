@@ -210,6 +210,10 @@
     .stat-item { text-align: center; }
     .stat-count { display: block; font-size: 1.2rem; font-weight: bold; color: var(--primary); }
     .stat-label { font-size: 0.75rem; color: var(--text-dim); }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -275,13 +279,13 @@
   </header>
 
   <div id="headerMenu" class="menu-dropdown">
-      <div class="menu-item" onclick="openSettings('account')">Manage account</div>
-      <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
-      <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
-      <div class="menu-item" onclick="openSettings('verification')">Verification</div>
-      <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
-      <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
-    </div>
+    <div class="menu-item" onclick="openSettings('account')">Manage account</div>
+    <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
+    <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
+    <div class="menu-item" onclick="openSettings('verification')">Verification</div>
+    <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
+    <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
+  </div>
 
   <div class="container">
     <div id="homeTab" class="tab-content active">
@@ -561,16 +565,8 @@
       </div>
     </div>
   </div>
-    <div class="modal-card">
-      <h3>🏦 Bank Withdrawal</h3>
-      <label>Select Bank</label>
-      <select id="bankSelect" class="auth-input"><option value="OPay">OPay</option><option value="Moniepoint">Moniepoint</option><option value="Kuda">Kuda</option></select>
-      <input type="tel" id="accountNum" class="auth-input" maxlength="10" placeholder="Account Number">
-      <button class="btn-main" onclick="submitWithdrawal()">Confirm Withdrawal</button>
-      <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('withdrawModal')">Cancel</button>
-    </div>
-  </div>
 
+  <!-- Other Modals -->
   <div id="coinModal" class="modal-bg">
     <div class="modal-card">
       <h3>🪙 Buy Coins</h3>
