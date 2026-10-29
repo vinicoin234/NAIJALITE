@@ -183,9 +183,33 @@
     .transaction-list { display: flex; flex-direction: column; gap: 10px; }
     .transaction-item { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border: 1px solid var(--border); }
 
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    /* Settings Modal */
+    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
+    .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+    .settings-section { margin-bottom: 24px; }
+    .settings-section h4 { font-size: 1rem; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-info { flex: 1; padding-right: 10px; }
+    .settings-info span { display: block; font-size: 0.9rem; font-weight: 600; }
+    .settings-info small { font-size: 0.7rem; color: var(--text-dim); line-height: 1.3; }
+    
+    /* Custom Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #334155; transition: .4s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Dropdown Select */
+    .settings-select { background: #0f172a; color: white; border: 1px solid var(--border); padding: 6px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+
+    /* Profile Social Stats */
+    .social-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+    .stat-item { text-align: center; }
+    .stat-count { display: block; font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+    .stat-label { font-size: 0.75rem; color: var(--text-dim); }
   </style>
 </head>
 <body>
@@ -251,13 +275,13 @@
   </header>
 
   <div id="headerMenu" class="menu-dropdown">
-    <div class="menu-item" onclick="alert('Opening Account Settings...')">Manage account</div>
-    <div class="menu-item" onclick="alert('Opening Privacy Settings...')">Privacy</div>
-    <div class="menu-item" onclick="alert('Opening Notifications...')">Notifications</div>
-    <div class="menu-item" onclick="alert('Opening Verification...')">Verification</div>
-    <div class="menu-item" onclick="alert('Opening Preferences...')">Preferences</div>
-    <div class="menu-item" onclick="alert('Opening Accessibility...')">Accessibility</div>
-  </div>
+      <div class="menu-item" onclick="openSettings('account')">Manage account</div>
+      <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
+      <div class="menu-item" onclick="alert('Opening Notifications...')">Notifications</div>
+      <div class="menu-item" onclick="alert('Opening Verification...')">Verification</div>
+      <div class="menu-item" onclick="alert('Opening Preferences...')">Preferences</div>
+      <div class="menu-item" onclick="alert('Opening Accessibility...')">Accessibility</div>
+    </div>
 
   <div class="container">
     <div id="homeTab" class="tab-content active">
@@ -337,6 +361,11 @@
         <h3 id="userNameDisplay">User Account</h3>
         <p id="userIdDisplay" style="color:var(--text-dim);">Agent ID: Loading...</p>
         
+        <div class="social-stats">
+          <div class="stat-item"><span class="stat-count" id="followerCount">0</span><span class="stat-label">Followers</span></div>
+          <div class="stat-item"><span class="stat-count" id="followingCount">0</span><span class="stat-label">Following</span></div>
+        </div>
+
         <div class="profile-menu">
           <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
@@ -369,8 +398,98 @@
     </div>
   </div>
 
-  <!-- MODALS -->
-  <div id="withdrawModal" class="modal-bg">
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="settings-modal">
+    <div class="settings-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 id="settingsTitle">Settings</h3>
+        <button onclick="closeModal('settingsModal')" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+
+      <div id="settingsAccount" class="settings-section" style="display:none;">
+        <h4>⚙️ Account Management</h4>
+        <div class="settings-row">
+          <div class="settings-info"><span>Change Email</span><small>Update your registered email address</small></div>
+          <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem;">Edit</button>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info"><span>Account Status</span><small>Currently Verified ✅</small></div>
+          <span style="color:var(--primary); font-weight:bold; font-size:0.8rem;">Active</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info"><span>Blocked Accounts</span><small>Manage users you've blocked</small></div>
+          <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem;">View List</button>
+        </div>
+      </div>
+
+      <div id="settingsPrivacy" class="settings-section" style="display:none;">
+        <h4>🔒 Privacy</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Private account</span>
+            <small>With a private account, only users you approve can follow you and watch your videos.</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="privateAccToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Interactions</span>
+            <small>Who can interact with your content</small>
+          </div>
+          <select class="settings-select">
+            <option>Everybody</option>
+            <option>Friends</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Comments</span>
+            <small>Who can comment on your posts</small>
+          </div>
+          <select class="settings-select">
+            <option>Everyone</option>
+            <option>Friends</option>
+            <option>No one</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Direct messages</span>
+            <small>Who can send you messages</small>
+          </div>
+          <select class="settings-select">
+            <option>Everyone</option>
+            <option>Friends</option>
+            <option>No one</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="settingsPrefs" class="settings-section" style="display:none;">
+        <h4>🔔 Notifications & Preferences</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Desktop notifications</span>
+            <small>Allow in browser. Stay on top of likes, comments, and more.</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.3); border-radius:12px;">
+          <span style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:5px;">Your preferences</span>
+          <small style="color:var(--text-dim);">Your preferences will be synced automatically: Likes, comments, new followers, mentions and tags.</small>
+        </div>
+      </div>
+    </div>
+  </div>
     <div class="modal-card">
       <h3>🏦 Bank Withdrawal</h3>
       <label>Select Bank</label>
@@ -613,6 +732,27 @@
     function toggleHeaderMenu() {
       const menu = document.getElementById('headerMenu');
       menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function openSettings(type) {
+      const modal = document.getElementById('settingsModal');
+      const sections = ['settingsAccount', 'settingsPrivacy', 'settingsPrefs'];
+      
+      sections.forEach(s => document.getElementById(s).style.display = 'none');
+      
+      if (type === 'account') {
+        document.getElementById('settingsTitle').textContent = 'Account Management';
+        document.getElementById('settingsAccount').style.display = 'block';
+      } else if (type === 'privacy') {
+        document.getElementById('settingsTitle').textContent = 'Privacy Settings';
+        document.getElementById('settingsPrivacy').style.display = 'block';
+      } else {
+        document.getElementById('settingsTitle').textContent = 'Preferences';
+        document.getElementById('settingsPrefs').style.display = 'block';
+      }
+      
+      modal.style.display = 'flex';
+      document.getElementById('headerMenu').style.display = 'none';
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
