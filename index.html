@@ -1,149 +1,363 @@
-const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NAIJALITE | Live & Earn</title>
+  <meta name="theme-color" content="#008751">
 
-let supabase;
-let userId = null;
-let currentAuthMode = 'login'; // Track auth mode
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+  <!-- Paystack SDK -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
-async function safeCall(fnName, promise) {
-  try {
-    const result = await promise;
-    if (result && result.error) throw result.error;
-    return result;
-  } catch (err) {
-    console.error(`Error in ${fnName}:`, err);
-    alert(`🚨 ERROR in ${fnName}:\n${err.message || err}`);
-    throw err;
-  }
-}
-
-async function initSupabase() {
-  try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    document.getElementById('loadingScreen').style.display = 'none';
-    checkSession();
-  } catch (e) {
-    alert("CRITICAL: Could not initialize Supabase. Check your internet connection.");
-  }
-}
-
-async function checkSession() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) {
-    alert("Session Error: " + error.message);
-    return;
-  }
-  if (session) {
-    userId = session.user.id;
-    document.getElementById('authScreen').style.display = 'none';
-    initHub();
-  } else {
-    document.getElementById('authScreen').style.display = 'flex';
-  }
-}
-
-async function initHub() {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (profile) {
-    document.getElementById('userNameDisplay').textContent = profile.username || 'User';
-    document.getElementById('userCoins').textContent = profile.coins || 0;
-    if (document.getElementById('coinsCount')) {
-      document.getElementById('coinsCount').textContent = profile.coins || 0;
+  <style>
+    :root {
+      --primary: #008751; --primary-dark: #006b40; --accent: #ffc107; --danger: #ff4757;
+      --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
     }
-  }
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
 
-function setAuthMode(mode) {
-  currentAuthMode = mode;
-  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
-  document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
-  document.getElementById('btnAuthAction').textContent = mode === 'login' ? 'Login' : 'Sign Up';
-  document.getElementById('authUsername').style.display = mode === 'signup' ? 'block' : 'none';
-}
+    /* Loading Overlay */
+    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-async function handleAuth() {
-  const email = document.getElementById('authEmail').value.trim();
-  const pass = document.getElementById('authPass').value.trim();
-  const username = document.getElementById('authUsername').value.trim();
+    /* --- COMPACT AUTH SCREEN --- */
+    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .auth-wrapper { width: 100%; max-width: 340px; text-align: center; animation: fadeIn 0.5s; }
+    .auth-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; }
+    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; }
+    .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); }
+    .auth-tab.active { background: var(--primary); color: white; }
+    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); }
+    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; }
+    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-  if (!email || !pass) return alert("Please enter email and password.");
+    /* --- MAIN HUB --- */
+    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+    .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .menu-dropdown { position: absolute; top: 60px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 200px; z-index: 1000; display: none; overflow: hidden; }
+    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
 
-  if (currentAuthMode === 'login') {
-    await safeCall('Login', supabase.auth.signInWithPassword({ email, password: pass }));
-  } else {
-    if (!username) return alert("Please enter a username.");
-    const { data } = await safeCall('SignUp', supabase.auth.signUp({
-      email,
-      password: pass,
-      options: { data: { username } }
-    }));
-    
-    // Create profile entry upon signup
-    if (data?.user) {
-      await supabase.from('profiles').insert([{ id: data.user.id, username, coins: 0 }]);
+    .container { padding: 16px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* TIKTOK LIVE */
+    .live-container { position: relative; width: 100%; height: 80vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
+    .main-video { width: 100%; height: 100%; object-fit: cover; }
+    .live-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+    .overlay-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
+    .live-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
+    .overlay-bottom { pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
+    .chat-area { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .chat-msg { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); }
+    .action-bar { display: flex; align-items: center; gap: 12px; }
+    .gift-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; backdrop-filter: blur(10px); }
+
+    .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; }
+    .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; }
+    .nav-item.active { color: var(--primary); }
+
+    /* Home Feed */
+    .home-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
+    .suggested-users-box { flex: 1; overflow-x: auto; display: flex; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
+    .suggested-user { background: var(--card); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .feed-container { display: flex; flex-direction: column; gap: 20px; }
+    .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
+    .post-media { width: 100%; max-height: 500px; object-fit: cover; background: #000; }
+    .post-content { padding: 15px; }
+
+    /* Profile Submenu */
+    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); }
+    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; color: var(--text-dim); }
+    .profile-menu-item.active { background: var(--primary); color: white; }
+    .profile-sub-tab { display: none; }
+    .profile-sub-tab.active { display: block; }
+
+    /* Settings Modal */
+    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
+    .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+    .settings-section { margin-bottom: 24px; }
+    .settings-section h4 { font-size: 1rem; color: var(--primary); margin-bottom: 15px; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .settings-info span { display: block; font-size: 0.9rem; font-weight: 600; }
+    .settings-info small { font-size: 0.7rem; color: var(--text-dim); }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #334155; transition: .4s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .floating-btn { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; z-index: 1000; box-shadow: 0 8px 20px rgba(0,135,81,0.4); }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
+
+  <div id="authScreen">
+    <div class="auth-wrapper">
+      <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo">
+      <h2 class="auth-title">NAIJALITE</h2>
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
+        <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
+      </div>
+      <div class="auth-card">
+        <input type="text" id="authUsername" class="auth-input" style="display:none" placeholder="Username">
+        <input type="text" id="authEmail" class="auth-input" placeholder="Email">
+        <input type="password" id="authPass" class="auth-input" placeholder="Password">
+        <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-top">
+      <h1>🇳🇬 NAIJALITE</h1>
+      <div class="header-actions">
+        <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
+        <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="headerMenu" class="menu-dropdown">
+    <div class="menu-item" onclick="openSettings('account')">Manage account</div>
+    <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
+    <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
+    <div class="menu-item" onclick="openSettings('verification')">Verification</div>
+    <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
+    <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
+  </div>
+
+  <div class="container">
+    <div id="homeTab" class="tab-content active">
+      <div class="home-header">
+        <div class="suggested-users-box" id="suggestedUsers">
+          <p style="font-size: 0.7rem; color: var(--text-dim);">Suggested Users...</p>
+        </div>
+      </div>
+      <div class="feed-container" id="homeFeed">
+        <p style="text-align:center; color:var(--text-dim);">Loading feed...</p>
+      </div>
+    </div>
+
+    <div id="liveTab" class="tab-content">
+      <div class="live-container">
+        <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
+        <div class="live-overlay">
+          <div class="overlay-top">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="live-badge">🔴 LIVE</div>
+            </div>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer;" onclick="openModal('coinModal')">+ Buy Coins</button>
+          </div>
+          <div class="overlay-bottom">
+            <div class="chat-area" id="chatArea"></div>
+            <div class="action-bar">
+              <input type="text" id="chatInput" style="flex:1; padding:10px; border-radius:20px; border:none; background:rgba(255,255,255,0.2); color:white;" placeholder="Say something...">
+              <button class="gift-btn" onclick="sendGroupGift('Rose 🌹', 10)">🌹</button>
+              <button class="gift-btn" onclick="sendGroupGift('Crown 👑', 50)">👑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
+        <button class="btn-main" style="background: #3182ce;" onclick="joinAsCoHost()">Join Stage</button>
+      </div>
+    </div>
+
+    <div id="inboxTab" class="tab-content">
+      <div class="card">Inbox Messages Area</div>
+    </div>
+
+    <div id="earnTab" class="tab-content">
+      <div class="card">Earn Rewards Area</div>
+    </div>
+
+    <div id="utilsTab" class="tab-content">
+      <div class="card">Utility Tools Area</div>
+    </div>
+
+    <div id="profileTab" class="tab-content">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem;">👤</div>
+        <h3 id="userNameDisplay">User</h3>
+        <div class="profile-menu">
+          <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
+        </div>
+        <div id="profilePosts" class="profile-sub-tab active"><p>Your Posts</p></div>
+        <div id="profileInbox" class="profile-sub-tab"><p>Your Messages</p></div>
+        <div id="profileCoins" class="profile-sub-tab">
+          <div id="coinDashboard">Coins: <span id="coinsCount">0</span></div>
+          <div style="margin-top:10px; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;">
+            <h4 style="font-size:0.9rem">🏦 Bank Withdrawal</h4>
+            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number">
+            <button class="btn-main" onclick="submitWithdrawal()">Confirm</button>
+          </div>
+        </div>
+        <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="settings-modal">
+    <div class="settings-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 id="settingsTitle">Settings</h3>
+        <button onclick="closeModal('settingsModal')" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">✕</button>
+      </div>
+      <div id="settingsContent"></div>
+    </div>
+  </div>
+
+  <div id="coinModal" class="modal-bg" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
+    <div class="modal-card" style="background:var(--card); padding:20px; border-radius:20px; width:90%; max-width:400px; color:white;">
+      <h3>🪙 Buy Coins</h3>
+      <input type="email" id="userEmail" class="auth-input" placeholder="Email">
+      <button class="btn-main" onclick="payWithPaystack()">Pay with Paystack</button>
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('homeTab', this)">🏠 Home</div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)">🔴 Live</div>
+    <div class="nav-item" onclick="switchTab('inboxTab', this)">💬 Inbox</div>
+    <div class="nav-item" onclick="switchTab('earnTab', this)">🎯 Earn</div>
+    <div class="nav-item" onclick="switchTab('utilsTab', this)">🛠️ Utils</div>
+    <div class="nav-item" onclick="switchTab('profileTab', this)">⚙️ Profile</div>
+  </div>
+
+  <div class="floating-btn" onclick="triggerFileUpload()">+</div>
+
+  <script>
+    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
+    let supabase;
+    let userId = null;
+
+    // SUPER ERROR TRACKER: Alerts you exactly what failed
+    async function safeCall(name, promise) {
+      try {
+        return await promise;
+      } catch (err) {
+        alert(`🚨 CONNECTION ERROR [${name}]:\n${err.message}\n\nPlease check your Supabase API keys or RLS policies.`);
+        throw err;
+      }
     }
-  }
-  location.reload();
-}
 
-async function handleLogout() {
-  await safeCall('Logout', supabase.auth.signOut());
-  location.reload();
-}
-
-function triggerFileUpload() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*,video/*';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const ext = file.name.split('.').pop();
-      const filePath = `${userId}/${Date.now()}.${ext}`;
-      await safeCall('FileUpload', supabase.storage.from('posts').upload(filePath, file));
-      alert("Uploaded successfully!");
+    async function initSupabase() {
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        document.getElementById('loadingScreen').style.display = 'none';
+        checkSession();
+      } catch (e) {
+        alert("Critical Error: Supabase failed to load.");
+      }
     }
-  };
-  input.click();
-}
 
-async function submitWithdrawal() {
-  const acc = document.getElementById('bankAcc').value.trim();
-  if (!acc) return alert("Enter account number");
-  await safeCall('Withdrawal', supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]));
-  alert("Withdrawal requested!");
-}
+    async function checkSession() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (session) {
+        userId = session.user.id;
+        document.getElementById('authScreen').style.display = 'none';
+        initHub();
+      } else {
+        document.getElementById('authScreen').style.display = 'flex';
+      }
+    }
 
-function switchTab(id, el) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  el.classList.add('active');
-}
+    async function initHub() {
+      await safeCall('Loading Profile', supabase.from('profiles').select('*').eq('id', userId).single());
+    }
 
-function switchProfileTab(id, el) {
-  document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  el.classList.add('active');
-}
+    async function handleAuth() {
+      const email = document.getElementById('authEmail').value;
+      const pass = document.getElementById('authPass').value;
+      await safeCall('Authentication', supabase.auth.signInWithPassword({ email, password: pass }));
+      location.reload();
+    }
 
-function toggleHeaderMenu() {
-  const m = document.getElementById('headerMenu');
-  m.style.display = m.style.display === 'block' ? 'none' : 'block';
-}
+    async function handleLogout() {
+      await safeCall('Logout', supabase.auth.signOut());
+      location.reload();
+    }
 
-function openSettings(type) {
-  document.getElementById('settingsTitle').textContent = type.toUpperCase();
-  document.getElementById('settingsModal').style.display = 'flex';
-  document.getElementById('headerMenu').style.display = 'none';
-}
+    function switchTab(id, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+    }
 
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function switchProfileTab(id, el) {
+      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+    }
 
-window.onload = initSupabase;
+    function toggleHeaderMenu() {
+      const m = document.getElementById('headerMenu');
+      m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function openSettings(type) {
+      document.getElementById('settingsTitle').textContent = type.toUpperCase();
+      document.getElementById('settingsModal').style.display = 'flex';
+      document.getElementById('headerMenu').style.display = 'none';
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function triggerFileUpload() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          await safeCall('Upload', supabase.storage.from('posts').upload(`${userId}/${Date.now()}`, file));
+          alert("Uploaded successfully!");
+        }
+      };
+      input.click();
+    }
+
+    async function submitWithdrawal() {
+      const acc = document.getElementById('bankAcc').value;
+      if (!acc) return alert("Enter account number");
+      await safeCall('Withdrawal', supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]));
+      alert("Withdrawal requested!");
+    }
+
+    function setAuthMode(m) {
+      document.getElementById('tabLogin').classList.toggle('active', m==='login');
+      document.getElementById('tabSignup').classList.toggle('active', m==='signup');
+      document.getElementById('btnAuthAction').textContent = m==='login' ? 'Login' : 'Sign Up';
+      document.getElementById('authUsername').style.display = m==='signup' ? 'block' : 'none';
+    }
+
+    window.onload = initSupabase;
+  </script>
+</body>
+</html>
