@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>NAIJALITE | Live, Chat & Earn</title>
+  <title>NAIJALITE | Live, Post & Earn</title>
   <meta name="theme-color" content="#008751">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
@@ -40,10 +40,21 @@
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; z-index: 100; shrink: 0; }
     .wallet-card { background: rgba(255, 255, 255, 0.15); padding: 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
 
-    /* MAIN CONTENT AREA */
+    /* MAIN CONTENT */
     .main-content { flex: 1; overflow-y: auto; padding: 16px; position: relative; padding-bottom: 80px; }
-    .tab-content { display: none; }
+    .tab-content { display: none; height: 100%; }
     .tab-content.active { display: block; animation: fadeIn 0.3s; }
+
+    /* POST WALL (TikTok Style) */
+    .post-wall { display: flex; flex-direction: column; gap: 20px; }
+    .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); animation: fadeInUp 0.4s; }
+    .post-header { padding: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+    .post-user-pic { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+    .post-media { width: 100%; background: #000; display: flex; justify-content: center; }
+    .post-media img, .post-media video { width: 100%; max-height: 500px; object-fit: cover; }
+    .post-body { padding: 15px; }
+    .post-text { font-size: 0.95rem; margin-bottom: 10px; line-height: 1.4; }
+    .post-footer { padding: 10px 15px; display: flex; justify-content: space-between; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); }
 
     /* LIVE STREAMING */
     .live-container { position: relative; width: 100%; height: 65vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
@@ -56,12 +67,7 @@
     .chat-input { flex: 1; padding: 12px 15px; border-radius: 25px; border: none; background: rgba(255,255,255,0.2); color: white; outline: none; font-size: 1rem; }
     .gift-mall-btn { width: 45px; height: 45px; border-radius: 50%; background: var(--accent); border: none; font-size: 1.5rem; cursor: pointer; }
 
-    /* GIFT MALL */
-    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
-    .gift-item { background: #0f172a; padding: 12px; border-radius: 15px; text-align: center; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
-    .gift-item:active { transform: scale(0.9); border-color: var(--accent); }
-
-    /* INBOX - WhatsApp Style */
+    /* INBOX */
     .inbox-list { display: flex; flex-direction: column; gap: 2px; }
     .chat-preview { background: var(--card); padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid #2a364a; }
     .avatar-circle { width: 50px; height: 50px; border-radius: 50%; background: #334155; object-fit: cover; }
@@ -72,7 +78,7 @@
     .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
     .chat-header { background: var(--card); padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 0.9rem; line-height: 1.4; }
+    .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 0.9rem; }
     .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
     .msg.received { align-self: flex-start; background: var(--card); color: white; border-bottom-left-radius: 2px; }
 
@@ -106,7 +112,7 @@
     <div class="auth-wrapper">
       <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo">
       <h2 class="auth-title" style="font-size:1.6rem; font-weight:800; color:white; margin-bottom:5px;">NAIJALITE</h2>
-      <p class="auth-subtitle" style="color:var(--text-dim); font-size:0.85rem; margin-bottom:20px;">Live, Chat & Earn</p>
+      <p class="auth-subtitle" style="color:var(--text-dim); font-size:0.85rem; margin-bottom:20px;">Live, Post & Earn</p>
       <div class="auth-card">
         <input type="text" id="authEmail" class="auth-input" placeholder="Email, Phone or Username">
         <input type="password" id="authPass" class="auth-input" placeholder="Password">
@@ -130,8 +136,19 @@
   </header>
 
   <div class="main-content">
+    <!-- POST WALL TAB -->
+    <div id="postTab" class="tab-content active">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h3 style="font-size:1.2rem;">Public Wall</h3>
+        <button onclick="openModal('createPostModal')" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:12px; font-weight:bold; cursor:pointer;">+ Post</button>
+      </div>
+      <div class="post-wall" id="postWall">
+        <p style="text-align:center; color:var(--text-dim);">Loading the vibe...</p>
+      </div>
+    </div>
+
     <!-- LIVE TAB -->
-    <div id="liveTab" class="tab-content active">
+    <div id="liveTab" class="tab-content">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
         <div class="live-overlay">
@@ -191,6 +208,20 @@
   </div>
 
   <!-- MODALS -->
+  <div id="createPostModal" class="modal-bg">
+    <div class="modal-card">
+      <h3>📝 Create Post</h3>
+      <textarea id="postContent" class="auth-input" style="height:100px; resize:none;" placeholder="What's on your mind?"></textarea>
+      <input type="text" id="postMedia" class="auth-input" placeholder="Image/Video URL (Optional)">
+      <select id="postVisibility" class="auth-input">
+        <option value="public">Public Wall</option>
+        <option value="profile">My Profile Only</option>
+      </select>
+      <button class="btn-auth" onclick="submitPost()">Post Now</button>
+      <button class="btn-auth" style="margin-top:10px; background:none; color:white;" onclick="closeModal('createPostModal')">Cancel</button>
+    </div>
+  </div>
+
   <div id="giftMallModal" class="modal-bg">
     <div class="modal-card">
       <h3 style="margin-bottom:10px;">🎁 Gift Mall</h3>
@@ -213,7 +244,6 @@
     </div>
   </div>
 
-  <!-- REAL CHAT WINDOW -->
   <div id="chatWindow" class="chat-window">
     <div class="chat-header">
       <button onclick="closeChat()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">←</button>
@@ -234,7 +264,8 @@
   </div>
 
   <div class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item active" onclick="switchTab('postTab', this)"><div>🌍</div>Post</div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
     <div class="nav-item" onclick="switchTab('inboxTab', this)"><div>💬</div>Inbox</div>
     <div class="nav-item" onclick="switchTab('earnTab', this)"><div>🎯</div>Earn</div>
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
@@ -294,6 +325,7 @@
       await fetchWallet();
       document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
       updateUI();
+      loadPostWall();
       loadInbox();
       loadProfile();
     }
@@ -306,6 +338,47 @@
 
     function updateUI() {
       document.getElementById('userCoins').textContent = userCoins;
+    }
+
+    /* POST WALL LOGIC */
+    async function loadPostWall() {
+      const { data, error } = await supabase.from('posts').select('*, profiles(username, avatar_url)').eq('visibility', 'public').order('created_at', { ascending: false });
+      const wall = document.getElementById('postWall');
+      wall.innerHTML = '';
+      if(!data || data.length === 0) {
+        wall.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin-top:20px;">No posts yet. Be the first!</p>';
+        return;
+      }
+      data.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        const mediaHtml = p.media_url ? (p.media_url.match(/\.(jpg|jpeg|png|gif)$/i) ? `<img src="${p.media_url}">` : `<video src="${p.media_url}" controls></video>`) : '';
+        card.innerHTML = `
+          <div class="post-header">
+            <img src="${p.profiles?.avatar_url || 'https://via.placeholder.com/35'}" class="post-user-pic">
+            <strong>${p.profiles?.username || 'User'}</strong>
+          </div>
+          <div class="post-media">${mediaHtml}</div>
+          <div class="post-body"><p class="post-text">${p.content}</p></div>
+          <div class="post-footer">
+            <span>${new Date(p.created_at).toLocaleDateString()}</span>
+            <span style="cursor:pointer; color:var(--primary);" onclick="reactPost('${p.id}')">❤️ Like</span>
+          </div>
+        `;
+        wall.appendChild(card);
+      });
+    }
+
+    async function submitPost() {
+      const content = document.getElementById('postContent').value;
+      const media = document.getElementById('postMedia').value;
+      const visibility = document.getElementById('postVisibility').value;
+      if(!content && !media) return alert('Post cannot be empty');
+      try {
+        await supabase.from('posts').insert([{ user_id: userId, content, media_url: media, visibility }]);
+        closeModal('createPostModal');
+        loadPostWall();
+      } catch (e) { alert(e.message); }
     }
 
     /* STREAMING LOGIC */
@@ -474,6 +547,7 @@
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       el.classList.add('active');
+      if (id === 'postTab') loadPostWall();
       if (id === 'inboxTab') loadInbox();
     }
 
