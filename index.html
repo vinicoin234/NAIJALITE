@@ -68,7 +68,7 @@
     .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
     .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; border: 1px solid var(--border); }
 
-    /* Profile Avatar + Plus Badge */
+    /* Profile Avatar */
     .avatar-wrapper { position: relative; width: 100px; height: 100px; margin: 0 auto 15px; cursor: pointer; }
     .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 3px solid var(--accent); }
     .avatar-plus-btn { position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
@@ -97,19 +97,12 @@
     .action-bar input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: white; font-size: 0.8rem; }
     .gift-btn { background: rgba(0,0,0,0.6); border: 1px solid var(--border); font-size: 1.2rem; padding: 6px; border-radius: 50%; cursor: pointer; }
 
-    /* Settings UI Switch */
-    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--border); transition: .4s; border-radius: 24px; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-    input:checked + .slider { background-color: var(--primary); }
-    input:checked + .slider:before { transform: translateX(20px); }
-
-    /* Call Modal */
+    /* Call Modal & Incoming Alert */
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
     .video-box video { width: 100%; height: 100%; object-fit: cover; }
+
+    #incomingCallBox { position: fixed; top: 20px; left: 20px; right: 20px; max-width: 460px; margin: 0 auto; background: var(--card); border: 2px solid var(--accent); padding: 15px; border-radius: 20px; z-index: 5000; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -118,6 +111,20 @@
 <body>
 
   <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
+
+  <!-- Incoming Call Popup -->
+  <div id="incomingCallBox">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <b id="incomingCallerName">Caller Name</b>
+        <p style="font-size:0.8rem; color:var(--text-dim);" id="incomingCallType">Incoming Call...</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-main" style="background:var(--primary); padding:8px 15px; font-size:0.8rem;" onclick="acceptCall()">Accept</button>
+        <button class="btn-main" style="background:var(--danger); padding:8px 15px; font-size:0.8rem;" onclick="declineCall()">Decline</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Auth Screen -->
   <div id="authScreen">
@@ -246,12 +253,6 @@
           <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:8px;">
           <button class="btn-main" onclick="openWhatsApp()">Open WhatsApp Chat</button>
         </div>
-
-        <div style="margin-top:15px;">
-          <label class="auth-label">Bank Account Verification Check</label>
-          <input type="text" id="bankCheckAcc" class="auth-input" placeholder="10-digit Account Number" style="margin-bottom:8px;">
-          <button class="btn-main" style="background:var(--card); border:1px solid var(--border);" onclick="verifyBankAcc()">Verify Account</button>
-        </div>
       </div>
     </div>
     
@@ -275,8 +276,8 @@
           <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
         </div>
         
-        <div id="profilePosts" class="profile-sub-tab active"><p>Your Posts</p></div>
-        <div id="profileInbox" class="profile-sub-tab"><p>Your Messages</p></div>
+        <div id="profilePosts" class="profile-sub-tab active"><p style="color:var(--text-dim);">Your shared posts will show here.</p></div>
+        <div id="profileInbox" class="profile-sub-tab"><p style="color:var(--text-dim);">Your conversations.</p></div>
         <div id="profileCoins" class="profile-sub-tab">
           <div id="coinDashboard">Coins: <span id="coinsCount">0</span></div>
           <div style="margin-top:10px; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;">
@@ -338,7 +339,7 @@
 
   <!-- Call Modal -->
   <div id="callModal" class="call-modal">
-    <h3 id="callStatus" style="color:white; margin-bottom:15px;">Calling User...</h3>
+    <h3 id="callStatus" style="color:white; margin-bottom:15px;">In Call...</h3>
     <div class="video-box">
       <video id="callVideo" autoplay playsinline muted></video>
     </div>
@@ -362,9 +363,7 @@
   <div id="settingsModal" class="settings-modal">
     <div class="settings-card">
       <h3 id="settingsTitle">Settings</h3>
-      <div id="settingsContent" style="margin: 15px 0;">
-        <p style="font-size:0.9rem; color:var(--text-dim);">Loading settings...</p>
-      </div>
+      <div id="settingsContent" style="margin: 15px 0;"></div>
       <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
     </div>
   </div>
@@ -378,7 +377,8 @@
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
   </div>
 
-  <div class="floating-btn" onclick="triggerFileUpload()">+</div>
+  <!-- Floating (+) Button strictly for posting on Home Feed -->
+  <div class="floating-btn" onclick="triggerFeedUpload()">+</div>
 
   <script>
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
@@ -391,6 +391,8 @@
     let activeChatUser = null;
     let localStream = null;
     let currentUserProfile = null;
+    let realtimeChannel = null;
+    let incomingCallData = null;
 
     async function initSupabase() {
       try {
@@ -410,6 +412,7 @@
           document.getElementById('authScreen').style.display = 'none';
           document.getElementById('userRefLink').textContent = `https://naijalite.app/?ref=${userId}`;
           initHub();
+          setupRealtimeCalls();
         } else {
           document.getElementById('authScreen').style.display = 'flex';
         }
@@ -449,6 +452,7 @@
       } catch (e) {}
     }
 
+    // --- Feed Loader ---
     async function loadFeed() {
       const feed = document.getElementById('homeFeed');
       try {
@@ -468,7 +472,31 @@
       }
     }
 
-    // --- Conversations & Inbox ---
+    // --- Floating (+) Feed Upload Only ---
+    function triggerFeedUpload() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,video/*';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file && userId) {
+          try {
+            const fileName = `${userId}/${Date.now()}_${file.name}`;
+            await supabase.storage.from('posts').upload(fileName, file);
+            const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
+            await supabase.from('posts').insert([{ user_id: userId, media_url: publicUrl, caption: 'New post' }]);
+            alert("Posted to feed!");
+            switchTab('homeTab', document.querySelectorAll('.nav-item')[0]);
+            loadFeed();
+          } catch(err) {
+            alert("Upload failed: " + err.message);
+          }
+        }
+      };
+      input.click();
+    }
+
+    // --- Conversations & Direct Messaging ---
     async function loadConversations() {
       const container = document.getElementById('conversationsList');
       try {
@@ -483,7 +511,7 @@
             <div class="user-item" onclick="openChat('${u.id}', '${u.username || 'User'}')">
               <div>
                 <b>${u.username || 'User'}</b> <span style="font-size:0.75rem; color:var(--text-dim);">${sexSymbol}</span>
-                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">Tap to open chat conversation</p>
+                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">Tap to chat</p>
               </div>
               <button class="btn-main" style="padding:6px 12px; font-size:0.8rem; width:auto;">Chat</button>
             </div>
@@ -530,7 +558,113 @@
       }
     }
 
-    // --- Profile Avatar & Upload ---
+    // --- Send Coins Function (Transfers to Receiver Balance) ---
+    async function shareCoinsPrompt() {
+      if (!activeChatUser) return;
+      const amount = prompt(`Enter coins to send to ${activeChatUser.name}:`);
+      if (!amount || isNaN(amount)) return;
+      const cost = parseInt(amount);
+      if (cost <= 0) return;
+      if (userCoins < cost) return alert("Insufficient coin balance!");
+      
+      try {
+        const { error } = await supabase.rpc('transfer_coins', {
+          sender_id: userId,
+          receiver_id: activeChatUser.id,
+          amount: cost
+        });
+
+        if (error) throw error;
+
+        userCoins -= cost;
+        updateUI();
+        alert(`Sent ${cost} coins to ${activeChatUser.name}!`);
+        
+        await supabase.from('messages').insert([{
+          sender_id: userId,
+          receiver_id: activeChatUser.id,
+          content: `🎁 Sent ${cost} coins!`
+        }]);
+        loadMessages();
+      } catch(e) {
+        alert("Coin transfer failed: " + e.message);
+      }
+      toggleChatMenu();
+    }
+
+    // --- Realtime Call Ringing & Signaling ---
+    function setupRealtimeCalls() {
+      realtimeChannel = supabase.channel(`user_${userId}`);
+      realtimeChannel.on('broadcast', { event: 'call_signal' }, payload => {
+        const data = payload.payload;
+        if (data.type === 'incoming_call') {
+          incomingCallData = data;
+          document.getElementById('incomingCallerName').textContent = data.callerName;
+          document.getElementById('incomingCallType').textContent = `Incoming ${data.callType.toUpperCase()} Call...`;
+          document.getElementById('incomingCallBox').style.display = 'block';
+        } else if (data.type === 'end_call') {
+          endCall();
+        }
+      }).subscribe();
+    }
+
+    async function startCall(callType) {
+      if (!activeChatUser) return;
+      document.getElementById('callStatus').textContent = `Calling ${activeChatUser.name}...`;
+      document.getElementById('callModal').style.display = 'flex';
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
+        document.getElementById('callVideo').srcObject = localStream;
+
+        // Send Ringing Notification to Receiver
+        const channel = supabase.channel(`user_${activeChatUser.id}`);
+        await channel.subscribe();
+        await channel.send({
+          type: 'broadcast',
+          event: 'call_signal',
+          payload: {
+            type: 'incoming_call',
+            callerId: userId,
+            callerName: currentUserProfile?.username || 'User',
+            callType: callType
+          }
+        });
+      } catch(e) {
+        alert("Camera/Mic access required for calling.");
+      }
+    }
+
+    async function acceptCall() {
+      document.getElementById('incomingCallBox').style.display = 'none';
+      if (!incomingCallData) return;
+      
+      document.getElementById('callStatus').textContent = `Connected with ${incomingCallData.callerName}`;
+      document.getElementById('callModal').style.display = 'flex';
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: incomingCallData.callType === 'video', audio: true });
+        document.getElementById('callVideo').srcObject = localStream;
+      } catch(e) {
+        alert("Mic/Camera access error");
+      }
+    }
+
+    function declineCall() {
+      document.getElementById('incomingCallBox').style.display = 'none';
+      incomingCallData = null;
+    }
+
+    function endCall() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      document.getElementById('callModal').style.display = 'none';
+      document.getElementById('incomingCallBox').style.display = 'none';
+    }
+
+    // --- Profile Avatar & Gallery Upload ---
     function triggerAvatarUpload() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -557,7 +691,7 @@
       input.click();
     }
 
-    // --- Edit Profile Settings ---
+    // --- Edit Profile ---
     function openEditProfileModal() {
       if (currentUserProfile) {
         document.getElementById('editUsername').value = currentUserProfile.username || '';
@@ -584,36 +718,7 @@
       }
     }
 
-    // --- Dynamic Settings Renderer ---
-    function openSettings(type) {
-      document.getElementById('settingsTitle').textContent = type.toUpperCase();
-      const content = document.getElementById('settingsContent');
-      
-      if (type === 'privacy') {
-        content.innerHTML = `
-          <div class="setting-row"><span>Private Account</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-          <div class="setting-row"><span>Show Online Status</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
-        `;
-      } else if (type === 'notifications') {
-        content.innerHTML = `
-          <div class="setting-row"><span>Push Notifications</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
-          <div class="setting-row"><span>Message Alerts</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
-        `;
-      } else if (type === 'verification') {
-        content.innerHTML = `
-          <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:10px;">Get a verified badge on your account.</p>
-          <input type="text" class="auth-input" placeholder="NIN or Govt ID Number">
-          <button class="btn-main" onclick="alert('Verification submitted!')">Submit for Review</button>
-        `;
-      } else {
-        content.innerHTML = `<p style="font-size:0.85rem; color:var(--text-dim);">${type.toUpperCase()} settings saved automatically.</p>`;
-      }
-      
-      document.getElementById('settingsModal').style.display = 'flex';
-      document.getElementById('headerMenu').style.display = 'none';
-    }
-
-    // --- Live Stream Functionality ---
+    // --- Live Stream ---
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       const video = document.getElementById('hostVideo');
@@ -639,74 +744,7 @@
       alert(`Sent ${name}!`);
     }
 
-    // --- Audio/Video Calling ---
-    async function startCall(type) {
-      document.getElementById('callStatus').textContent = `In ${type.toUpperCase()} Call with ${activeChatUser?.name || 'User'}...`;
-      document.getElementById('callModal').style.display = 'flex';
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
-        const video = document.getElementById('callVideo');
-        video.srcObject = localStream;
-      } catch(e) {
-        alert("Camera/Mic access required for calling.");
-      }
-    }
-
-    function endCall() {
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-        localStream = null;
-      }
-      document.getElementById('callModal').style.display = 'none';
-    }
-
-    // --- Send Coins inside Chat ---
-    async function shareCoinsPrompt() {
-      const amount = prompt("Enter amount of coins to send:");
-      if (!amount || isNaN(amount)) return;
-      const cost = parseInt(amount);
-      if (userCoins < cost) return alert("Insufficient coins!");
-      
-      userCoins -= cost;
-      updateUI();
-      try {
-        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
-        alert(`Sent ${cost} coins successfully!`);
-      } catch(e) {}
-      toggleChatMenu();
-    }
-
-    function toggleChatMenu() {
-      const m = document.getElementById('chatMenu');
-      if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // --- Utils & Earn Tools ---
-    function copyRefLink() {
-      const text = document.getElementById('userRefLink').textContent;
-      navigator.clipboard.writeText(text);
-      alert("Referral link copied!");
-    }
-
-    function claimDailyReward() {
-      userCoins += 5;
-      updateUI();
-      alert("Claimed +5 coins!");
-    }
-
-    function openWhatsApp() {
-      const num = document.getElementById('waPhone').value.trim();
-      if (!num) return alert("Enter a phone number");
-      window.open(`https://wa.me/${num}`, '_blank');
-    }
-
-    function verifyBankAcc() {
-      const acc = document.getElementById('bankCheckAcc').value.trim();
-      if (!acc || acc.length !== 10) return alert("Enter a valid 10-digit account number");
-      alert("Account valid! Name match found.");
-    }
-
-    // --- Menu & Navigation ---
+    // --- Navigation & Helper Functions ---
     function switchTab(id, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -729,6 +767,11 @@
       if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
     }
 
+    function toggleChatMenu() {
+      const m = document.getElementById('chatMenu');
+      if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    }
+
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
@@ -737,7 +780,6 @@
       document.getElementById('coinsCount').textContent = userCoins;
     }
 
-    // --- Auth Logic ---
     function setAuthMode(m) {
       authMode = m;
       document.getElementById('tabLogin').classList.toggle('active', m === 'login');
@@ -765,12 +807,7 @@
           if (error) throw error;
 
           if (data?.user) {
-            await supabase.from('profiles').insert([{ 
-              id: data.user.id, 
-              username, 
-              dob, 
-              sex 
-            }]);
+            await supabase.from('profiles').insert([{ id: data.user.id, username, dob, sex }]);
             await supabase.from('wallets').insert([{ id: data.user.id, coin_balance: 0 }]);
           }
           alert("Account created successfully!");
@@ -786,25 +823,22 @@
       location.reload();
     }
 
-    function triggerFileUpload() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (file && userId) {
-          try {
-            const fileName = `${userId}/${Date.now()}_${file.name}`;
-            await supabase.storage.from('posts').upload(fileName, file);
-            const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
-            await supabase.from('posts').insert([{ user_id: userId, media_url: publicUrl, caption: 'New post' }]);
-            alert("Uploaded!");
-            loadFeed();
-          } catch(err) {
-            alert("Upload failed: " + err.message);
-          }
-        }
-      };
-      input.click();
+    function copyRefLink() {
+      const text = document.getElementById('userRefLink').textContent;
+      navigator.clipboard.writeText(text);
+      alert("Referral link copied!");
+    }
+
+    function claimDailyReward() {
+      userCoins += 5;
+      updateUI();
+      alert("Claimed +5 coins!");
+    }
+
+    function openWhatsApp() {
+      const num = document.getElementById('waPhone').value.trim();
+      if (!num) return alert("Enter a phone number");
+      window.open(`https://wa.me/${num}`, '_blank');
     }
 
     async function submitWithdrawal() {
@@ -828,7 +862,7 @@
       let handler = PaystackPop.setup({
         key: key,
         email: email,
-        amount: 100000, // ₦1,000 in kobo
+        amount: 100000,
         currency: 'NGN',
         callback: function(response) {
           alert('Payment complete! Reference: ' + response.reference);
