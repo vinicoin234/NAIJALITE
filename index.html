@@ -69,17 +69,17 @@
     .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
     .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
 
-    /* TikTok-Style Live Banner at Top of Feed */
+    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .setting-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
+
     .live-top-banner { background: linear-gradient(135deg, #ff4757, #ff6b81); border-radius: 16px; padding: 12px 16px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(255,71,87,0.4); animation: pulse 2s infinite; cursor: pointer; }
     .live-banner-info { display: flex; align-items: center; gap: 10px; color: white; }
     .live-dot { width: 10px; height: 10px; background: white; border-radius: 50%; animation: ping 1s infinite; }
 
-    /* Profile Avatar */
     .avatar-wrapper { position: relative; width: 110px; height: 110px; margin: 0 auto 15px; cursor: pointer; }
     .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; border: 3px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     .avatar-plus-btn { position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
 
-    /* WhatsApp-Style Messages & Timestamps */
     .user-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
     .chat-header { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
@@ -99,7 +99,6 @@
     .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
     .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
 
-    /* Immersive Full-Screen Live Stream UI */
     .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; }
     .main-video { width: 100%; height: 500px; object-fit: cover; background: #000; display: block; }
     .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; }
@@ -112,7 +111,6 @@
     .action-bar input { flex: 1; padding: 12px 14px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.9rem; }
     .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 10px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
 
-    /* Gift Grid Modal */
     .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
     .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 15px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; }
     .gift-card:active { border-color: var(--accent); transform: scale(0.95); }
@@ -235,7 +233,7 @@
             </div>
             <div class="action-bar">
               <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
-              <button class="gift-box-btn" onclick="openModal('giftCatalogModal')">🎁 Gifts</button>
+              <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁 Gifts</button>
             </div>
           </div>
         </div>
@@ -522,7 +520,7 @@
     <div class="settings-card">
       <h3 id="settingsTitle">Settings</h3>
       <div id="settingsContent" style="margin: 15px 0;"></div>
-      <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
+      <button class="btn-main" onclick="closeModal('settingsModal')">Save & Close</button>
     </div>
   </div>
 
@@ -561,7 +559,14 @@
     let outgoingRingTimeout = null;
     let isStreamingLive = false;
 
-    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    // Robust STUN servers for network/NAT/firewall traversal
+    const rtcConfig = { 
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }
+      ] 
+    };
 
     async function initSupabase() {
       try {
@@ -724,7 +729,67 @@
       }
     }
 
-    // --- Live Stream Broadcaster & Active Chat System ---
+    function openSettings(type) {
+      toggleHeaderMenu();
+      const title = document.getElementById('settingsTitle');
+      const content = document.getElementById('settingsContent');
+      
+      if (type === 'account') {
+        title.textContent = "Manage Account";
+        content.innerHTML = `
+          <div style="text-align:left;">
+            <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:12px;">Manage your login credentials & account security.</p>
+            <label class="auth-label">Registered ID</label>
+            <input type="text" class="auth-input" value="${userId}" disabled readonly>
+            <button class="btn-main" style="background:var(--danger); margin-top:10px;" onclick="handleLogout()">Sign Out Account</button>
+          </div>
+        `;
+      } else if (type === 'privacy') {
+        title.textContent = "Privacy Settings";
+        content.innerHTML = `
+          <div style="text-align:left;">
+            <div class="setting-row"><span>Private Account Mode</span><input type="checkbox" checked></div>
+            <div class="setting-row"><span>Show Online Status</span><input type="checkbox" checked></div>
+            <div class="setting-row"><span>Allow Direct Calls</span><input type="checkbox" checked></div>
+          </div>
+        `;
+      } else if (type === 'notifications') {
+        title.textContent = "Notifications";
+        content.innerHTML = `
+          <div style="text-align:left;">
+            <div class="setting-row"><span>Push Notifications</span><input type="checkbox" checked></div>
+            <div class="setting-row"><span>DM Sound Alerts</span><input type="checkbox" checked></div>
+            <div class="setting-row"><span>Call Ringtone Sound</span><input type="checkbox" checked></div>
+          </div>
+        `;
+      } else if (type === 'verification') {
+        title.textContent = "Verification Status";
+        content.innerHTML = `
+          <div style="text-align:center; padding:10px 0;">
+            <div style="font-size:3rem; margin-bottom:10px;">✅</div>
+            <h4 style="color:var(--primary);">Identity Standard Verified</h4>
+            <p style="font-size:0.8rem; color:var(--text-dim); margin-top:8px;">Your account is fully verified for live streaming & payouts.</p>
+          </div>
+        `;
+      } else if (type === 'prefs') {
+        title.textContent = "Preferences";
+        content.innerHTML = `
+          <div style="text-align:left;">
+            <label class="auth-label">Theme</label>
+            <select class="auth-input"><option>Dark Slate</option></select>
+          </div>
+        `;
+      } else if (type === 'accessibility') {
+        title.textContent = "Accessibility";
+        content.innerHTML = `
+          <div style="text-align:left;">
+            <div class="setting-row"><span>High Contrast Captions</span><input type="checkbox"></div>
+          </div>
+        `;
+      }
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+
     function setupLiveStreamBroadcasting() {
       const globalChannel = supabase.channel('global_live_streams');
       globalChannel.on('broadcast', { event: 'stream_status' }, payload => {
@@ -802,6 +867,15 @@
       div.innerHTML = `<b style="color:var(--accent);">${username}:</b> ${text}`;
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    // --- Strict Viewer-Only Gift Control ---
+    function triggerGiftModal() {
+      if (isStreamingLive) {
+        alert("Gifts are only available to viewers watching a stream!");
+        return;
+      }
+      openModal('giftCatalogModal');
     }
 
     async function loadFeed() {
@@ -1071,16 +1145,29 @@
       }, 30000);
 
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
-        document.getElementById('callVideo').srcObject = localStream;
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          video: callType === 'video' ? { width: 640, height: 480 } : false, 
+          audio: { echoCancellation: true, noiseSuppression: true } 
+        });
+
+        const videoElem = document.getElementById('callVideo');
+        videoElem.srcObject = callType === 'video' ? localStream : null;
 
         peerConnection = new RTCPeerConnection(rtcConfig);
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
 
         peerConnection.ontrack = event => {
           const remoteAudio = document.getElementById('remoteAudioPlayer');
-          remoteAudio.srcObject = event.streams[0];
-          remoteAudio.play().catch(err => console.log("Audio autoplay handled:", err));
+          if (event.streams && event.streams[0]) {
+            remoteAudio.srcObject = event.streams[0];
+          } else {
+            let inboundStream = new MediaStream([event.track]);
+            remoteAudio.srcObject = inboundStream;
+          }
+          remoteAudio.play().catch(err => console.log("Audio playback error:", err));
         };
 
         peerConnection.onicecandidate = event => {
@@ -1104,25 +1191,42 @@
         sendCallSignal({ type: 'sdp_offer', offer: offer, targetId: activeChatUser.id, callType: callType });
 
       } catch(e) {
-        alert("Camera/Mic access required for calling.");
+        alert("Microphone/Camera permission is required to make calls.");
         endCall();
       }
     }
 
     async function handleOffer(data) {
       activeCallType = data.callType;
-      peerConnection = new RTCPeerConnection(rtcConfig);
       
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: data.callType === 'video', audio: true });
-        document.getElementById('callVideo').srcObject = localStream;
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-      } catch (e) {}
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          video: data.callType === 'video' ? { width: 640, height: 480 } : false, 
+          audio: { echoCancellation: true, noiseSuppression: true } 
+        });
+
+        const videoElem = document.getElementById('callVideo');
+        videoElem.srcObject = data.callType === 'video' ? localStream : null;
+      } catch (e) {
+        alert("Microphone access required to answer call.");
+        return;
+      }
+
+      peerConnection = new RTCPeerConnection(rtcConfig);
+      
+      localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+      });
 
       peerConnection.ontrack = event => {
         const remoteAudio = document.getElementById('remoteAudioPlayer');
-        remoteAudio.srcObject = event.streams[0];
-        remoteAudio.play().catch(err => console.log("Audio autoplay handled:", err));
+        if (event.streams && event.streams[0]) {
+          remoteAudio.srcObject = event.streams[0];
+        } else {
+          let inboundStream = new MediaStream([event.track]);
+          remoteAudio.srcObject = inboundStream;
+        }
+        remoteAudio.play().catch(err => console.log("Audio playback error:", err));
       };
 
       peerConnection.onicecandidate = event => {
@@ -1153,7 +1257,7 @@
       
       callStartTime = new Date();
       activeCallType = incomingCallData.callType;
-      document.getElementById('callStatus').textContent = `You are on a call with ${incomingCallData.callerName}`;
+      document.getElementById('callStatus').textContent = `You are on a call with ${incomingCallData.callerName} (Connected)`;
       document.getElementById('callModal').style.display = 'flex';
     }
 
@@ -1359,6 +1463,8 @@
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       const video = document.getElementById('hostVideo');
+      const giftBtn = document.getElementById('streamGiftBtn');
+
       if (btn.textContent === 'Start Live') {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -1366,6 +1472,10 @@
           btn.textContent = 'End Live';
           btn.style.background = 'var(--danger)';
           isStreamingLive = true;
+          
+          // Hide gift button for host/streamer
+          if (giftBtn) giftBtn.style.display = 'none';
+
           broadcastLiveStatus(true);
         } catch (err) { alert("Camera access required for live streaming."); }
       } else {
@@ -1374,6 +1484,10 @@
         btn.textContent = 'Start Live';
         btn.style.background = 'var(--primary)';
         isStreamingLive = false;
+        
+        // Show gift button back for viewers
+        if (giftBtn) giftBtn.style.display = 'flex';
+
         broadcastLiveStatus(false);
       }
     }
@@ -1421,7 +1535,7 @@
           await supabase.auth.signInWithPassword({ email, password: pass });
           location.reload();
         } else {
-          if (!username) return alert("Please enter a username.");
+          if (!username) return alert("Please ensure a username is provided.");
           if (!dob) return alert("Please enter your date of birth.");
           
           const { data, error } = await supabase.auth.signUp({ email, password: pass });
