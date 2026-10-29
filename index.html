@@ -118,6 +118,9 @@
     #incomingCallBox { position: fixed; top: 20px; left: 20px; right: 20px; max-width: 460px; margin: 0 auto; background: var(--card); border: 2px solid var(--accent); padding: 15px; border-radius: 20px; z-index: 5000; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .caller-avatar-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); background: var(--primary); flex-shrink: 0; }
 
+    /* Business Link Button */
+    .biz-link-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,135,81,0.2); border: 1px solid var(--primary); color: var(--accent); text-decoration: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-top: 10px; word-break: break-all; }
+
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
@@ -126,10 +129,10 @@
 
   <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
 
-  <!-- Hidden Remote Audio Element for Listening to Calls -->
+  <!-- Hidden Remote Audio Element for Calls -->
   <audio id="remoteAudioPlayer" autoplay></audio>
 
-  <!-- Incoming Call Popup with Photo & Audio Ringtone -->
+  <!-- Incoming Call Popup -->
   <div id="incomingCallBox">
     <div style="display:flex; align-items:center; gap:12px;">
       <img id="incomingCallerAvatar" class="caller-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>">
@@ -278,7 +281,7 @@
       <div class="card" style="text-align: center; position: relative;">
         <div style="position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.3rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
 
-        <!-- Permanent Profile Photo Wrapper -->
+        <!-- Permanent Avatar Box -->
         <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
           <img id="profileAvatarImg" src="" class="profile-avatar" style="display:none;">
           <div id="profileAvatarPlaceholder" class="profile-avatar">👤</div>
@@ -288,14 +291,31 @@
         <h3 id="userNameDisplay">User <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;"></span></h3>
         <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.75rem; margin-bottom:10px;"></p>
 
+        <!-- Profile Sub-Navigation: Posts, Bio, Coin -->
         <div class="profile-menu">
           <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
-          <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileBioTab', this)">Bio</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
         </div>
         
-        <div id="profilePosts" class="profile-sub-tab active"><p style="color:var(--text-dim);">Your shared posts will show here.</p></div>
-        <div id="profileInbox" class="profile-sub-tab"><p style="color:var(--text-dim);">Your conversations.</p></div>
+        <!-- User's Feed Posts -->
+        <div id="profilePosts" class="profile-sub-tab active">
+          <div id="userPostsList"><p style="color:var(--text-dim);">Loading your posts...</p></div>
+        </div>
+
+        <!-- User's Bio & Clickable Business Links -->
+        <div id="profileBioTab" class="profile-sub-tab">
+          <div style="text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
+            <h4 style="font-size:0.9rem; margin-bottom:8px;">📝 About Me</h4>
+            <p id="bioTextDisplay" style="font-size:0.85rem; color:var(--text-dim); margin-bottom:15px; white-space:pre-line;">No bio added yet. Tap ⚙️ edit profile above to write about yourself!</p>
+
+            <h4 style="font-size:0.9rem; margin-bottom:8px;">🌐 Business & Links</h4>
+            <div id="businessLinkDisplay">
+              <p style="font-size:0.8rem; color:var(--text-dim);">No link attached.</p>
+            </div>
+          </div>
+        </div>
+
         <div id="profileCoins" class="profile-sub-tab">
           <div id="coinDashboard">Coins: <span id="coinsCount">0</span></div>
           <div style="margin-top:10px; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;">
@@ -304,6 +324,7 @@
             <button class="btn-main" onclick="submitWithdrawal()">Confirm</button>
           </div>
         </div>
+
         <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
       </div>
     </div>
@@ -333,7 +354,7 @@
     </div>
   </div>
 
-  <!-- Live Stream Gift Box Catalog Modal -->
+  <!-- Live Stream Gift Catalog Modal -->
   <div id="giftCatalogModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -395,11 +416,11 @@
     </div>
   </div>
 
-  <!-- Coin Purchase Modal -->
+  <!-- Simplified Coin Purchase Modal (No Paystack Key required) -->
   <div id="coinModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
       <h3 style="margin-bottom:10px">🪙 Buy Coins</h3>
-      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin. Choose a package or enter amount.</p>
+      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin. Select package or enter amount.</p>
       
       <div class="package-grid">
         <div class="package-card" onclick="selectPackage(10, 1)">
@@ -431,18 +452,15 @@
       <label class="auth-label">Amount in Naira (₦10 to ₦100,000)</label>
       <input type="number" id="customNairaAmount" class="auth-input" placeholder="e.g. 500" value="1000">
 
-      <label class="auth-label">Email for Receipt</label>
+      <label class="auth-label">Email for Payment Receipt</label>
       <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
       
-      <label class="auth-label">Paystack Public Key</label>
-      <input type="text" id="paystackKey" class="auth-input" placeholder="pk_test_... or pk_live_...">
-      
-      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Proceed with Paystack</button>
+      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay with Paystack</button>
       <button class="btn-main" style="background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
     </div>
   </div>
 
-  <!-- Edit Profile Modal -->
+  <!-- Edit Profile Modal with Bio & Business Link Inputs -->
   <div id="editProfileModal" class="settings-modal">
     <div class="settings-card">
       <h3>Edit Profile</h3>
@@ -450,6 +468,15 @@
         <label class="auth-label">Username</label>
         <input type="text" id="editUsername" class="auth-input">
         
+        <label class="auth-label">Bio (Tell people about yourself)</label>
+        <textarea id="editBio" class="auth-input" style="height:80px; resize:none;" placeholder="Write a short bio..."></textarea>
+
+        <label class="auth-label">Business / Website Link Title</label>
+        <input type="text" id="editLinkTitle" class="auth-input" placeholder="e.g. My YouTube Channel / Store">
+
+        <label class="auth-label">Business / Website URL</label>
+        <input type="url" id="editBusinessLink" class="auth-input" placeholder="https://...">
+
         <label class="auth-label">Date of Birth (Private)</label>
         <input type="date" id="editDob" class="auth-input">
         
@@ -491,12 +518,13 @@
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
   </div>
 
-  <!-- Floating (+) Upload Button - Configured to show strictly on Home tab -->
+  <!-- Floating Upload (+) Button (Visible strictly on Home tab) -->
   <div class="floating-btn" id="floatingUploadBtn" onclick="triggerFeedUpload()">+</div>
 
   <script>
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
+    const PAYSTACK_PUBLIC_KEY = 'pk_test_a08906bd35a09e0783f06cb7507304859a0f025e'; // Default Paystack key placeholder
     
     let supabase;
     let userId = null;
@@ -548,16 +576,32 @@
           document.getElementById('userNameDisplay').innerHTML = `${profile.username || 'User'} <span style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;">${sexSymbol}</span>`;
           document.getElementById('userIdDisplay').textContent = `ID: ${userId.substring(0,8)}...`;
           
-          // PERMANENT AVATAR LOAD FROM SUPABASE
           if (profile.avatar_url) {
             document.getElementById('profileAvatarImg').src = profile.avatar_url;
             document.getElementById('profileAvatarImg').style.display = 'block';
             document.getElementById('profileAvatarPlaceholder').style.display = 'none';
           }
+
+          // Populate Bio
+          if (profile.bio) {
+            document.getElementById('bioTextDisplay').textContent = profile.bio;
+          }
+
+          // Populate Clickable Business Link
+          if (profile.business_link) {
+            const linkTitle = profile.link_title || 'Visit Business Webpage';
+            let formattedUrl = profile.business_link.startsWith('http') ? profile.business_link : `https://${profile.business_link}`;
+            document.getElementById('businessLinkDisplay').innerHTML = `
+              <a href="${formattedUrl}" target="_blank" class="biz-link-btn">
+                🔗 ${linkTitle}
+              </a>
+            `;
+          }
         }
       } catch (e) {}
       fetchWallet();
       loadFeed();
+      loadUserPosts();
       loadConversations();
     }
 
@@ -571,7 +615,7 @@
       } catch (e) {}
     }
 
-    // --- Feed Loader ---
+    // --- Home Feed Loader ---
     async function loadFeed() {
       const feed = document.getElementById('homeFeed');
       try {
@@ -591,7 +635,28 @@
       }
     }
 
-    // --- Feed Upload (Home Tab Only) ---
+    // --- User's Profile Posts Loader ---
+    async function loadUserPosts() {
+      const userFeed = document.getElementById('userPostsList');
+      if (!userId) return;
+      try {
+        const { data } = await supabase.from('posts').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+        if (!data || data.length === 0) {
+          userFeed.innerHTML = '<p style="text-align:center; color:var(--text-dim);">You have not posted anything yet.</p>';
+          return;
+        }
+        userFeed.innerHTML = data.map(p => `
+          <div class="card" style="margin-bottom:12px; background:rgba(0,0,0,0.2);">
+            ${p.media_url ? `<img src="${p.media_url}" style="width:100%; border-radius:12px; max-height:300px; object-fit:cover; margin-bottom:8px;">` : ''}
+            <p style="font-size:0.85rem;">${p.caption || ''}</p>
+          </div>
+        `).join('');
+      } catch (e) {
+        userFeed.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Unable to load your posts.</p>';
+      }
+    }
+
+    // --- Feed Upload (Posts go to Home Feed & Profile Posts) ---
     function triggerFeedUpload() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -604,9 +669,10 @@
             await supabase.storage.from('posts').upload(fileName, file);
             const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
             await supabase.from('posts').insert([{ user_id: userId, media_url: publicUrl, caption: 'New post' }]);
-            alert("Posted to feed!");
+            alert("Posted successfully!");
             switchTab('homeTab', document.querySelectorAll('.nav-item')[0]);
             loadFeed();
+            loadUserPosts();
           } catch(err) {
             alert("Upload failed: " + err.message);
           }
@@ -615,7 +681,7 @@
       input.click();
     }
 
-    // --- PERMANENT PROFILE PHOTO UPLOAD ---
+    // --- Permanent Profile Photo Upload ---
     function triggerAvatarUpload() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -628,13 +694,12 @@
             await supabase.storage.from('posts').upload(fileName, file, { upsert: true });
             const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
             
-            // Save Permanently to Profiles Table in Supabase
             await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
             
             document.getElementById('profileAvatarImg').src = publicUrl;
             document.getElementById('profileAvatarImg').style.display = 'block';
             document.getElementById('profileAvatarPlaceholder').style.display = 'none';
-            alert("Profile photo permanently updated!");
+            alert("Profile photo updated permanently!");
           } catch(err) {
             alert("Avatar upload failed: " + err.message);
           }
@@ -705,7 +770,7 @@
       }
     }
 
-    // --- WebRTC Audio & Incoming Ringing Sound System ---
+    // --- WebRTC Ringing & Calling ---
     function startRingtone() {
       stopRingtone();
       try {
@@ -877,7 +942,7 @@
       document.getElementById('incomingCallBox').style.display = 'none';
     }
 
-    // --- TAB NAVIGATION (Floating + Button visible strictly on Home Tab) ---
+    // --- Tab Switching ---
     function switchTab(id, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -904,7 +969,7 @@
       if (el) el.classList.add('active');
     }
 
-    // --- Send Coins to User ---
+    // --- Send Coins ---
     async function shareCoinsPrompt() {
       if (!activeChatUser) return;
       const amount = prompt(`Enter coins to send to ${activeChatUser.name}:`);
@@ -938,7 +1003,7 @@
       toggleChatMenu();
     }
 
-    // --- Live Stream Gifts Sending ---
+    // --- Live Stream Gifts ---
     function sendGroupGift(name, cost) {
       if (userCoins < cost) {
         alert(`Insufficient coins to send ${name}! You need ${cost} coins.`);
@@ -959,24 +1024,22 @@
       alert(`Sent ${name}!`);
     }
 
-    // --- Package Selection & Paystack Payment ---
+    // --- Package Selection & Simplified Paystack Payment ---
     function selectPackage(naira, coins) {
       document.getElementById('customNairaAmount').value = naira;
     }
 
     function payWithPaystack() {
       const email = document.getElementById('userEmail').value.trim();
-      const key = document.getElementById('paystackKey').value.trim();
       const naira = parseInt(document.getElementById('customNairaAmount').value);
       
-      if (!email) return alert("Please enter your email");
-      if (!key || !key.startsWith('pk_')) return alert("Please enter a valid Paystack key starting with pk_test_ or pk_live_");
-      if (isNaN(naira) || naira < 10 || naira > 100000) return alert("Please enter a valid amount between ₦10 and ₦100,000");
+      if (!email) return alert("Please enter your email for the receipt");
+      if (isNaN(naira) || naira < 10 || naira > 100000) return alert("Please enter an amount between ₦10 and ₦100,000");
 
       const coinsToAdd = Math.floor(naira / 10);
 
       let handler = PaystackPop.setup({
-        key: key,
+        key: PAYSTACK_PUBLIC_KEY,
         email: email,
         amount: naira * 100,
         currency: 'NGN',
@@ -994,10 +1057,13 @@
       handler.openIframe();
     }
 
-    // --- Edit Profile ---
+    // --- Edit Profile (Bio, Username, Business Link) ---
     function openEditProfileModal() {
       if (currentUserProfile) {
         document.getElementById('editUsername').value = currentUserProfile.username || '';
+        document.getElementById('editBio').value = currentUserProfile.bio || '';
+        document.getElementById('editLinkTitle').value = currentUserProfile.link_title || '';
+        document.getElementById('editBusinessLink').value = currentUserProfile.business_link || '';
         document.getElementById('editDob').value = currentUserProfile.dob || '';
         document.getElementById('editSex').value = currentUserProfile.sex || 'Male';
       }
@@ -1006,13 +1072,24 @@
 
     async function saveProfileChanges() {
       const username = document.getElementById('editUsername').value.trim();
+      const bio = document.getElementById('editBio').value.trim();
+      const link_title = document.getElementById('editLinkTitle').value.trim();
+      const business_link = document.getElementById('editBusinessLink').value.trim();
       const dob = document.getElementById('editDob').value;
       const sex = document.getElementById('editSex').value;
 
       if (!username) return alert("Username cannot be empty");
 
       try {
-        await supabase.from('profiles').update({ username, dob, sex }).eq('id', userId);
+        await supabase.from('profiles').update({ 
+          username, 
+          bio, 
+          link_title, 
+          business_link, 
+          dob, 
+          sex 
+        }).eq('id', userId);
+        
         alert("Profile updated successfully!");
         closeModal('editProfileModal');
         initHub();
@@ -1021,7 +1098,7 @@
       }
     }
 
-    // --- Live Stream Stream Toggle ---
+    // --- Stream Toggle ---
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       const video = document.getElementById('hostVideo');
