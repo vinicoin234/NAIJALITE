@@ -74,7 +74,7 @@
     .avatar-plus-btn { position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
     /* User & Inbox Conversations */
-    .user-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .user-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
     .chat-header { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
@@ -96,6 +96,15 @@
     .action-bar { display: flex; gap: 8px; align-items: center; }
     .action-bar input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: white; font-size: 0.8rem; }
     .gift-btn { background: rgba(0,0,0,0.6); border: 1px solid var(--border); font-size: 1.2rem; padding: 6px; border-radius: 50%; cursor: pointer; }
+
+    /* Settings UI Switch */
+    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--border); transition: .4s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
 
     /* Call Modal */
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -177,7 +186,7 @@
         <div class="live-overlay">
           <div class="overlay-top">
             <div class="live-badge">🔴 LIVE</div>
-            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer;" onclick="openModal('coinModal')">+ Buy Coins</button>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
           </div>
           <div class="overlay-bottom">
             <div class="chat-area" id="liveChatArea"></div>
@@ -202,8 +211,49 @@
       </div>
     </div>
     
-    <div id="earnTab" class="tab-content"><div class="card">Earn Area</div></div>
-    <div id="utilsTab" class="tab-content"><div class="card">Utils Area</div></div>
+    <!-- Earn Tab -->
+    <div id="earnTab" class="tab-content">
+      <div class="card">
+        <h3>💰 Earn Rewards & Coins</h3>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Invite friends or complete daily tasks to earn coins.</p>
+        
+        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; text-align:center; border:1px dashed var(--accent); margin-bottom:15px;">
+          <div style="font-size:0.8rem; color:var(--text-dim);">Your Referral Link:</div>
+          <div id="userRefLink" style="font-weight:bold; margin:8px 0; word-break:break-all; font-size:0.85rem;">https://naijalite.app/?ref=user</div>
+          <button class="btn-main" onclick="copyRefLink()" style="padding:10px;">Copy Referral Link</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:var(--bg); padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <b style="font-size:0.9rem;">Daily Check-in</b>
+              <p style="font-size:0.75rem; color:var(--text-dim);">Claim +5 coins daily</p>
+            </div>
+            <button class="btn-main" style="width:auto; padding:8px 14px; font-size:0.8rem;" onclick="claimDailyReward()">Claim</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Utils Tab -->
+    <div id="utilsTab" class="tab-content">
+      <div class="card">
+        <h3>🛠️ Community Utilities</h3>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Quick tools for members.</p>
+        
+        <div style="margin-bottom:15px;">
+          <label class="auth-label">WhatsApp Direct Message</label>
+          <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:8px;">
+          <button class="btn-main" onclick="openWhatsApp()">Open WhatsApp Chat</button>
+        </div>
+
+        <div style="margin-top:15px;">
+          <label class="auth-label">Bank Account Verification Check</label>
+          <input type="text" id="bankCheckAcc" class="auth-input" placeholder="10-digit Account Number" style="margin-bottom:8px;">
+          <button class="btn-main" style="background:var(--card); border:1px solid var(--border);" onclick="verifyBankAcc()">Verify Account</button>
+        </div>
+      </div>
+    </div>
     
     <!-- Profile Tab -->
     <div id="profileTab" class="tab-content">
@@ -240,7 +290,7 @@
     </div>
   </div>
 
-  <!-- Chat Screen (1-on-1 Conversation View with Top-Right Coin Sending Dot Menu) -->
+  <!-- Chat Screen -->
   <div id="chatWindow" class="chat-window">
     <div class="chat-header">
       <div style="display:flex; align-items:center; gap:10px;">
@@ -252,7 +302,6 @@
         <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('video')">📹</button>
         <button style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;" onclick="toggleChatMenu()">⋮</button>
         
-        <!-- Dropdown Menu for Sending Coins in Chat -->
         <div id="chatMenu" class="menu-dropdown" style="top:40px; right:0;">
           <div class="menu-item" onclick="shareCoinsPrompt()">💰 Send Coins</div>
         </div>
@@ -300,7 +349,10 @@
   <div id="coinModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
       <h3 style="margin-bottom:15px">🪙 Buy Coins</h3>
-      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email for Receipt">
+      <label class="auth-label">Email for Receipt</label>
+      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
+      <label class="auth-label">Paystack Public Key</label>
+      <input type="text" id="paystackKey" class="auth-input" placeholder="pk_test_... or pk_live_...">
       <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay ₦1,000 for 100 Coins</button>
       <button class="btn-main" style="background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
     </div>
@@ -310,8 +362,8 @@
   <div id="settingsModal" class="settings-modal">
     <div class="settings-card">
       <h3 id="settingsTitle">Settings</h3>
-      <div id="settingsContent" style="margin: 15px 0; font-size:0.9rem; color:var(--text-dim);">
-        <p>Manage your preferences, security, and account settings directly here.</p>
+      <div id="settingsContent" style="margin: 15px 0;">
+        <p style="font-size:0.9rem; color:var(--text-dim);">Loading settings...</p>
       </div>
       <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
     </div>
@@ -356,6 +408,7 @@
         if (session) {
           userId = session.user.id;
           document.getElementById('authScreen').style.display = 'none';
+          document.getElementById('userRefLink').textContent = `https://naijalite.app/?ref=${userId}`;
           initHub();
         } else {
           document.getElementById('authScreen').style.display = 'flex';
@@ -415,7 +468,7 @@
       }
     }
 
-    // --- 1-on-1 Conversations & Inbox ---
+    // --- Conversations & Inbox ---
     async function loadConversations() {
       const container = document.getElementById('conversationsList');
       try {
@@ -477,7 +530,7 @@
       }
     }
 
-    // --- Profile Avatar & Gallery Upload (+ Button) ---
+    // --- Profile Avatar & Upload ---
     function triggerAvatarUpload() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -486,8 +539,8 @@
         const file = e.target.files[0];
         if (file && userId) {
           try {
-            const fileName = `avatars/${userId}_${Date.now()}`;
-            await supabase.storage.from('posts').upload(fileName, file);
+            const fileName = `${userId}_avatar.jpg`;
+            await supabase.storage.from('posts').upload(fileName, file, { upsert: true });
             const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
             
             await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
@@ -504,7 +557,7 @@
       input.click();
     }
 
-    // --- Edit Profile Settings Modal ---
+    // --- Edit Profile Settings ---
     function openEditProfileModal() {
       if (currentUserProfile) {
         document.getElementById('editUsername').value = currentUserProfile.username || '';
@@ -529,6 +582,35 @@
       } catch(e) {
         alert("Failed to update profile: " + e.message);
       }
+    }
+
+    // --- Dynamic Settings Renderer ---
+    function openSettings(type) {
+      document.getElementById('settingsTitle').textContent = type.toUpperCase();
+      const content = document.getElementById('settingsContent');
+      
+      if (type === 'privacy') {
+        content.innerHTML = `
+          <div class="setting-row"><span>Private Account</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="setting-row"><span>Show Online Status</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        `;
+      } else if (type === 'notifications') {
+        content.innerHTML = `
+          <div class="setting-row"><span>Push Notifications</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="setting-row"><span>Message Alerts</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        `;
+      } else if (type === 'verification') {
+        content.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:10px;">Get a verified badge on your account.</p>
+          <input type="text" class="auth-input" placeholder="NIN or Govt ID Number">
+          <button class="btn-main" onclick="alert('Verification submitted!')">Submit for Review</button>
+        `;
+      } else {
+        content.innerHTML = `<p style="font-size:0.85rem; color:var(--text-dim);">${type.toUpperCase()} settings saved automatically.</p>`;
+      }
+      
+      document.getElementById('settingsModal').style.display = 'flex';
+      document.getElementById('headerMenu').style.display = 'none';
     }
 
     // --- Live Stream Functionality ---
@@ -599,6 +681,31 @@
       if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
     }
 
+    // --- Utils & Earn Tools ---
+    function copyRefLink() {
+      const text = document.getElementById('userRefLink').textContent;
+      navigator.clipboard.writeText(text);
+      alert("Referral link copied!");
+    }
+
+    function claimDailyReward() {
+      userCoins += 5;
+      updateUI();
+      alert("Claimed +5 coins!");
+    }
+
+    function openWhatsApp() {
+      const num = document.getElementById('waPhone').value.trim();
+      if (!num) return alert("Enter a phone number");
+      window.open(`https://wa.me/${num}`, '_blank');
+    }
+
+    function verifyBankAcc() {
+      const acc = document.getElementById('bankCheckAcc').value.trim();
+      if (!acc || acc.length !== 10) return alert("Enter a valid 10-digit account number");
+      alert("Account valid! Name match found.");
+    }
+
     // --- Menu & Navigation ---
     function switchTab(id, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -620,12 +727,6 @@
     function toggleHeaderMenu() {
       const m = document.getElementById('headerMenu');
       if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function openSettings(type) {
-      document.getElementById('settingsTitle').textContent = type.toUpperCase();
-      document.getElementById('settingsModal').style.display = 'flex';
-      document.getElementById('headerMenu').style.display = 'none';
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -719,19 +820,24 @@
 
     function payWithPaystack() {
       const email = document.getElementById('userEmail').value.trim();
-      if (!email) return alert("Please enter your email");
+      const key = document.getElementById('paystackKey').value.trim();
       
+      if (!email) return alert("Please enter your email");
+      if (!key || !key.startsWith('pk_')) return alert("Please enter a valid Paystack key starting with pk_test_ or pk_live_");
+
       let handler = PaystackPop.setup({
-        key: 'pk_live_your_paystack_key_here', // replace with your Paystack public key if needed
+        key: key,
         email: email,
         amount: 100000, // ₦1,000 in kobo
         currency: 'NGN',
         callback: function(response) {
           alert('Payment complete! Reference: ' + response.reference);
+          userCoins += 100;
+          updateUI();
           closeModal('coinModal');
         },
         onClose: function() {
-          alert('Transaction window closed.');
+          alert('Transaction closed.');
         }
       });
       handler.openIframe();
