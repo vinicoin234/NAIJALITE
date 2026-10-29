@@ -45,11 +45,12 @@
     }
     .auth-logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
     .auth-logo { 
-      width: 80px; height: 80px; border-radius: 22px; 
+      width: 80px; height: 80px; border-radius: 20px; 
       object-fit: cover; 
       box-shadow: 0 8px 20px rgba(0,0,0,0.4);
       animation: bounceIn 1s;
       border: 2px solid var(--primary);
+      background: white;
     }
     .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; letter-spacing: 1px; }
     .auth-subtitle { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px; }
@@ -128,8 +129,8 @@
   <div id="authScreen">
     <div class="auth-wrapper">
       <div class="auth-logo-container">
-        <!-- OFFICIAL BRANDED LOGO -->
-        <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" alt="NAIJALITE Logo" class="auth-logo">
+        <!-- FIXED DIRECT LINK TO LOGO -->
+        <img src="https://i.ibb.co/vV2B9vS/PNG-1.jpg" alt="NAIJALITE Logo" class="auth-logo" onerror="this.src='https://flagcdn.com/w160/ng.png'">
       </div>
       <h2 class="auth-title">NAIJALITE</h2>
       <p class="auth-subtitle">Join the community and earn rewards!</p>
