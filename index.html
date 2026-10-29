@@ -6,11 +6,8 @@
   <title>NAIJALITE | Live & Earn</title>
   <meta name="theme-color" content="#008751">
 
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
-  <!-- Paystack SDK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
-  <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
   <style>
@@ -28,8 +25,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
 
-    /* Loading Overlay */
-    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.5s; }
+    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -50,16 +46,12 @@
     .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; }
     .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 
-    /* HEADER */
+    /* HEADER (Wallet Removed) */
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
     .header-top h1 { font-size: 1.3rem; font-weight: 800; }
     .btn-logout-top { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold; }
-    .wallet-card { background: rgba(255, 255, 255, 0.15); padding: 12px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-    .wallet-info span { font-size: 0.75rem; opacity: 0.9; display: block; }
-    .wallet-info strong { font-size: 1.2rem; font-weight: 700; }
 
-    /* MAIN CONTAINER */
     .container { padding: 16px; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -172,12 +164,6 @@
       <h1>🇳🇬 NAIJALITE</h1>
       <button class="btn-logout-top" onclick="handleLogout()">Logout</button>
     </div>
-    <div class="wallet-card">
-      <div class="wallet-info">
-        <span>Balance | Coins</span>
-        <strong><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></strong>
-      </div>
-    </div>
   </header>
 
   <div class="container">
@@ -209,7 +195,7 @@
             </div>
             <div class="action-bar">
               <input type="text" id="chatInput" style="flex:1; padding:10px; border-radius:20px; border:none; background:rgba(255,255,255,0.2); color:white;" placeholder="Say something...">
-              <button class="gift-box-btn" onclick="openModal('giftMallModal')">🎁</button>
+              <button class="gift-box-btn" onclick="openGiftMall()">🎁</button>
             </div>
           </div>
         </div>
@@ -257,6 +243,14 @@
         <h3 id="userNameDisplay">User Account</h3>
         <p id="userIdDisplay" style="color:var(--text-dim); margin-bottom:20px;">Agent ID: Loading...</p>
         
+        <!-- WALLET MOVED HERE -->
+        <div class="wallet-card" style="margin-bottom: 20px; background: rgba(0,135,81,0.2); color: white; border: 1px solid var(--primary);">
+          <div class="wallet-info" style="text-align: center; width: 100%;">
+            <span style="color: white;">Current Balance | Coins</span>
+            <strong style="font-size: 1.5rem;"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></strong>
+          </div>
+        </div>
+
         <div class="dashboard-grid">
           <div class="dash-card">
             <span>Spent this Month</span>
@@ -350,26 +344,20 @@
     ];
 
     async function initSupabase() {
-      // Force loading screen to disappear after 6 seconds regardless of result
       const forceHideTimeout = setTimeout(() => {
         document.getElementById('loadingScreen').style.display = 'none';
       }, 6000);
 
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // Test if we can actually talk to Supabase
         const { error } = await supabase.from('profiles').select('id').limit(1);
-        
         if (error) throw error;
-        
         document.getElementById('loadingScreen').style.display = 'none';
         clearTimeout(forceHideTimeout);
         checkSession();
       } catch (e) {
         console.error('Supabase Init Error:', e);
         document.getElementById('loadingText').innerHTML = `<span style="color:var(--danger)">Connection Error: ${e.message}</span>`;
-        // We don't force hide immediately so user sees the error
       }
     }
 
@@ -385,13 +373,11 @@
       const username = document.getElementById('authUsername').value;
       const identifier = document.getElementById('authEmail').value;
       const password = document.getElementById('authPass').value;
-      
       if (isLoginMode) {
         if (!identifier || !password) return alert('Please fill in all fields');
       } else {
         if (!username || !identifier || !password) return alert('Please fill in all fields');
       }
-
       try {
         if (isLoginMode) {
           const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
@@ -574,7 +560,7 @@
           list.appendChild(item);
         });
       } catch (err) {
-        list.innerHTML = '<p style="text-align:center; color:var(--danger);">Failed to load messages.</p>';
+        list.innerHTML = '<p style="text-align:center; color:var(--danger);">Failed to load messages. Check RLS settings.</p>';
       }
     }
 
