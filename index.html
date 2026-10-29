@@ -70,6 +70,8 @@
     
     .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; transition: 0.3s; }
     .btn-auth:active { transform: scale(0.97); background: var(--primary-dark); }
+    .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; transition: 0.3s; }
+    .btn-google:hover { background: #f8f8f8; }
     
     .auth-footer { margin-top: 15px; font-size: 0.8rem; color: var(--text-dim); }
     .auth-footer span { color: var(--accent); font-weight: bold; cursor: pointer; }
@@ -87,6 +89,17 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
+    /* HOME FEED */
+    .feed-container { display: flex; flex-direction: column; gap: 20px; }
+    .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+    .post-media { width: 100%; max-height: 500px; object-fit: cover; background: #000; }
+    .post-content { padding: 15px; }
+    .post-user { font-weight: bold; color: var(--primary); margin-bottom: 5px; display: block; }
+    .post-text { font-size: 0.9rem; color: var(--text); line-height: 1.4; }
+    .post-actions { display: flex; gap: 15px; padding: 10px 15px; border-top: 1px solid var(--border); }
+    .action-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+    .action-btn.active { color: var(--danger); }
+
     /* TIKTOK LIVE */
     .live-container { position: relative; width: 100%; height: 80vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
     .main-video { width: 100%; height: 100%; object-fit: cover; }
@@ -103,6 +116,24 @@
 
     .gift-animation { position: absolute; bottom: 100px; right: -100px; font-size: 3rem; pointer-events: none; z-index: 1000; animation: giftFly 3s linear forwards; }
     @keyframes giftFly { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(-300px, -400px) rotate(360deg); opacity: 0; } }
+
+    /* INBOX */
+    .inbox-list { display: flex; flex-direction: column; gap: 10px; }
+    .chat-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
+    .chat-item:hover { background: #2d3a4f; }
+    .chat-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .chat-info { flex: 1; }
+    .chat-name { font-weight: bold; display: block; font-size: 0.9rem; }
+    .chat-preview { font-size: 0.75rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    
+    .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
+    .chat-header { background: var(--primary); padding: 15px; display: flex; align-items: center; gap: 15px; color: white; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; }
+    .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+    .msg.received { align-self: flex-start; background: var(--card); color: white; border-bottom-left-radius: 2px; }
+    .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
+    .chat-input-area input { flex: 1; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 20px; }
 
     .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
     .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
@@ -140,7 +171,6 @@
       </div>
 
       <div class="auth-card">
-        <!-- USERNAME FIELD: ONLY VISIBLE DURING SIGNUP -->
         <div class="auth-input-group" id="usernameGroup" style="display: none;">
           <label>Username</label>
           <input type="text" id="authUsername" class="auth-input" placeholder="Choose a unique username...">
@@ -155,6 +185,9 @@
         </div>
         
         <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+        <button class="btn-google" onclick="signInWithGoogle()">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18"> Sign in with Google
+        </button>
         
         <div class="auth-footer">
           <span id="forgotPass" style="display:block; margin-bottom:10px;">Forgot password?</span>
@@ -181,7 +214,14 @@
   </header>
 
   <div class="container">
-    <div id="liveTab" class="tab-content active">
+    <div id="homeTab" class="tab-content active">
+      <div class="feed-container" id="homeFeed">
+        <p style="text-align:center; color:var(--text-dim); margin: 20px 0;">Loading feed...</p>
+      </div>
+      <button class="btn-main" style="margin-top:20px; background:var(--accent); color:#000;" onclick="openModal('postModal')">➕ Create Post</button>
+    </div>
+
+    <div id="liveTab" class="tab-content">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
         <div class="live-overlay">
@@ -211,6 +251,12 @@
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
         <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
         <button class="btn-main" style="background: #3182ce;" onclick="joinAsCoHost()">Join Stage</button>
+      </div>
+    </div>
+
+    <div id="inboxTab" class="tab-content">
+      <div class="inbox-list" id="inboxList">
+        <p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No messages yet.</p>
       </div>
     </div>
 
@@ -267,8 +313,27 @@
     </div>
   </div>
 
+  <!-- POST MODAL -->
+  <div id="postModal" class="modal-bg">
+    <div class="modal-card">
+      <h3>🚀 Create Post</h3>
+      <div class="auth-input-group">
+        <label>Caption</label>
+        <input type="text" id="postCaption" class="auth-input" placeholder="What's on your mind?">
+      </div>
+      <div class="auth-input-group">
+        <label>Media (Image/Video URL)</label>
+        <input type="text" id="postMedia" class="auth-input" placeholder="Paste link here...">
+      </div>
+      <button class="btn-main" onclick="submitPost()">Post to Feed</button>
+      <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('postModal')">Cancel</button>
+    </div>
+  </div>
+
   <div class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item active" onclick="switchTab('homeTab', this)"><div>🏠</div>Home</div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item" onclick="switchTab('inboxTab', this)"><div>💬</div>Inbox</div>
     <div class="nav-item" onclick="switchTab('earnTab', this)"><div>🎯</div>Earn</div>
     <div class="nav-item" onclick="switchTab('utilsTab', this)"><div>🛠️</div>Utils</div>
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
@@ -301,8 +366,6 @@
       document.getElementById('tabLogin').classList.toggle('active', isLoginMode);
       document.getElementById('tabSignup').classList.toggle('active', !isLoginMode);
       document.getElementById('btnAuthAction').textContent = isLoginMode ? 'Login' : 'Sign Up';
-      
-      // Toggle username field visibility
       document.getElementById('usernameGroup').style.display = isLoginMode ? 'none' : 'block';
     }
 
@@ -322,7 +385,6 @@
           const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
           if (error) throw error;
         } else {
-          // Check if username is taken
           const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
           if (existing) return alert('Username already taken. Please choose another.');
 
@@ -335,6 +397,15 @@
         checkSession();
       } catch (error) {
         alert('Auth Error: ' + error.message);
+      }
+    }
+
+    async function signInWithGoogle() {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+        if (error) throw error;
+      } catch (error) {
+        alert('Google Auth Error: ' + error.message);
       }
     }
 
@@ -364,6 +435,8 @@
         document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
         document.getElementById('userRefLink').textContent = window.location.origin + window.location.pathname + '?ref=' + agentId;
         updateUI();
+        loadHomeFeed();
+        loadInbox();
       } catch (err) { console.error(err); }
     }
 
@@ -381,6 +454,92 @@
     function updateUI() {
       document.getElementById('walletBalance').textContent = '₦' + currentBalance.toLocaleString();
       document.getElementById('userCoins').textContent = userCoins;
+    }
+
+    /* HOME FEED LOGIC */
+    async function loadHomeFeed() {
+      const feed = document.getElementById('homeFeed');
+      try {
+        const { data: posts, error } = await supabase.from('posts').select('*, profiles(username)').order('created_at', { ascending: false });
+        if (error) throw error;
+        
+        if (!posts || posts.length === 0) {
+          feed.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No posts yet. Be the first!</p>';
+          return;
+        }
+
+        feed.innerHTML = '';
+        posts.forEach(post => {
+          const card = document.createElement('div');
+          card.className = 'post-card';
+          card.innerHTML = `
+            <img src="${post.media_url}" class="post-media" onerror="this.src='https://via.placeholder.com/400x500?text=No+Media'">
+            <div class="post-content">
+              <span class="post-user">@${post.profiles?.username || 'unknown'}</span>
+              <p class="post-text">${post.caption}</p>
+            </div>
+            <div class="post-actions">
+              <button class="action-btn" onclick="likePost('${post.id}', this)">❤️ <span>0</span></button>
+              <button class="action-btn">💬 Comment</button>
+            </div>
+          `;
+          feed.appendChild(card);
+        });
+      } catch (err) {
+        feed.innerHTML = '<p style="text-align:center; color:var(--danger);">Failed to load feed.</p>';
+      }
+    }
+
+    async function submitPost() {
+      const caption = document.getElementById('postCaption').value;
+      const media = document.getElementById('postMedia').value;
+      if (!caption || !media) return alert('Please fill in all fields');
+
+      try {
+        const { error } = await supabase.from('posts').insert([{ user_id: userId, caption, media_url: media }]);
+        if (error) throw error;
+        alert('Post shared successfully!');
+        closeModal('postModal');
+        loadHomeFeed();
+      } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    /* INBOX LOGIC */
+    async function loadInbox() {
+      const list = document.getElementById('inboxList');
+      try {
+        const { data: msgs, error } = await supabase.from('messages').select('*, profiles(username)').eq('receiver_id', userId).order('created_at', { ascending: false });
+        if (error) throw error;
+
+        if (!msgs || msgs.length === 0) {
+          list.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No messages yet.</p>';
+          return;
+        }
+
+        list.innerHTML = '';
+        msgs.forEach(m => {
+          const item = document.createElement('div');
+          item.className = 'chat-item';
+          item.onclick = () => openChat(m.sender_id, m.profiles?.username);
+          item.innerHTML = `
+            <div class="chat-avatar">${(m.profiles?.username || 'U')[0].toUpperCase()}</div>
+            <div class="chat-info">
+              <span class="chat-name">${m.profiles?.username || 'Unknown'}</span>
+              <span class="chat-preview">${m.content}</span>
+            </div>
+          `;
+          list.appendChild(item);
+        });
+      } catch (err) {
+        list.innerHTML = '<p style="text-align:center; color:var(--danger);">Failed to load messages.</p>';
+      }
+    }
+
+    async function openChat(partnerId, partnerName) {
+      const win = document.querySelector('.chat-window');
+      // Note: chat-window HTML structure would be added here dynamically or exist in HTML
+      // For this version, we ensure the logic is ready
+      alert('Chat with ' + partnerName + ' coming soon in the next update!');
     }
 
     async function sendGroupGift(name, cost) {
