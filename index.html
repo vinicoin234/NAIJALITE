@@ -32,9 +32,10 @@
     .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
     .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); transition: 0.3s; }
     .auth-tab.active { background: var(--primary); color: white; }
-    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: left; }
     .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; font-size: 1rem; }
-    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+    .auth-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px; display: block; }
+    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; margin-top: 5px; }
 
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 20px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
@@ -67,7 +68,12 @@
     .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
     .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; border: 1px solid var(--border); }
 
-    /* Chat & Users */
+    /* Profile Avatar + Plus Badge */
+    .avatar-wrapper { position: relative; width: 100px; height: 100px; margin: 0 auto 15px; cursor: pointer; }
+    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 3px solid var(--accent); }
+    .avatar-plus-btn { position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+
+    /* User & Inbox Conversations */
     .user-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
     .chat-header { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
@@ -91,6 +97,7 @@
 
   <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
 
+  <!-- Auth Screen with Signup fields for DOB and Sex -->
   <div id="authScreen">
     <div class="auth-wrapper">
       <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo" alt="Logo">
@@ -100,9 +107,26 @@
         <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
       </div>
       <div class="auth-card">
-        <input type="text" id="authUsername" class="auth-input" style="display:none" placeholder="Username">
+        <div id="signupFields" style="display:none;">
+          <label class="auth-label">Username</label>
+          <input type="text" id="authUsername" class="auth-input" placeholder="Username">
+          
+          <label class="auth-label">Date of Birth (Private)</label>
+          <input type="date" id="authDob" class="auth-input">
+          
+          <label class="auth-label">Sex</label>
+          <select id="authSex" class="auth-input">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <label class="auth-label">Email</label>
         <input type="text" id="authEmail" class="auth-input" placeholder="Email">
+        
+        <label class="auth-label">Password</label>
         <input type="password" id="authPass" class="auth-input" placeholder="Password">
+        
         <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
       </div>
     </div>
@@ -134,25 +158,38 @@
     
     <div id="liveTab" class="tab-content"><div class="card">Live Stream Area</div></div>
     
+    <!-- Inbox Tab: 1-on-1 Conversation List -->
     <div id="inboxTab" class="tab-content">
       <div class="card">
-        <h3 style="margin-bottom:15px;">💬 App Users</h3>
-        <div id="usersList"><p style="color:var(--text-dim);">Loading users...</p></div>
+        <h3 style="margin-bottom:15px;">💬 Conversations</h3>
+        <div id="conversationsList"><p style="color:var(--text-dim);">Loading chats...</p></div>
       </div>
     </div>
     
     <div id="earnTab" class="tab-content"><div class="card">Earn Area</div></div>
     <div id="utilsTab" class="tab-content"><div class="card">Utils Area</div></div>
     
+    <!-- Profile Tab with Edit Settings Icon & Avatar + Plus Button -->
     <div id="profileTab" class="tab-content">
-      <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem;">👤</div>
-        <h3 id="userNameDisplay">User</h3>
+      <div class="card" style="text-align: center; position: relative;">
+        <!-- Settings Edit Icon right above/beside profile photo -->
+        <div style="position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.3rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
+
+        <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
+          <img id="profileAvatarImg" src="" class="profile-avatar" style="display:none;">
+          <div id="profileAvatarPlaceholder" class="profile-avatar">👤</div>
+          <div class="avatar-plus-btn">+</div>
+        </div>
+
+        <h3 id="userNameDisplay">User <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;"></span></h3>
+        <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.75rem; margin-bottom:10px;"></p>
+
         <div class="profile-menu">
           <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
         </div>
+        
         <div id="profilePosts" class="profile-sub-tab active"><p>Your Posts</p></div>
         <div id="profileInbox" class="profile-sub-tab"><p>Your Messages</p></div>
         <div id="profileCoins" class="profile-sub-tab">
@@ -168,290 +205,4 @@
     </div>
   </div>
 
-  <!-- Chat Screen -->
-  <div id="chatWindow" class="chat-window">
-    <div class="chat-header">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="closeChat()">←</button>
-        <b id="chatUser">Username</b>
-      </div>
-      <div style="display:flex; gap:15px;">
-        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
-        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('video')">📹</button>
-      </div>
-    </div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input-area">
-      <input type="text" id="chatInputText" placeholder="Type a message...">
-      <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="sendMessage()">Send</button>
-    </div>
-  </div>
-
-  <!-- Call Modal -->
-  <div id="callModal" class="call-modal">
-    <h3 id="callStatus" style="color:white; margin-bottom:15px;">Calling User...</h3>
-    <div class="video-box">
-      <video id="callVideo" autoplay playsinline muted></video>
-    </div>
-    <button class="btn-main" style="background:var(--danger); max-width:200px;" onclick="endCall()">End Call</button>
-  </div>
-
-  <!-- Settings Modal -->
-  <div id="settingsModal" class="settings-modal">
-    <div class="settings-card">
-      <h3 id="settingsTitle">Settings</h3>
-      <div id="settingsContent" style="margin: 15px 0; font-size:0.9rem; color:var(--text-dim);">
-        <p>Manage your preferences, security, and account settings directly here.</p>
-      </div>
-      <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
-    </div>
-  </div>
-
-  <div class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('homeTab', this)"><div>🏠</div>Home</div>
-    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
-    <div class="nav-item" onclick="switchTab('inboxTab', this)"><div>💬</div>Inbox</div>
-    <div class="nav-item" onclick="switchTab('earnTab', this)"><div>🎯</div>Earn</div>
-    <div class="nav-item" onclick="switchTab('utilsTab', this)"><div>🛠️</div>Utils</div>
-    <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
-  </div>
-
-  <div class="floating-btn" onclick="triggerFileUpload()">+</div>
-
-  <script>
-    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
-    
-    let supabase;
-    let userId = null;
-    let authMode = 'login';
-    let activeChatUser = null;
-    let localStream = null;
-
-    async function initSupabase() {
-      try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        document.getElementById('loadingScreen').style.display = 'none';
-        checkSession();
-      } catch (e) {
-        document.getElementById('loadingScreen').style.display = 'none';
-      }
-    }
-
-    async function checkSession() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          userId = session.user.id;
-          document.getElementById('authScreen').style.display = 'none';
-          initHub();
-        } else {
-          document.getElementById('authScreen').style.display = 'flex';
-        }
-      } catch (e) {
-        document.getElementById('authScreen').style.display = 'flex';
-      }
-    }
-
-    async function initHub() {
-      try {
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
-        if (profile && profile.username) {
-          document.getElementById('userNameDisplay').textContent = profile.username;
-        }
-      } catch (e) {}
-      loadUsers();
-    }
-
-    // --- Users & Messaging ---
-    async function loadUsers() {
-      const container = document.getElementById('usersList');
-      try {
-        const { data } = await supabase.from('profiles').select('*').neq('id', userId);
-        if (!data || data.length === 0) {
-          container.innerHTML = '<p style="color:var(--text-dim);">No other users found.</p>';
-          return;
-        }
-        container.innerHTML = data.map(u => `
-          <div class="user-item">
-            <div>
-              <b>${u.username || 'User'}</b>
-            </div>
-            <div style="display:flex; gap:8px;">
-              <button class="btn-main" style="padding:6px 12px; font-size:0.8rem;" onclick="openChat('${u.id}', '${u.username || 'User'}')">Message</button>
-              <button class="btn-main" style="padding:6px 12px; font-size:0.8rem; background:var(--card); border:1px solid var(--border);" onclick="toggleFollow('${u.id}', this)">Follow</button>
-            </div>
-          </div>
-        `).join('');
-      } catch (e) {
-        container.innerHTML = '<p style="color:var(--text-dim);">Unable to load users.</p>';
-      }
-    }
-
-    function openChat(id, name) {
-      activeChatUser = { id, name };
-      document.getElementById('chatUser').textContent = name;
-      document.getElementById('chatWindow').style.display = 'flex';
-      loadMessages();
-    }
-
-    function closeChat() { document.getElementById('chatWindow').style.display = 'none'; }
-
-    async function loadMessages() {
-      if (!activeChatUser) return;
-      try {
-        const { data } = await supabase.from('messages').select('*')
-          .or(`and(sender_id.eq.${userId},receiver_id.eq.${activeChatUser.id}),and(sender_id.eq.${activeChatUser.id},receiver_id.eq.${userId})`)
-          .order('created_at', { ascending: true });
-
-        const container = document.getElementById('chatMessages');
-        container.innerHTML = (data || []).map(m => `
-          <div class="msg ${m.sender_id === userId ? 'sent' : 'received'}">${m.content}</div>
-        `).join('');
-        container.scrollTop = container.scrollHeight;
-      } catch(e) {}
-    }
-
-    async function sendMessage() {
-      const text = document.getElementById('chatInputText').value.trim();
-      if (!text || !activeChatUser) return;
-      try {
-        await supabase.from('messages').insert([{ sender_id: userId, receiver_id: activeChatUser.id, content: text }]);
-        document.getElementById('chatInputText').value = '';
-        loadMessages();
-      } catch(e) {
-        alert("Failed to send message");
-      }
-    }
-
-    // --- Following ---
-    async function toggleFollow(targetId, btn) {
-      if (btn.textContent === 'Follow') {
-        btn.textContent = 'Following';
-        btn.style.background = 'var(--primary)';
-        try { await supabase.from('follows').insert([{ follower_id: userId, following_id: targetId }]); } catch(e){}
-      } else {
-        btn.textContent = 'Follow';
-        btn.style.background = 'var(--card)';
-        try { await supabase.from('follows').delete().eq('follower_id', userId).eq('following_id', targetId); } catch(e){}
-      }
-    }
-
-    // --- Audio/Video Calling ---
-    async function startCall(type) {
-      document.getElementById('callStatus').textContent = `In ${type.toUpperCase()} Call with ${activeChatUser?.name || 'User'}...`;
-      document.getElementById('callModal').style.display = 'flex';
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
-        const video = document.getElementById('callVideo');
-        video.srcObject = localStream;
-      } catch(e) {
-        alert("Camera/Mic access required for calling.");
-      }
-    }
-
-    function endCall() {
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-        localStream = null;
-      }
-      document.getElementById('callModal').style.display = 'none';
-    }
-
-    // --- Menu & Navigation ---
-    function switchTab(id, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      const target = document.getElementById(id);
-      if (target) target.classList.add('active');
-      if (el) el.classList.add('active');
-      if (id === 'inboxTab') loadUsers();
-    }
-
-    function switchProfileTab(id, el) {
-      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
-      const target = document.getElementById(id);
-      if (target) target.classList.add('active');
-      if (el) el.classList.add('active');
-    }
-
-    function toggleHeaderMenu() {
-      const m = document.getElementById('headerMenu');
-      if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function openSettings(type) {
-      document.getElementById('settingsTitle').textContent = type.toUpperCase();
-      document.getElementById('settingsModal').style.display = 'flex';
-      document.getElementById('headerMenu').style.display = 'none';
-    }
-
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    // --- Auth Logic ---
-    function setAuthMode(m) {
-      authMode = m;
-      document.getElementById('tabLogin').classList.toggle('active', m === 'login');
-      document.getElementById('tabSignup').classList.toggle('active', m === 'signup');
-      document.getElementById('btnAuthAction').textContent = m === 'login' ? 'Login' : 'Sign Up';
-      document.getElementById('authUsername').style.display = m === 'signup' ? 'block' : 'none';
-    }
-
-    async function handleAuth() {
-      const email = document.getElementById('authEmail').value;
-      const pass = document.getElementById('authPass').value;
-      const username = document.getElementById('authUsername').value;
-
-      try {
-        if (authMode === 'login') {
-          await supabase.auth.signInWithPassword({ email, password: pass });
-        } else {
-          const { data } = await supabase.auth.signUp({ email, password: pass });
-          if (data?.user) {
-            await supabase.from('profiles').insert([{ id: data.user.id, username }]);
-          }
-        }
-        location.reload();
-      } catch (err) {
-        alert("Authentication error: " + err.message);
-      }
-    }
-
-    async function handleLogout() {
-      if (supabase) await supabase.auth.signOut();
-      location.reload();
-    }
-
-    function triggerFileUpload() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (file && userId) {
-          try {
-            await supabase.storage.from('posts').upload(`${userId}/${Date.now()}`, file);
-            alert("Uploaded!");
-          } catch(err) {
-            alert("Upload failed");
-          }
-        }
-      };
-      input.click();
-    }
-
-    async function submitWithdrawal() {
-      const acc = document.getElementById('bankAcc').value;
-      if (!acc) return alert("Enter account number");
-      try {
-        await supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]);
-        alert("Withdrawal requested!");
-      } catch(err) {
-        alert("Withdrawal failed");
-      }
-    }
-
-    window.onload = initSupabase;
-  </script>
-</body>
-</html>
+  <!-- Chat Screen (1
