@@ -205,4 +205,379 @@
     </div>
   </div>
 
-  <!-- Chat Screen (1
+  <!-- Chat Screen (1-on-1 Conversation View) -->
+  <div id="chatWindow" class="chat-window">
+    <div class="chat-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="closeChat()">←</button>
+        <b id="chatUser">Username</b>
+      </div>
+      <div style="display:flex; gap:15px;">
+        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
+        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('video')">📹</button>
+      </div>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chatInputText" placeholder="Type a message...">
+      <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div id="editProfileModal" class="settings-modal">
+    <div class="settings-card">
+      <h3>Edit Profile</h3>
+      <div style="margin: 15px 0; text-align: left;">
+        <label class="auth-label">Username</label>
+        <input type="text" id="editUsername" class="auth-input">
+        
+        <label class="auth-label">Date of Birth (Private)</label>
+        <input type="date" id="editDob" class="auth-input">
+        
+        <label class="auth-label">Sex</label>
+        <select id="editSex" class="auth-input">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+      <button class="btn-main" onclick="saveProfileChanges()" style="margin-bottom:10px;">Save Changes</button>
+      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('editProfileModal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Call Modal -->
+  <div id="callModal" class="call-modal">
+    <h3 id="callStatus" style="color:white; margin-bottom:15px;">Calling User...</h3>
+    <div class="video-box">
+      <video id="callVideo" autoplay playsinline muted></video>
+    </div>
+    <button class="btn-main" style="background:var(--danger); max-width:200px;" onclick="endCall()">End Call</button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="settings-modal">
+    <div class="settings-card">
+      <h3 id="settingsTitle">Settings</h3>
+      <div id="settingsContent" style="margin: 15px 0; font-size:0.9rem; color:var(--text-dim);">
+        <p>Manage your preferences, security, and account settings directly here.</p>
+      </div>
+      <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('homeTab', this)"><div>🏠</div>Home</div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item" onclick="switchTab('inboxTab', this)"><div>💬</div>Inbox</div>
+    <div class="nav-item" onclick="switchTab('earnTab', this)"><div>🎯</div>Earn</div>
+    <div class="nav-item" onclick="switchTab('utilsTab', this)"><div>🛠️</div>Utils</div>
+    <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
+  </div>
+
+  <div class="floating-btn" onclick="triggerFileUpload()">+</div>
+
+  <script>
+    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
+    
+    let supabase;
+    let userId = null;
+    let authMode = 'login';
+    let activeChatUser = null;
+    let localStream = null;
+    let currentUserProfile = null;
+
+    async function initSupabase() {
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        document.getElementById('loadingScreen').style.display = 'none';
+        checkSession();
+      } catch (e) {
+        document.getElementById('loadingScreen').style.display = 'none';
+      }
+    }
+
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          userId = session.user.id;
+          document.getElementById('authScreen').style.display = 'none';
+          initHub();
+        } else {
+          document.getElementById('authScreen').style.display = 'flex';
+        }
+      } catch (e) {
+        document.getElementById('authScreen').style.display = 'flex';
+      }
+    }
+
+    async function initHub() {
+      try {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+        if (profile) {
+          currentUserProfile = profile;
+          const sexSymbol = profile.sex === 'Female' ? '[F]' : '[M]';
+          document.getElementById('userNameDisplay').innerHTML = `${profile.username || 'User'} <span style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;">${sexSymbol}</span>`;
+          document.getElementById('userIdDisplay').textContent = `ID: ${userId.substring(0,8)}...`;
+          
+          if (profile.avatar_url) {
+            document.getElementById('profileAvatarImg').src = profile.avatar_url;
+            document.getElementById('profileAvatarImg').style.display = 'block';
+            document.getElementById('profileAvatarPlaceholder').style.display = 'none';
+          }
+        }
+      } catch (e) {}
+      loadConversations();
+    }
+
+    // --- 1-on-1 Conversations & Inbox ---
+    async function loadConversations() {
+      const container = document.getElementById('conversationsList');
+      try {
+        const { data } = await supabase.from('profiles').select('*').neq('id', userId);
+        if (!data || data.length === 0) {
+          container.innerHTML = '<p style="color:var(--text-dim);">No other users found.</p>';
+          return;
+        }
+        container.innerHTML = data.map(u => {
+          const sexSymbol = u.sex === 'Female' ? '[F]' : '[M]';
+          return `
+            <div class="user-item" onclick="openChat('${u.id}', '${u.username || 'User'}')">
+              <div>
+                <b>${u.username || 'User'}</b> <span style="font-size:0.75rem; color:var(--text-dim);">${sexSymbol}</span>
+                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">Tap to open chat conversation</p>
+              </div>
+              <button class="btn-main" style="padding:6px 12px; font-size:0.8rem; width:auto;">Chat</button>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = '<p style="color:var(--text-dim);">Unable to load chats.</p>';
+      }
+    }
+
+    function openChat(id, name) {
+      activeChatUser = { id, name };
+      document.getElementById('chatUser').textContent = name;
+      document.getElementById('chatWindow').style.display = 'flex';
+      loadMessages();
+    }
+
+    function closeChat() { document.getElementById('chatWindow').style.display = 'none'; }
+
+    async function loadMessages() {
+      if (!activeChatUser) return;
+      try {
+        const { data } = await supabase.from('messages').select('*')
+          .or(`and(sender_id.eq.${userId},receiver_id.eq.${activeChatUser.id}),and(sender_id.eq.${activeChatUser.id},receiver_id.eq.${userId})`)
+          .order('created_at', { ascending: true });
+
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = (data || []).map(m => `
+          <div class="msg ${m.sender_id === userId ? 'sent' : 'received'}">${m.content}</div>
+        `).join('');
+        container.scrollTop = container.scrollHeight;
+      } catch(e) {}
+    }
+
+    async function sendMessage() {
+      const text = document.getElementById('chatInputText').value.trim();
+      if (!text || !activeChatUser) return;
+      try {
+        await supabase.from('messages').insert([{ sender_id: userId, receiver_id: activeChatUser.id, content: text }]);
+        document.getElementById('chatInputText').value = '';
+        loadMessages();
+      } catch(e) {
+        alert("Failed to send message");
+      }
+    }
+
+    // --- Profile Avatar & Gallery Upload (+ Button) ---
+    function triggerAvatarUpload() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file && userId) {
+          try {
+            const fileName = `avatars/${userId}_${Date.now()}`;
+            await supabase.storage.from('posts').upload(fileName, file);
+            const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
+            
+            await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
+            
+            document.getElementById('profileAvatarImg').src = publicUrl;
+            document.getElementById('profileAvatarImg').style.display = 'block';
+            document.getElementById('profileAvatarPlaceholder').style.display = 'none';
+            alert("Profile picture updated!");
+          } catch(err) {
+            alert("Avatar upload failed: " + err.message);
+          }
+        }
+      };
+      input.click();
+    }
+
+    // --- Edit Profile Settings Modal ---
+    function openEditProfileModal() {
+      if (currentUserProfile) {
+        document.getElementById('editUsername').value = currentUserProfile.username || '';
+        document.getElementById('editDob').value = currentUserProfile.dob || '';
+        document.getElementById('editSex').value = currentUserProfile.sex || 'Male';
+      }
+      document.getElementById('editProfileModal').style.display = 'flex';
+    }
+
+    async function saveProfileChanges() {
+      const username = document.getElementById('editUsername').value.trim();
+      const dob = document.getElementById('editDob').value;
+      const sex = document.getElementById('editSex').value;
+
+      if (!username) return alert("Username cannot be empty");
+
+      try {
+        await supabase.from('profiles').update({ username, dob, sex }).eq('id', userId);
+        alert("Profile updated successfully!");
+        closeModal('editProfileModal');
+        initHub();
+      } catch(e) {
+        alert("Failed to update profile: " + e.message);
+      }
+    }
+
+    // --- Audio/Video Calling ---
+    async function startCall(type) {
+      document.getElementById('callStatus').textContent = `In ${type.toUpperCase()} Call with ${activeChatUser?.name || 'User'}...`;
+      document.getElementById('callModal').style.display = 'flex';
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+        const video = document.getElementById('callVideo');
+        video.srcObject = localStream;
+      } catch(e) {
+        alert("Camera/Mic access required for calling.");
+      }
+    }
+
+    function endCall() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      document.getElementById('callModal').style.display = 'none';
+    }
+
+    // --- Menu & Navigation ---
+    function switchTab(id, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.add('active');
+      if (el) el.classList.add('active');
+      if (id === 'inboxTab') loadConversations();
+    }
+
+    function switchProfileTab(id, el) {
+      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.add('active');
+      if (el) el.classList.add('active');
+    }
+
+    function toggleHeaderMenu() {
+      const m = document.getElementById('headerMenu');
+      if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function openSettings(type) {
+      document.getElementById('settingsTitle').textContent = type.toUpperCase();
+      document.getElementById('settingsModal').style.display = 'flex';
+      document.getElementById('headerMenu').style.display = 'none';
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // --- Auth Logic ---
+    function setAuthMode(m) {
+      authMode = m;
+      document.getElementById('tabLogin').classList.toggle('active', m === 'login');
+      document.getElementById('tabSignup').classList.toggle('active', m === 'signup');
+      document.getElementById('btnAuthAction').textContent = m === 'login' ? 'Login' : 'Sign Up';
+      document.getElementById('signupFields').style.display = m === 'signup' ? 'block' : 'none';
+    }
+
+    async function handleAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value.trim();
+      const username = document.getElementById('authUsername').value.trim();
+      const dob = document.getElementById('authDob').value;
+      const sex = document.getElementById('authSex').value;
+
+      try {
+        if (authMode === 'login') {
+          await supabase.auth.signInWithPassword({ email, password: pass });
+          location.reload();
+        } else {
+          if (!username) return alert("Please enter a username.");
+          if (!dob) return alert("Please enter your date of birth.");
+          
+          const { data, error } = await supabase.auth.signUp({ email, password: pass });
+          if (error) throw error;
+
+          if (data?.user) {
+            await supabase.from('profiles').insert([{ 
+              id: data.user.id, 
+              username, 
+              dob, 
+              sex 
+            }]);
+            await supabase.from('wallets').insert([{ id: data.user.id, coin_balance: 0 }]);
+          }
+          alert("Account created successfully!");
+          location.reload();
+        }
+      } catch (err) {
+        alert("Authentication error: " + err.message);
+      }
+    }
+
+    async function handleLogout() {
+      if (supabase) await supabase.auth.signOut();
+      location.reload();
+    }
+
+    function triggerFileUpload() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file && userId) {
+          try {
+            await supabase.storage.from('posts').upload(`${userId}/${Date.now()}`, file);
+            alert("Uploaded!");
+          } catch(err) {
+            alert("Upload failed");
+          }
+        }
+      };
+      input.click();
+    }
+
+    async function submitWithdrawal() {
+      const acc = document.getElementById('bankAcc').value;
+      if (!acc) return alert("Enter account number");
+      try {
+        await supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]);
+        alert("Withdrawal requested!");
+      } catch(err) {
+        alert("Withdrawal failed");
+      }
+    }
+
+    window.onload = initSupabase;
+  </script>
+</body>
+</html>
