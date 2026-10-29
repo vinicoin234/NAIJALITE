@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Naijalite - Group Live Stream & Utility Hub</title>
+  <meta name="theme-color" content="#008751">
+
+  <!-- PWA Manifest & Apple Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Naijalite">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2983/2983780.png">
+
+  <!-- Supabase JS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Paystack Inline JS SDK -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+
+  <style>
+    :root {
+      --primary: #008751;
+      --primary-dark: #006b40;
+      --accent: #ffc107;
+      --bg: #f4f7f6;
+      --card: #ffffff;
+      --text: #1a1a1a;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 85px; max-width: 480px; margin: 0 auto; }
+    
+    header { background: var(--primary); color: white; padding: 16px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .header-top h1 { font-size: 1.2rem; }
+    
+    .install-banner { display: none; background: #ffffff; color: var(--text); padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .btn-install { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+
+    .wallet-card { background: rgba(255, 255, 255, 0.18); padding: 10px 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(5px); }
+    .wallet-info span { font-size: 0.7rem; opacity: 0.9; display: block; }
+    .wallet-info strong { font-size: 1.15rem; }
+    .btn-withdraw { background: var(--accent); color: #000; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; cursor: pointer; }
+
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; }
+    .nav-item { flex: 1; text-align: center; padding: 8px 0; font-size: 0.68rem; color: #718096; cursor: pointer; font-weight: 600; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item div { font-size: 1.1rem; margin-bottom: 2px; }
+
+    .container { padding: 14px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .card h3 { font-size: 0.95rem; margin-bottom: 4px; color: var(--text); }
+    .card p { font-size: 0.78rem; color: #718096; margin-bottom: 10px; }
+
+    .badge { display: inline-block; background: #e6f4ea; color: var(--primary); padding: 3px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: bold; margin-bottom: 6px; }
+    
+    label { display: block; font-size: 0.78rem; font-weight: bold; margin-bottom: 4px; color: #4a5568; }
+    input, select { width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; margin-bottom: 10px; background: #fff; }
+    
+    .btn-main { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; }
+    .btn-main:active { background: var(--primary-dark); }
+
+    .group-stream-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #000; width: 100%; min-height: 260px; border-radius: 12px; overflow: hidden; margin-bottom: 10px; padding: 6px; }
+    .stream-box { position: relative; background: #1a202c; border-radius: 8px; overflow: hidden; height: 130px; display: flex; align-items: center; justify-content: center; }
+    .stream-box video { width: 100%; height: 100%; object-fit: cover; }
+    .stream-label { position: absolute; bottom: 4px; left: 6px; background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; }
+
+    .stream-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .live-badge { background: #e53e3e; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
+    .coin-counter { background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ffeeba; }
+
+    .gift-tray { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+    .gift-card { background: #f7fafc; border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; }
+    .gift-card:active { transform: scale(0.95); background: #feebc8; }
+    .gift-icon { font-size: 1.5rem; display: block; }
+    .gift-cost { font-size: 0.7rem; font-weight: bold; color: var(--primary); }
+
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
+    .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .btn-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #718096; }
+
+    .payout-box { background: #ebf8ff; border: 1px solid #90cdf4; padding: 10px; border-radius: 8px; font-size: 0.78rem; margin-top: 8px; }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <h1>🇳🇬 Naijalite Hub</h1>
+      <span style="font-size: 0.75rem; opacity: 0.9;">Online 🟢</span>
+    </div>
+
+    <div id="pwaInstallBanner" class="install-banner">
+      <span style="font-size: 0.75rem; font-weight: bold;">📲 Install App for Fast Access</span>
+      <button class="btn-install" id="btnInstallApp" onclick="triggerPWAInstall()">Install</button>
+    </div>
+
+    <div class="wallet-card">
+      <div class="wallet-info">
+        <span>Available Cash | Coins</span>
+        <strong><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></strong>
+      </div>
+      <button class="btn-withdraw" onclick="openWithdrawModal()">Withdraw</button>
+    </div>
+  </header>
+
+  <!-- MODALS -->
+  <div id="withdrawModal" class="modal-bg">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🏦 Bank Withdrawal</h3>
+        <button class="btn-close" onclick="closeModal('withdrawModal')">✕</button>
+      </div>
+      <p style="font-size: 0.78rem; color: #718096; margin-bottom: 10px;">Withdraw earned commissions directly to your bank account.</p>
+      <label for="bankSelect">Select Bank</label>
+      <select id="bankSelect">
+        <option value="">-- Choose Bank --</option>
+        <option value="OPay">OPay Digital Services</option>
+        <option value="Moniepoint">Moniepoint MFB</option>
+        <option value="Kuda">Kuda Microfinance Bank</option>
+        <option value="Palmpay">PalmPay</option>
+        <option value="GTB">Guaranty Trust Bank (GTB)</option>
+        <option value="Access">Access Bank</option>
+        <option value="UBA">United Bank for Africa (UBA)</option>
+      </select>
+      <label for="accountNum">10-Digit Account Number</label>
+      <input type="tel" id="accountNum" maxlength="10" placeholder="e.g. 8123456789">
+      <button class="btn-main" onclick="submitWithdrawal()">Confirm Withdrawal</button>
+    </div>
+  </div>
+
+  <div id="coinModal" class="modal-bg">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🪙 Buy Stream Coins (Paystack)</h3>
+        <button class="btn-close" onclick="closeModal('coinModal')">✕</button>
+      </div>
+      <p style="font-size: 0.78rem; color: #718096; margin-bottom: 12px;">Coins let you send gifts during live streams.</p>
+      <label for="coinPack">Select Package</label>
+      <select id="coinPack">
+        <option value="1000">100 Coins - ₦1,000</option>
+        <option value="2500">260 Coins - ₦2,500 (+10 Free)</option>
+        <option value="5000">550 Coins - ₦5,000 (+50 Free)</option>
+        <option value="10000">1,200 Coins - ₦10,000 (+200 Free)</option>
+      </select>
+      <label for="userEmail">Your Email Address</label>
+      <input type="email" id="userEmail" placeholder="yourname@gmail.com">
+      <button class="btn-main" onclick="payWithPaystack()">Pay with Paystack</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- TAB 1: LIVE -->
+    <div id="liveTab" class="tab-content active">
+      <div class="card">
+        <div class="stream-top-bar">
+          <span class="badge">🔴 Group Multi-Live</span>
+          <button style="background:var(--accent); border:none; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:0.7rem; cursor:pointer;" onclick="openModal('coinModal')">+ Buy Coins</button>
+        </div>
+        <div class="group-stream-grid">
+          <div class="stream-box"><span class="stream-label">Host (You)</span><video id="hostVideo" autoplay playsinline muted></video></div>
+          <div class="stream-box" id="guestBox1"><span class="stream-label">Co-Host 2 (Waiting)</span><div style="font-size:0.7rem; color:#a0aec0; text-align:center; padding:10px;">Empty Stage</div></div>
+          <div class="stream-box" id="guestBox2"><span class="stream-label">Co-Host 3 (Waiting)</span><div style="font-size:0.7rem; color:#a0aec0; text-align:center; padding:10px;">Empty Stage</div></div>
+          <div class="stream-box"><span class="stream-label">Audience View</span><div style="font-size:0.7rem; color:#a0aec0; text-align:center; padding:10px;">👁️ 248 Watching</div></div>
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+          <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Host Stream</button>
+          <button class="btn-main" onclick="joinAsCoHost()" style="background: #3182ce;">Join as Co-Host</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="font-size:0.9rem;">Send Group Gift</h3>
+          <span class="coin-counter">Total Pool: 🟡 <span id="streamReceivedCoins">0</span> Coins</span>
+        </div>
+        <div class="gift-tray">
+          <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 10)"><span class="gift-icon">🌹</span><div class="gift-cost">10 Coins</div></div>
+          <div class="gift-card" onclick="sendGroupGift('Crown 👑', 50)"><span class="gift-icon">👑</span><div class="gift-cost">50 Coins</div></div>
+          <div class="gift-card" onclick="sendGroupGift('Sports Car 🏎️', 200)"><span class="gift-icon">🏎️</span><div class="gift-cost">200 Coins</div></div>
+          <div class="gift-card" onclick="sendGroupGift('Lion 🦁', 500)"><span class="gift-icon">🦁</span><div class="gift-cost">500 Coins</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="badge">📊 Group Earnings & Payout Calculator</span>
+        <h3>Month-End Pool Split</h3>
+        <p>1 Coin = ₦10 Value. Platform retains 10% commission fee.</p>
+        <div class="payout-box">
+          <div>Total Pool Coins: <strong id="calcCoins">0</strong></div>
+          <div>Gross Pool Value: <strong id="calcGross">₦0.00</strong></div>
+          <div style="color:#e53e3e;">Platform Commission (10%): <strong id="calcFee">-₦0.00</strong></div>
+          <hr style="margin:6px 0; border:0; border-top:1px solid #90cdf4;">
+          <div style="color:var(--primary); font-weight:bold; font-size:0.85rem;">Group Net Payout (90%): <strong id="calcNet">₦0.00</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: EARN -->
+    <div id="earnTab" class="tab-content">
+      <div class="card">
+        <span class="badge">🎁 Referral Bonus</span>
+        <h3>Invite Friends & Earn ₦200 Each</h3>
+        <p>Get ₦200 credited to your wallet for every friend who joins using your link.</p>
+        <div style="background:#fefcbf; border:1px dashed #d69e2e; padding:10px; border-radius:8px; font-size:0.75rem; text-align:center;">
+          Your Referral Link:
+          <div id="userRefLink" style="background:#fff; border:1px solid #cbd5e0; padding:6px; border-radius:6px; word-break:break-all; margin:6px 0; font-weight:bold;">Generating...</div>
+          <button class="btn-main" onclick="copyRefLink()">Copy Referral Link</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: UTILITIES -->
+    <div id="utilsTab" class="tab-content">
+      <div class="card">
+        <span class="badge">⚡ Quick Utility</span>
+        <h3>WhatsApp Direct Chat</h3>
+        <p>Message any number without saving contacts.</p>
+        <input type="tel" id="waPhone" placeholder="Enter phone e.g. 08012345678">
+        <button class="btn-main" onclick="openWhatsApp()">Open Chat</button>
+      </div>
+    </div>
+
+    <!-- TAB 4: PROFILE -->
+    <div id="profileTab" class="tab-content">
+      <div class="card" style="text-align: center; padding: 20px 16px;">
+        <div style="font-size: 2.2rem; margin-bottom: 6px;">👤</div>
+        <h3>Verified Creator Account</h3>
+        <p id="userIdDisplay" style="font-size: 0.8rem;">Agent ID: Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item" onclick="switchTab('earnTab', this)"><div>🎯</div>Earn</div>
+    <div class="nav-item" onclick="switchTab('utilsTab', this)"><div>🛠️</div>Utilities</div>
+    <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
+  </div>
+
+  <script>
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // App State
+    let currentBalance = 0;
+    let userCoins = 0;
+    let receivedCoins = 0;
+    let isStreaming = false;
+    let mediaStream = null;
+    let isCoHostActive = false;
+    let agentId = '';
+    let userId = ''; // Supabase Auth ID
+
+    // Initialize App
+    async function initApp() {
+      // 1. Handle User Identity (Guest Session for now)
+      userId = localStorage.getItem('naijalite_user_id');
+      if (!userId) {
+        // In a real app, you'd use supabase.auth.signUp()
+        // For now, we create a pseudo-ID to link to the database
+        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('naijalite_user_id', userId);
+      }
+
+      // 2. Handle Agent ID
+      agentId = localStorage.getItem('naijalite_agent_id');
+      if (!agentId) {
+        agentId = 'NL-' + Math.floor(100000 + Math.random() * 900000);
+        localStorage.setItem('naijalite_agent_id', agentId);
+      }
+
+      // 3. Sync Profile with Supabase
+      await syncProfile();
+      
+      // 4. Load Initial Wallet Data
+      await fetchWalletData();
+
+      document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
+      document.getElementById('userRefLink').textContent = window.location.origin + window.location.pathname + '?ref=' + agentId;
+      
+      updateUI();
+    }
+
+    async function syncProfile() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({ id: userId, agent_id: agentId }, { onConflict: 'id' });
+    }
+
+    async function fetchWalletData() {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('cash_balance, coin_balance')
+        .eq('id', userId)
+        .single();
+
+      if (data) {
+        currentBalance = data.cash_balance || 0;
+        userCoins = data.coin_balance || 0;
+      } else {
+        // Create wallet if it doesn't exist
+        await supabase.from('wallets').insert([{ id: userId, cash_balance: 1650.00, coin_balance: 100 }]);
+        currentBalance = 1650.00;
+        userCoins = 100;
+      }
+    }
+
+    async function updateWalletInDB(cash, coins) {
+      await supabase
+        .from('wallets')
+        .update({ cash_balance: cash, coin_balance: coins })
+        .eq('id', userId);
+    }
+
+    function updateUI() {
+      document.getElementById('walletBalance').textContent = '₦' + currentBalance.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('userCoins').textContent = userCoins;
+      document.getElementById('streamReceivedCoins').textContent = receivedCoins;
+      
+      const grossNaira = receivedCoins * 10;
+      const platformFee = grossNaira * 0.10;
+      const creatorNet = grossNaira - platformFee;
+
+      document.getElementById('calcCoins').textContent = receivedCoins;
+      document.getElementById('calcGross').textContent = '₦' + grossNaira.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('calcFee').textContent = '-₦' + platformFee.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('calcNet').textContent = '₦' + creatorNet.toLocaleString('en-NG', {minimumFractionDigits: 2});
+    }
+
+    // MODAL LOGIC
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // STREAMING LOGIC
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const video = document.getElementById('hostVideo');
+      if (!isStreaming) {
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          video.srcObject = mediaStream;
+          isStreaming = true;
+          btn.textContent = 'End Host Stream';
+          btn.style.background = '#e53e3e';
+        } catch (err) { alert('Camera access required.'); }
+      } else {
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+        isStreaming = false;
+        btn.textContent = 'Start Host Stream';
+        btn.style.background = 'var(--primary)';
+      }
+    }
+
+    async function joinAsCoHost() {
+      const guestBox1 = document.getElementById('guestBox1');
+      if (!isCoHostActive) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          guestBox1.innerHTML = '<span class="stream-label">Co-Host 2 (Active)</span><video autoplay playsinline muted></video>';
+          guestBox1.querySelector('video').srcObject = stream;
+          isCoHostActive = true;
+        } catch(err) { alert('Camera access required.'); }
+      } else {
+        guestBox1.innerHTML = '<span class="stream-label">Co-Host 2 (Waiting)</span><div style="font-size:0.7rem; color:#a0aec0; text-align:center; padding:10px;">Empty Stage</div>';
+        isCoHostActive = false;
+      }
+    }
+
+    // GIFTING LOGIC (Now connects to Supabase)
+    async function sendGroupGift(giftName, cost) {
+      if (userCoins < cost) {
+        alert(`Insufficient coins! You need ${cost} coins.`);
+        openModal('coinModal');
+        return;
+      }
+
+      // 1. Update local state
+      userCoins -= cost;
+      receivedCoins += cost;
+      
+      // 2. Update Database
+      await updateWalletInDB(currentBalance, userCoins);
+      await supabase.from('transactions').insert([{
+        sender_id: userId,
+        gift_name: giftName,
+        coin_amount: cost
+      }]);
+
+      updateUI();
+      alert(`🎉 Sent ${giftName}! Pool received ${cost} Coins.`);
+    }
+
+    // PAYMENT LOGIC
+    function payWithPaystack() {
+      const email = document.getElementById('userEmail').value.trim();
+      const amountNaira = parseInt(document.getElementById('coinPack').value);
+      if (!email || !email.includes('@')) { alert('Valid email required.'); return; }
+
+      const handler = PaystackPop.setup({
+        key: 'pk_test_sample_key', 
+        email: email,
+        amount: amountNaira * 100,
+        currency: "NGN",
+        callback: async function(response) {
+          let addedCoins = Math.floor(amountNaira / 10);
+          userCoins += addedCoins;
+          await updateWalletInDB(currentBalance, userCoins);
+          updateUI();
+          closeModal('coinModal');
+          alert(`Payment Successful! ${addedCoins} coins added.`);
+        }
+      });
+      handler.openIframe();
+    }
+
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      element.classList.add('active');
+    }
+
+    function copyRefLink() {
+      navigator.clipboard.writeText(document.getElementById('userRefLink').textContent).then(() => alert('Link copied!'));
+    }
+
+    function openWithdrawModal() {
+      if (currentBalance < 500) { alert('Min withdrawal is ₦500.'); return; }
+      openModal('withdrawModal');
+    }
+
+    function submitWithdrawal() {
+      const bank = document.getElementById('bankSelect').value;
+      const account = document.getElementById('accountNum').value.trim();
+      if (!bank || account.length !== 10) { alert('Invalid bank or account.'); return; }
+      
+      alert(`Payout request of ₦${currentBalance} to ${bank} submitted!`);
+      currentBalance = 0;
+      updateWalletInDB(0, userCoins);
+      updateUI();
+      closeModal('withdrawModal');
+    }
+
+    function openWhatsApp() {
+      let num = document.getElementById('waPhone').value.trim();
+      if (!num) return;
+      if (num.startsWith('0')) num = num.substring(1);
+      window.open('https://wa.me/234' + num, '_blank');
+    }
+
+    // Start the app
+    window.onload = initApp;
+  </script>
+</body>
+</html>
