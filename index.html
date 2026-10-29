@@ -84,6 +84,19 @@
     .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
     .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
 
+    /* Live Stream UI */
+    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; }
+    .main-video { width: 100%; height: 320px; object-fit: cover; background: #000; }
+    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
+    .live-overlay * { pointer-events: auto; }
+    .overlay-top { display: flex; justify-content: space-between; align-items: center; }
+    .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; }
+    .overlay-bottom { display: flex; flex-direction: column; gap: 10px; }
+    .chat-area { max-height: 100px; overflow-y: auto; color: white; font-size: 0.8rem; }
+    .action-bar { display: flex; gap: 8px; align-items: center; }
+    .action-bar input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: white; font-size: 0.8rem; }
+    .gift-btn { background: rgba(0,0,0,0.6); border: 1px solid var(--border); font-size: 1.2rem; padding: 6px; border-radius: 50%; cursor: pointer; }
+
     /* Call Modal */
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
@@ -97,7 +110,7 @@
 
   <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
 
-  <!-- Auth Screen with Signup fields for DOB and Sex -->
+  <!-- Auth Screen -->
   <div id="authScreen">
     <div class="auth-wrapper">
       <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo" alt="Logo">
@@ -152,13 +165,36 @@
   </div>
 
   <div class="container">
+    <!-- Home Feed Tab -->
     <div id="homeTab" class="tab-content active">
       <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
     </div>
     
-    <div id="liveTab" class="tab-content"><div class="card">Live Stream Area</div></div>
+    <!-- Live Stream Tab -->
+    <div id="liveTab" class="tab-content">
+      <div class="live-container">
+        <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
+        <div class="live-overlay">
+          <div class="overlay-top">
+            <div class="live-badge">🔴 LIVE</div>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer;" onclick="openModal('coinModal')">+ Buy Coins</button>
+          </div>
+          <div class="overlay-bottom">
+            <div class="chat-area" id="liveChatArea"></div>
+            <div class="action-bar">
+              <input type="text" id="liveChatInput" placeholder="Say something...">
+              <button class="gift-btn" onclick="sendGroupGift('Rose 🌹', 10)">🌹</button>
+              <button class="gift-btn" onclick="sendGroupGift('Crown 👑', 50)">👑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
+      </div>
+    </div>
     
-    <!-- Inbox Tab: 1-on-1 Conversation List -->
+    <!-- Inbox Tab -->
     <div id="inboxTab" class="tab-content">
       <div class="card">
         <h3 style="margin-bottom:15px;">💬 Conversations</h3>
@@ -169,10 +205,9 @@
     <div id="earnTab" class="tab-content"><div class="card">Earn Area</div></div>
     <div id="utilsTab" class="tab-content"><div class="card">Utils Area</div></div>
     
-    <!-- Profile Tab with Edit Settings Icon & Avatar + Plus Button -->
+    <!-- Profile Tab -->
     <div id="profileTab" class="tab-content">
       <div class="card" style="text-align: center; position: relative;">
-        <!-- Settings Edit Icon right above/beside profile photo -->
         <div style="position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.3rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
 
         <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
@@ -205,16 +240,22 @@
     </div>
   </div>
 
-  <!-- Chat Screen (1-on-1 Conversation View) -->
+  <!-- Chat Screen (1-on-1 Conversation View with Top-Right Coin Sending Dot Menu) -->
   <div id="chatWindow" class="chat-window">
     <div class="chat-header">
       <div style="display:flex; align-items:center; gap:10px;">
         <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="closeChat()">←</button>
         <b id="chatUser">Username</b>
       </div>
-      <div style="display:flex; gap:15px;">
+      <div style="display:flex; gap:15px; align-items:center; position:relative;">
         <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
         <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('video')">📹</button>
+        <button style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;" onclick="toggleChatMenu()">⋮</button>
+        
+        <!-- Dropdown Menu for Sending Coins in Chat -->
+        <div id="chatMenu" class="menu-dropdown" style="top:40px; right:0;">
+          <div class="menu-item" onclick="shareCoinsPrompt()">💰 Send Coins</div>
+        </div>
       </div>
     </div>
     <div class="chat-messages" id="chatMessages"></div>
@@ -255,6 +296,16 @@
     <button class="btn-main" style="background:var(--danger); max-width:200px;" onclick="endCall()">End Call</button>
   </div>
 
+  <!-- Coin Purchase Modal -->
+  <div id="coinModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <h3 style="margin-bottom:15px">🪙 Buy Coins</h3>
+      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email for Receipt">
+      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay ₦1,000 for 100 Coins</button>
+      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
+    </div>
+  </div>
+
   <!-- Settings Modal -->
   <div id="settingsModal" class="settings-modal">
     <div class="settings-card">
@@ -283,6 +334,7 @@
     
     let supabase;
     let userId = null;
+    let userCoins = 0;
     let authMode = 'login';
     let activeChatUser = null;
     let localStream = null;
@@ -329,7 +381,38 @@
           }
         }
       } catch (e) {}
+      fetchWallet();
+      loadFeed();
       loadConversations();
+    }
+
+    async function fetchWallet() {
+      try {
+        const { data } = await supabase.from('wallets').select('*').eq('id', userId).maybeSingle();
+        if (data) {
+          userCoins = data.coin_balance || 0;
+          updateUI();
+        }
+      } catch (e) {}
+    }
+
+    async function loadFeed() {
+      const feed = document.getElementById('homeFeed');
+      try {
+        const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+        if (!data || data.length === 0) {
+          feed.innerHTML = '<p style="text-align:center; color:var(--text-dim);">No posts yet.</p>';
+          return;
+        }
+        feed.innerHTML = data.map(p => `
+          <div class="card">
+            ${p.media_url ? `<img src="${p.media_url}" style="width:100%; border-radius:15px; max-height:400px; object-fit:cover; margin-bottom:10px;">` : ''}
+            <p style="font-size:0.9rem;">${p.caption || ''}</p>
+          </div>
+        `).join('');
+      } catch (e) {
+        feed.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Unable to load feed.</p>';
+      }
     }
 
     // --- 1-on-1 Conversations & Inbox ---
@@ -448,6 +531,32 @@
       }
     }
 
+    // --- Live Stream Functionality ---
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const video = document.getElementById('hostVideo');
+      if (btn.textContent === 'Start Live') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          video.srcObject = stream;
+          btn.textContent = 'End Live';
+          btn.style.background = 'var(--danger)';
+        } catch (err) { alert("Camera access required for live streaming."); }
+      } else {
+        if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+        btn.textContent = 'Start Live';
+        btn.style.background = 'var(--primary)';
+      }
+    }
+
+    function sendGroupGift(name, cost) {
+      if (userCoins < cost) return alert("Insufficient coins!");
+      userCoins -= cost;
+      updateUI();
+      alert(`Sent ${name}!`);
+    }
+
     // --- Audio/Video Calling ---
     async function startCall(type) {
       document.getElementById('callStatus').textContent = `In ${type.toUpperCase()} Call with ${activeChatUser?.name || 'User'}...`;
@@ -467,6 +576,27 @@
         localStream = null;
       }
       document.getElementById('callModal').style.display = 'none';
+    }
+
+    // --- Send Coins inside Chat ---
+    async function shareCoinsPrompt() {
+      const amount = prompt("Enter amount of coins to send:");
+      if (!amount || isNaN(amount)) return;
+      const cost = parseInt(amount);
+      if (userCoins < cost) return alert("Insufficient coins!");
+      
+      userCoins -= cost;
+      updateUI();
+      try {
+        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+        alert(`Sent ${cost} coins successfully!`);
+      } catch(e) {}
+      toggleChatMenu();
+    }
+
+    function toggleChatMenu() {
+      const m = document.getElementById('chatMenu');
+      if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
     }
 
     // --- Menu & Navigation ---
@@ -498,7 +628,13 @@
       document.getElementById('headerMenu').style.display = 'none';
     }
 
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function updateUI() {
+      document.getElementById('userCoins').textContent = userCoins;
+      document.getElementById('coinsCount').textContent = userCoins;
+    }
 
     // --- Auth Logic ---
     function setAuthMode(m) {
@@ -556,10 +692,14 @@
         const file = e.target.files[0];
         if (file && userId) {
           try {
-            await supabase.storage.from('posts').upload(`${userId}/${Date.now()}`, file);
+            const fileName = `${userId}/${Date.now()}_${file.name}`;
+            await supabase.storage.from('posts').upload(fileName, file);
+            const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
+            await supabase.from('posts').insert([{ user_id: userId, media_url: publicUrl, caption: 'New post' }]);
             alert("Uploaded!");
+            loadFeed();
           } catch(err) {
-            alert("Upload failed");
+            alert("Upload failed: " + err.message);
           }
         }
       };
@@ -575,6 +715,26 @@
       } catch(err) {
         alert("Withdrawal failed");
       }
+    }
+
+    function payWithPaystack() {
+      const email = document.getElementById('userEmail').value.trim();
+      if (!email) return alert("Please enter your email");
+      
+      let handler = PaystackPop.setup({
+        key: 'pk_live_your_paystack_key_here', // replace with your Paystack public key if needed
+        email: email,
+        amount: 100000, // ₦1,000 in kobo
+        currency: 'NGN',
+        callback: function(response) {
+          alert('Payment complete! Reference: ' + response.reference);
+          closeModal('coinModal');
+        },
+        onClose: function() {
+          alert('Transaction window closed.');
+        }
+      });
+      handler.openIframe();
     }
 
     window.onload = initSupabase;
