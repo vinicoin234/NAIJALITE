@@ -75,13 +75,18 @@
     .auth-footer span { color: var(--accent); font-weight: bold; cursor: pointer; }
 
     /* --- MAIN HUB --- */
-    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .header-top h1 { font-size: 1.3rem; font-weight: 800; }
-    .wallet-card { background: rgba(255, 255, 255, 0.15); padding: 12px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-    .wallet-info span { font-size: 0.75rem; opacity: 0.9; display: block; }
-    .wallet-info strong { font-size: 1.2rem; font-weight: 700; }
-    .btn-withdraw { background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+    .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0 5px; }
+
+    /* Header Menu Dropdown */
+    .menu-dropdown { position: absolute; top: 60px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 200px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000; display: none; overflow: hidden; }
+    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+    .menu-item:hover { background: var(--border); }
+    .menu-item:last-child { border-bottom: none; }
 
     .container { padding: 16px; }
     .tab-content { display: none; }
@@ -163,6 +168,21 @@
     .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
     .modal-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 24px; padding: 24px; color: white; }
 
+    /* Profile Submenu */
+    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); }
+    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; transition: 0.2s; color: var(--text-dim); }
+    .profile-menu-item.active { background: var(--primary); color: white; }
+    .profile-sub-tab { display: none; animation: fadeIn 0.3s; }
+    .profile-sub-tab.active { display: block; }
+
+    /* Coin Dashboard */
+    .coin-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .stat-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
+    .stat-box span { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 5px; }
+    .stat-box strong { font-size: 1.1rem; color: var(--accent); }
+    .transaction-list { display: flex; flex-direction: column; gap: 10px; }
+    .transaction-item { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border: 1px solid var(--border); }
+
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -221,16 +241,23 @@
   <header>
     <div class="header-top">
       <h1>🇳🇬 NAIJALITE</h1>
-      <span style="font-size: 0.8rem; opacity: 0.9;">Online 🟢</span>
-    </div>
-    <div class="wallet-card">
-      <div class="wallet-info">
-        <span>Available Cash | Coins</span>
-        <strong><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></strong>
+      <div class="header-actions">
+        <div class="wallet-mini">
+          <span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span>
+        </div>
+        <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
       </div>
-      <button class="btn-withdraw" onclick="openModal('withdrawModal')">Withdraw</button>
     </div>
   </header>
+
+  <div id="headerMenu" class="menu-dropdown">
+    <div class="menu-item" onclick="alert('Opening Account Settings...')">Manage account</div>
+    <div class="menu-item" onclick="alert('Opening Privacy Settings...')">Privacy</div>
+    <div class="menu-item" onclick="alert('Opening Notifications...')">Notifications</div>
+    <div class="menu-item" onclick="alert('Opening Verification...')">Verification</div>
+    <div class="menu-item" onclick="alert('Opening Preferences...')">Preferences</div>
+    <div class="menu-item" onclick="alert('Opening Accessibility...')">Accessibility</div>
+  </div>
 
   <div class="container">
     <div id="homeTab" class="tab-content active">
@@ -310,7 +337,29 @@
         <h3 id="userNameDisplay">User Account</h3>
         <p id="userIdDisplay" style="color:var(--text-dim);">Agent ID: Loading...</p>
         
-        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+        <div class="profile-menu">
+          <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
+        </div>
+
+        <div id="profilePosts" class="profile-sub-tab active">
+          <p style="font-size: 0.8rem; color: var(--text-dim);">Your shared posts will appear here.</p>
+        </div>
+        <div id="profileInbox" class="profile-sub-tab">
+          <p style="font-size: 0.8rem; color: var(--text-dim);">Your private messages.</p>
+        </div>
+        <div id="profileCoins" class="profile-sub-tab">
+          <div class="coin-stats">
+            <div class="stat-box"><span>Earned</span><strong id="totalEarned">0</strong></div>
+            <div class="stat-box"><span>Spent</span><strong id="totalSpent">0</strong></div>
+          </div>
+          <div class="transaction-list" id="coinTxList">
+            <p style="font-size: 0.7rem; color: var(--text-dim); text-align:center;">No transactions yet.</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px;">
           <input type="text" id="newUsernameInput" class="auth-input" placeholder="New username...">
           <button class="btn-main" style="background: var(--primary);" onclick="updateUsername()">Update Username</button>
         </div>
@@ -450,6 +499,7 @@
         document.getElementById('userRefLink').textContent = window.location.origin + window.location.pathname + '?ref=' + agentId;
         updateUI();
         await loadSuggestedUsers();
+        await loadCoinDashboard();
       } catch (err) { console.error(err); }
     }
 
@@ -478,6 +528,30 @@
     function updateUI() {
       document.getElementById('walletBalance').textContent = '₦' + currentBalance.toLocaleString();
       document.getElementById('userCoins').textContent = userCoins;
+    }
+
+    async function loadCoinDashboard() {
+      const { data: txs, error } = await supabase.from('coin_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (error) return console.error(error);
+
+      let earned = 0, spent = 0;
+      const list = document.getElementById('coinTxList');
+      if (!txs || txs.length === 0) return;
+
+      txs.forEach(tx => {
+        if (tx.type === 'receive') earned += tx.amount;
+        else spent += tx.amount;
+      });
+
+      document.getElementById('totalEarned').textContent = earned;
+      document.getElementById('totalSpent').textContent = spent;
+
+      list.innerHTML = txs.map(tx => `
+        <div class="transaction-item">
+          <span>${tx.type === 'receive' ? '🟢 Received' : '🔴 Sent'}</span>
+          <strong>${tx.type === 'receive' ? '+' : '-'}${tx.amount} 🟡</strong>
+        </div>
+      `).join('');
     }
 
     async function sendGroupGift(name, cost) {
@@ -527,6 +601,18 @@
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       el.classList.add('active');
+    }
+
+    function switchProfileTab(id, el) {
+      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function toggleHeaderMenu() {
+      const menu = document.getElementById('headerMenu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
