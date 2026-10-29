@@ -6,8 +6,11 @@
   <title>NAIJALITE | Live & Earn</title>
   <meta name="theme-color" content="#008751">
 
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+  <!-- Paystack SDK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
   <style>
@@ -25,6 +28,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
 
+    /* Loading Overlay */
     #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -46,7 +50,7 @@
     .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; }
     .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 
-    /* HEADER & WALLET */
+    /* HEADER */
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
     .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .header-top h1 { font-size: 1.3rem; font-weight: 800; }
@@ -55,12 +59,30 @@
     .wallet-info span { font-size: 0.75rem; opacity: 0.9; display: block; }
     .wallet-info strong { font-size: 1.2rem; font-weight: 700; }
 
-    /* LIVE SECTION */
+    /* MAIN CONTAINER */
+    .container { padding: 16px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* HOME FEED */
+    .feed-container { display: flex; flex-direction: column; gap: 20px; }
+    .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+    .post-media { width: 100%; max-height: 500px; object-fit: cover; background: #000; }
+    .post-content { padding: 15px; }
+    .post-user { font-weight: bold; color: var(--primary); margin-bottom: 5px; display: block; }
+    .post-text { font-size: 0.9rem; color: var(--text); line-height: 1.4; }
+    .post-actions { display: flex; gap: 15px; padding: 10px 15px; border-top: 1px solid var(--border); }
+    .action-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+    .action-btn.active { color: var(--danger); }
+
+    /* LIVE */
     .live-container { position: relative; width: 100%; height: 80vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
     .main-video { width: 100%; height: 100%; object-fit: cover; }
     .live-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
     .overlay-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
     .live-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
+    .guest-slots { display: flex; gap: 10px; margin-top: 10px; }
+    .guest-slot { width: 50px; height: 50px; border-radius: 50%; background: #334155; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; }
     .overlay-bottom { pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
     .chat-area { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; mask-image: linear-gradient(transparent, black 20%); }
     .chat-msg { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); }
@@ -73,6 +95,8 @@
     .gift-item:hover { border-color: var(--accent); background: #1e293b; }
     .gift-item div { font-size: 1.5rem; margin-bottom: 5px; }
     .gift-item span { font-size: 0.7rem; color: var(--accent); font-weight: bold; }
+    .gift-animation { position: absolute; bottom: 100px; right: -100px; font-size: 3rem; pointer-events: none; z-index: 1000; animation: giftFly 3s linear forwards; }
+    @keyframes giftFly { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(-300px, -400px) rotate(360deg); opacity: 0; } }
 
     /* INBOX */
     .inbox-list { display: flex; flex-direction: column; gap: 10px; }
@@ -276,9 +300,7 @@
     <div class="modal-card">
       <h3>🎁 Gift Mall</h3>
       <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 15px;">Choose a gift to send to the host!</p>
-      <div class="gift-grid" id="giftGrid">
-        <!-- Gifts will be injected here -->
-      </div>
+      <div class="gift-grid" id="giftGrid"></div>
       <button class="btn-main" style="background:none; color:white; margin-top:20px;" onclick="closeModal('giftMallModal')">Close</button>
     </div>
   </div>
@@ -366,10 +388,8 @@
         } else {
           const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
           if (existing) return alert('Username already taken.');
-
           const { data, error } = await supabase.auth.signUp({ email: identifier, password });
           if (error) throw error;
-
           const { error: profileError } = await supabase.from('profiles').upsert({ id: data.user.id, username: username });
           if (profileError) throw profileError;
         }
@@ -436,7 +456,6 @@
       document.getElementById('userCoins').textContent = userCoins;
     }
 
-    /* GIFT MALL LOGIC */
     function openGiftMall() {
       const grid = document.getElementById('giftGrid');
       grid.innerHTML = '';
@@ -456,7 +475,6 @@
       try {
         await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
         await supabase.from('coin_transactions').insert([{ sender_id: userId, amount: cost, type: 'gift' }]);
-        
         const anim = document.createElement('div');
         anim.className = 'gift-animation animate__animated animate__fadeInUp';
         anim.textContent = icon;
@@ -477,14 +495,13 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    /* HOME FEED */
     async function loadHomeFeed() {
       const feed = document.getElementById('homeFeed');
       try {
         const { data: posts, error } = await supabase.from('posts').select('*, profiles(username)').order('created_at', { ascending: false });
         if (error) throw error;
         if (!posts || posts.length === 0) {
-          feed.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No posts yet. Be the first!</p>';
+          feed.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No posts yet.</p>';
           return;
         }
         feed.innerHTML = '';
@@ -522,7 +539,6 @@
       } catch (err) { alert('Error: ' + err.message); }
     }
 
-    /* INBOX & COIN SHARING */
     async function loadInbox() {
       const list = document.getElementById('inboxList');
       try {
@@ -552,116 +568,4 @@
     }
 
     async function shareCoins(targetId, targetName) {
-      const amount = prompt(`Enter amount of coins to share with ${targetName}:`);
-      if (!amount || isNaN(amount) || amount <= 0) return;
-      const coinAmount = parseInt(amount);
-
-      if (userCoins < coinAmount) return alert('Insufficient coins!');
-
-      try {
-        // 1. Deduct from sender
-        userCoins -= coinAmount;
-        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
-        
-        // 2. Add to receiver
-        const { data: receiverWallet } = await supabase.from('wallets').select('coin_balance').eq('id', targetId).single();
-        const newReceiverBalance = (receiverWallet?.coin_balance || 0) + coinAmount;
-        await supabase.from('wallets').update({ coin_balance: newReceiverBalance }).eq('id', targetId);
-        
-        // 3. Log transaction
-        await supabase.from('coin_transactions').insert([{ sender_id: userId, receiver_id: targetId, amount: coinAmount, type: 'share' }]);
-        
-        updateUI();
-        alert(`Successfully shared ${coinAmount} coins with ${targetName}!`);
-      } catch (err) { alert('Error: ' + err.message); }
-    }
-
-    /* DASHBOARD LOGIC */
-    async function loadDashboard() {
-      try {
-        const { data: txs } = await supabase.from('coin_transactions').select('amount').eq('sender_id', userId);
-        const totalSpent = txs ? txs.reduce((acc, curr) => acc + curr.amount, 0) : 0;
-        document.getElementById('spentCoins').textContent = totalSpent;
-        
-        const { data: earnedTxs } = await supabase.from('coin_transactions').select('amount').eq('receiver_id', userId);
-        const totalEarned = earnedTxs ? earnedTxs.reduce((acc, curr) => acc + curr.amount, 0) : 0;
-        document.getElementById('earnedCoins').textContent = totalEarned;
-      } catch (err) { console.error(err); }
-    }
-
-    async function toggleGroupStream() {
-      const btn = document.getElementById('btnStreamToggle');
-      const video = document.getElementById('hostVideo');
-      if (btn.textContent === 'Start Live') {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-          video.srcObject = stream;
-          btn.textContent = 'End Live';
-          btn.style.background = 'var(--danger)';
-        } catch (err) { alert('Camera access required.'); }
-      } else {
-        if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-        video.srcObject = null;
-        btn.textContent = 'Start Live';
-        btn.style.background = 'var(--primary)';
-      }
-    }
-
-    function switchTab(id, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      el.classList.add('active');
-    }
-
-    function openModal(id) { 
-      if(id === 'giftMallModal') openGiftMall();
-      document.getElementById(id).style.display = 'flex'; 
-    }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function payWithPaystack() {
-      const email = document.getElementById('userEmail').value;
-      const amount = parseInt(document.getElementById('coinPack').value);
-      if (!email) return alert('Email required');
-
-      const btn = document.getElementById('payBtn');
-      const originalText = btn.textContent;
-      btn.textContent = 'Processing...';
-      btn.disabled = true;
-
-      PaystackPop.setup({
-        key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', 
-        email, 
-        amount: amount * 100, 
-        currency: "NGN",
-        callback: async () => {
-          userCoins += Math.floor(amount/10);
-          await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
-          updateUI();
-          closeModal('coinModal');
-          alert('Payment successful!');
-        },
-        onClose: () => {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      }).openIframe();
-    }
-
-    function openWhatsApp() {
-      let num = document.getElementById('waPhone').value.trim();
-      if (!num) return;
-      if (num.startsWith('0')) num = num.substring(1);
-      window.open('https://wa.me/234' + num, '_blank');
-    }
-
-    function copyRefLink() {
-      navigator.clipboard.writeText(document.getElementById('userRefLink').textContent);
-      alert('Link Copied!');
-    }
-
-    window.onload = initSupabase;
-  </script>
-</body>
-</html>
+      const amount =
