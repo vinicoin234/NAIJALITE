@@ -129,7 +129,6 @@
   <div id="authScreen">
     <div class="auth-wrapper">
       <div class="auth-logo-container">
-        <!-- UPDATED DIRECT LOGO LINK -->
         <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" alt="NAIJALITE Logo" class="auth-logo" onerror="this.src='https://flagcdn.com/w160/ng.png'">
       </div>
       <h2 class="auth-title">NAIJALITE</h2>
@@ -142,7 +141,11 @@
 
       <div class="auth-card">
         <div class="auth-input-group">
-          <label>Username, Email, or Phone</label>
+          <label>Username</label>
+          <input type="text" id="authUsername" class="auth-input" placeholder="Choose a unique username...">
+        </div>
+        <div class="auth-input-group">
+          <label>Email or Phone</label>
           <input type="text" id="authEmail" class="auth-input" placeholder="Enter your details...">
         </div>
         <div class="auth-input-group">
@@ -300,17 +303,24 @@
     }
 
     async function handleAuth() {
+      const username = document.getElementById('authUsername').value;
       const identifier = document.getElementById('authEmail').value;
       const password = document.getElementById('authPass').value;
-      if (!identifier || !password) return alert('Please fill in all fields');
+      if (!username || !identifier || !password) return alert('Please fill in all fields');
 
       try {
         if (isLoginMode) {
           const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
           if (error) throw error;
         } else {
+          const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
+          if (existing) return alert('Username already taken. Please choose another.');
+
           const { data, error } = await supabase.auth.signUp({ email: identifier, password });
           if (error) throw error;
+
+          const { error: profileError } = await supabase.from('profiles').upsert({ id: data.user.id, username: username });
+          if (profileError) throw profileError;
         }
         checkSession();
       } catch (error) {
@@ -337,8 +347,10 @@
     async function initHub() {
       agentId = 'NL-' + Math.floor(100000 + Math.random() * 900000);
       try {
-        await supabase.from('profiles').upsert({ id: userId, agent_id: agentId });
+        const { data: profile } = await supabase.from('profiles').select('username').eq('id', userId).single();
+        await supabase.from('profiles').upsert({ id: userId, agent_id: agentId, username: profile?.username || 'User_' + agentId });
         await fetchWallet();
+        document.getElementById('userNameDisplay').textContent = profile?.username || 'User_' + agentId;
         document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
         document.getElementById('userRefLink').textContent = window.location.origin + window.location.pathname + '?ref=' + agentId;
         updateUI();
@@ -417,13 +429,27 @@
       const email = document.getElementById('userEmail').value;
       const amount = parseInt(document.getElementById('coinPack').value);
       if (!email) return alert('Email required');
+
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+
       PaystackPop.setup({
-        key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', email, amount: amount * 100, currency: "NGN",
+        key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', 
+        email, 
+        amount: amount * 100, 
+        currency: "NGN",
         callback: async () => {
           userCoins += Math.floor(amount/10);
           await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
           updateUI();
           closeModal('coinModal');
+          alert('Payment successful! Your coins have been added.');
+        },
+        onClose: () => {
+          btn.textContent = originalText;
+          btn.disabled = false;
         }
       }).openIframe();
     }
