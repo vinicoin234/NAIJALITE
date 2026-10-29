@@ -140,7 +140,8 @@
       </div>
 
       <div class="auth-card">
-        <div class="auth-input-group">
+        <!-- USERNAME FIELD: ONLY VISIBLE DURING SIGNUP -->
+        <div class="auth-input-group" id="usernameGroup" style="display: none;">
           <label>Username</label>
           <input type="text" id="authUsername" class="auth-input" placeholder="Choose a unique username...">
         </div>
@@ -300,19 +301,28 @@
       document.getElementById('tabLogin').classList.toggle('active', isLoginMode);
       document.getElementById('tabSignup').classList.toggle('active', !isLoginMode);
       document.getElementById('btnAuthAction').textContent = isLoginMode ? 'Login' : 'Sign Up';
+      
+      // Toggle username field visibility
+      document.getElementById('usernameGroup').style.display = isLoginMode ? 'none' : 'block';
     }
 
     async function handleAuth() {
       const username = document.getElementById('authUsername').value;
       const identifier = document.getElementById('authEmail').value;
       const password = document.getElementById('authPass').value;
-      if (!username || !identifier || !password) return alert('Please fill in all fields');
+      
+      if (isLoginMode) {
+        if (!identifier || !password) return alert('Please fill in all fields');
+      } else {
+        if (!username || !identifier || !password) return alert('Please fill in all fields');
+      }
 
       try {
         if (isLoginMode) {
           const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
           if (error) throw error;
         } else {
+          // Check if username is taken
           const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
           if (existing) return alert('Username already taken. Please choose another.');
 
