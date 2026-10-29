@@ -29,7 +29,7 @@
     body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
 
     /* Loading Overlay */
-    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.5s; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -131,7 +131,7 @@
 
   <div id="loadingScreen">
     <div class="spinner"></div>
-    <p>Loading NAIJALITE...</p>
+    <p id="loadingText">Connecting to Hub...</p>
   </div>
 
   <!-- Auth Screen -->
@@ -295,7 +295,6 @@
     </div>
   </div>
 
-  <!-- GIFT MALL MODAL -->
   <div id="giftMallModal" class="modal-bg">
     <div class="modal-card">
       <h3>🎁 Gift Mall</h3>
@@ -305,7 +304,6 @@
     </div>
   </div>
 
-  <!-- POST MODAL -->
   <div id="postModal" class="modal-bg">
     <div class="modal-card">
       <h3>🚀 Create Post</h3>
@@ -352,13 +350,26 @@
     ];
 
     async function initSupabase() {
+      // Force loading screen to disappear after 6 seconds regardless of result
+      const forceHideTimeout = setTimeout(() => {
+        document.getElementById('loadingScreen').style.display = 'none';
+      }, 6000);
+
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Test if we can actually talk to Supabase
+        const { error } = await supabase.from('profiles').select('id').limit(1);
+        
+        if (error) throw error;
+        
         document.getElementById('loadingScreen').style.display = 'none';
+        clearTimeout(forceHideTimeout);
         checkSession();
       } catch (e) {
         console.error('Supabase Init Error:', e);
-        document.getElementById('loadingScreen').innerHTML = '<p style="color:red">Failed to connect to database.</p>';
+        document.getElementById('loadingText').innerHTML = `<span style="color:var(--danger)">Connection Error: ${e.message}</span>`;
+        // We don't force hide immediately so user sees the error
       }
     }
 
@@ -568,4 +579,110 @@
     }
 
     async function shareCoins(targetId, targetName) {
-      const amount =
+      const amount = prompt(`Enter amount of coins to share with ${targetName}:`);
+      if (!amount || isNaN(amount) || amount <= 0) return;
+      const coinAmount = parseInt(amount);
+      if (userCoins < coinAmount) return alert('Insufficient coins!');
+      try {
+        userCoins -= coinAmount;
+        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+        const { data: rec } = await supabase.from('wallets').select('coin_balance').eq('id', targetId).single();
+        await supabase.from('wallets').update({ coin_balance: (rec?.coin_balance || 0) + coinAmount }).eq('id', targetId);
+        await supabase.from('coin_transactions').insert([{ sender_id: userId, receiver_id: targetId, amount: coinAmount, type: 'share' }]);
+        updateUI();
+        alert(`Shared ${coinAmount} coins with ${targetName}!`);
+      } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    async function loadDashboard() {
+      try {
+        const { data: spent } = await supabase.from('coin_transactions').select('amount').eq('sender_id', userId);
+        document.getElementById('spentCoins').textContent = spent ? spent.reduce((a, b) => a + b.amount, 0) : 0;
+        const { data: earned } = await supabase.from('coin_transactions').select('amount').eq('receiver_id', userId);
+        document.getElementById('earnedCoins').textContent = earned ? earned.reduce((a, b) => a + b.amount, 0) : 0;
+      } catch (err) { console.error(err); }
+    }
+
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const video = document.getElementById('hostVideo');
+      if (btn.textContent === 'Start Live') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          video.srcObject = stream;
+          btn.textContent = 'End Live';
+          btn.style.background = 'var(--danger)';
+        } catch (err) { alert('Camera access required.'); }
+      } else {
+        if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+        btn.textContent = 'Start Live';
+        btn.style.background = 'var(--primary)';
+      }
+    }
+
+    function switchTab(id, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function openModal(id) { 
+      if(id === 'giftMallModal') openGiftMall();
+      document.getElementById(id).style.display = 'flex'; 
+    }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function payWithPaystack() {
+      const email = document.getElementById('userEmail').value;
+      const amount = parseInt(document.getElementById('coinPack').value);
+      if (!email) return alert('Email required');
+
+      const payBtn = document.getElementById('payBtn');
+      const originalText = payBtn.textContent;
+      payBtn.textContent = 'Processing...';
+      payBtn.disabled = true;
+
+      try {
+        PaystackPop.setup({
+          key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', 
+          email: email, 
+          amount: amount * 100, 
+          currency: "NGN",
+          callback: async (res) => {
+            userCoins += Math.floor(amount / 10);
+            await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+            updateUI();
+            closeModal('coinModal');
+            alert('Payment successful!');
+          },
+          onClose: () => {
+            payBtn.textContent = originalText;
+            payBtn.disabled = false;
+          }
+        });
+        PaystackPop.openIframe();
+      } catch (err) {
+        alert('Payment Error. Try again.');
+        payBtn.textContent = originalText;
+        payBtn.disabled = false;
+      }
+    }
+
+    function openWhatsApp() {
+      let num = document.getElementById('waPhone').value.trim();
+      if (!num) return;
+      if (num.startsWith('0')) num = num.substring(1);
+      window.open('https://wa.me/234' + num, '_blank');
+    }
+
+    function copyRefLink() {
+      navigator.clipboard.writeText(document.getElementById('userRefLink').textContent);
+      alert('Link Copied!');
+    }
+
+    window.onload = initSupabase;
+  </script>
+</body>
+</html>
