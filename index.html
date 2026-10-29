@@ -2,98 +2,115 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>NAIJALITE | Live, Post & Earn</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NAIJALITE | Live & Earn</title>
   <meta name="theme-color" content="#008751">
 
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+  <!-- Paystack SDK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
   <style>
     :root {
-      --primary: #008751; --primary-dark: #006b40; --accent: #ffc107; --danger: #ff4757;
-      --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
+      --primary: #008751;
+      --primary-dark: #006b40;
+      --accent: #ffc107;
+      --danger: #ff4757;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: #334155;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-      background: var(--bg); color: var(--text); 
-      height: 100svh; width: 100vw; 
-      max-width: 480px; margin: 0 auto; 
-      overflow: hidden; display: flex; flex-direction: column;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
 
-    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    /* Loading Overlay */
+    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* AUTH */
-    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .auth-wrapper { width: 100%; max-width: 340px; text-align: center; }
-    .auth-logo { width: 100px; height: 100px; border-radius: 20px; object-fit: cover; border: 3px solid var(--primary); background: white; margin-bottom: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; border: 1px solid var(--border); }
-    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; font-size: 1rem; }
-    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+    /* --- COMPACT AUTH SCREEN --- */
+    #authScreen { 
+      position: fixed; inset: 0; background: var(--bg); z-index: 2000; 
+      display: none; flex-direction: column; align-items: center; justify-content: center; 
+      padding: 20px;
+    }
+    .auth-wrapper { 
+      width: 100%; max-width: 340px; text-align: center; 
+      animation: fadeIn 0.5s;
+    }
+    .auth-logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
+    .auth-logo { 
+      width: 80px; height: 80px; border-radius: 20px; 
+      object-fit: cover; 
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      animation: bounceIn 1s;
+      border: 2px solid var(--primary);
+      background: white;
+    }
+    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; letter-spacing: 1px; }
+    .auth-subtitle { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px; }
+    
+    .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: 0.3s; color: var(--text-dim); }
+    .auth-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,135,81,0.3); }
 
-    /* HEADER */
-    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; z-index: 100; shrink: 0; }
-    .wallet-card { background: rgba(255, 255, 255, 0.15); padding: 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
+    .auth-card { 
+      background: var(--card); padding: 24px; border-radius: 24px; width: 100%; 
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); border: 1px solid var(--border); 
+    }
+    .auth-input-group { position: relative; margin-bottom: 15px; text-align: left; }
+    .auth-input-group label { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px; margin-left: 4px; font-weight: 600; }
+    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; font-size: 0.95rem; transition: 0.3s; }
+    .auth-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,135,81,0.2); }
+    
+    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; transition: 0.3s; }
+    .btn-auth:active { transform: scale(0.97); background: var(--primary-dark); }
+    
+    .auth-footer { margin-top: 15px; font-size: 0.8rem; color: var(--text-dim); }
+    .auth-footer span { color: var(--accent); font-weight: bold; cursor: pointer; }
 
-    /* MAIN CONTENT */
-    .main-content { flex: 1; overflow-y: auto; padding: 16px; position: relative; padding-bottom: 80px; }
-    .tab-content { display: none; height: 100%; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s; }
+    /* --- MAIN HUB --- */
+    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .header-top h1 { font-size: 1.3rem; font-weight: 800; }
+    .wallet-card { background: rgba(255, 255, 255, 0.15); padding: 12px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    .wallet-info span { font-size: 0.75rem; opacity: 0.9; display: block; }
+    .wallet-info strong { font-size: 1.2rem; font-weight: 700; }
+    .btn-withdraw { background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
 
-    /* POST WALL (TikTok Style) */
-    .post-wall { display: flex; flex-direction: column; gap: 20px; }
-    .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); animation: fadeInUp 0.4s; }
-    .post-header { padding: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
-    .post-user-pic { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
-    .post-media { width: 100%; background: #000; display: flex; justify-content: center; }
-    .post-media img, .post-media video { width: 100%; max-height: 500px; object-fit: cover; }
-    .post-body { padding: 15px; }
-    .post-text { font-size: 0.95rem; margin-bottom: 10px; line-height: 1.4; }
-    .post-footer { padding: 10px 15px; display: flex; justify-content: space-between; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); }
+    .container { padding: 16px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
-    /* LIVE STREAMING */
-    .live-container { position: relative; width: 100%; height: 65vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
+    /* TIKTOK LIVE */
+    .live-container { position: relative; width: 100%; height: 80vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
     .main-video { width: 100%; height: 100%; object-fit: cover; }
     .live-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
-    .overlay-top, .overlay-bottom { pointer-events: auto; }
-    .chat-area { height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; mask-image: linear-gradient(transparent, black 20%); }
-    .chat-msg { background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); animation: fadeInUp 0.3s; }
-    .action-bar { display: flex; align-items: center; gap: 10px; }
-    .chat-input { flex: 1; padding: 12px 15px; border-radius: 25px; border: none; background: rgba(255,255,255,0.2); color: white; outline: none; font-size: 1rem; }
-    .gift-mall-btn { width: 45px; height: 45px; border-radius: 50%; background: var(--accent); border: none; font-size: 1.5rem; cursor: pointer; }
+    .overlay-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
+    .live-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
+    .guest-slots { display: flex; gap: 10px; margin-top: 10px; }
+    .guest-slot { width: 50px; height: 50px; border-radius: 50%; background: #334155; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; }
+    .overlay-bottom { pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
+    .chat-area { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; mask-image: linear-gradient(transparent, black 20%); }
+    .chat-msg { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); animation: fadeInUp 0.3s; }
+    .action-bar { display: flex; align-items: center; gap: 12px; }
+    .gift-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; backdrop-filter: blur(10px); }
 
-    /* INBOX */
-    .inbox-list { display: flex; flex-direction: column; gap: 2px; }
-    .chat-preview { background: var(--card); padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-bottom: 1px solid #2a364a; }
-    .avatar-circle { width: 50px; height: 50px; border-radius: 50%; background: #334155; object-fit: cover; }
-    .chat-info { flex: 1; overflow: hidden; }
-    .chat-info h4 { font-size: 0.95rem; margin-bottom: 2px; }
-    .chat-info p { font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gift-animation { position: absolute; bottom: 100px; right: -100px; font-size: 3rem; pointer-events: none; z-index: 1000; animation: giftFly 3s linear forwards; }
+    @keyframes giftFly { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(-300px, -400px) rotate(360deg); opacity: 0; } }
 
-    .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
-    .chat-header { background: var(--card); padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .msg { padding: 10px 15px; border-radius: 15px; max-width: 75%; font-size: 0.9rem; }
-    .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
-    .msg.received { align-self: flex-start; background: var(--card); color: white; border-bottom-left-radius: 2px; }
-
-    /* PROFILE */
-    .profile-header { text-align: center; padding: 20px 0; }
-    .profile-pic-container { position: relative; width: 110px; height: 110px; margin: 0 auto 15px; }
-    .profile-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); }
-    .emoji-reaction { position: absolute; bottom: 0; right: 0; background: white; border-radius: 50%; padding: 5px; cursor: pointer; font-size: 1.2rem; }
-
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; height: 65px; }
-    .nav-item { flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; }
+    .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; }
+    .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; }
     .nav-item.active { color: var(--primary); }
-    .nav-item div { font-size: 1.3rem; margin-bottom: 2px; }
-
-    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+    .nav-item div { font-size: 1.3rem; margin-bottom: 4px; }
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
     .modal-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 24px; padding: 24px; color: white; }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -108,193 +125,197 @@
     <p>Loading NAIJALITE...</p>
   </div>
 
+  <!-- TikTok-Style Auth Screen -->
   <div id="authScreen">
     <div class="auth-wrapper">
-      <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo">
-      <h2 class="auth-title" style="font-size:1.6rem; font-weight:800; color:white; margin-bottom:5px;">NAIJALITE</h2>
-      <p class="auth-subtitle" style="color:var(--text-dim); font-size:0.85rem; margin-bottom:20px;">Live, Post & Earn</p>
+      <div class="auth-logo-container">
+        <!-- UPDATED DIRECT LOGO LINK -->
+        <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" alt="NAIJALITE Logo" class="auth-logo" onerror="this.src='https://flagcdn.com/w160/ng.png'">
+      </div>
+      <h2 class="auth-title">NAIJALITE</h2>
+      <p class="auth-subtitle">Join the community and earn rewards!</p>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
+        <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
+      </div>
+
       <div class="auth-card">
-        <input type="text" id="authEmail" class="auth-input" placeholder="Email, Phone or Username">
-        <input type="password" id="authPass" class="auth-input" placeholder="Password">
-        <button class="btn-auth" onclick="handleAuth()">Login / Sign Up</button>
+        <div class="auth-input-group">
+          <label>Username, Email, or Phone</label>
+          <input type="text" id="authEmail" class="auth-input" placeholder="Enter your details...">
+        </div>
+        <div class="auth-input-group">
+          <label>Password</label>
+          <input type="password" id="authPass" class="auth-input" placeholder="••••••••">
+        </div>
+        
+        <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+        
+        <div class="auth-footer">
+          <span id="forgotPass" style="display:block; margin-bottom:10px;">Forgot password?</span>
+          <div id="authFooterText">
+            By continuing, you agree to our <span style="color:var(--primary)">Terms of Service</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <header>
-    <div class="header-top" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h1 style="font-size:1.3rem; font-weight:800;">🇳🇬 NAIJALITE</h1>
+    <div class="header-top">
+      <h1>🇳🇬 NAIJALITE</h1>
       <span style="font-size: 0.8rem; opacity: 0.9;">Online 🟢</span>
     </div>
     <div class="wallet-card">
       <div class="wallet-info">
-        <span style="font-size: 0.75rem; opacity: 0.9; display: block;">Balance | Coins</span>
-        <strong id="walletBalance">₦0.00</strong> | 🟡 <strong id="userCoins">0</strong>
+        <span>Available Cash | Coins</span>
+        <strong><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></strong>
       </div>
-      <button class="btn-withdraw" style="background:var(--accent); color:#000; border:none; padding:8px 14px; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="openModal('coinModal')">Top Up</button>
+      <button class="btn-withdraw" onclick="openModal('withdrawModal')">Withdraw</button>
     </div>
   </header>
 
-  <div class="main-content">
-    <!-- POST WALL TAB -->
-    <div id="postTab" class="tab-content active">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h3 style="font-size:1.2rem;">Public Wall</h3>
-        <button onclick="openModal('createPostModal')" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:12px; font-weight:bold; cursor:pointer;">+ Post</button>
-      </div>
-      <div class="post-wall" id="postWall">
-        <p style="text-align:center; color:var(--text-dim);">Loading the vibe...</p>
-      </div>
-    </div>
-
-    <!-- LIVE TAB -->
-    <div id="liveTab" class="tab-content">
+  <div class="container">
+    <div id="liveTab" class="tab-content active">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
         <div class="live-overlay">
-          <div class="overlay-top" style="display:flex; justify-content:space-between;">
-            <div class="live-badge" style="background:var(--danger); color:white; padding:4px 12px; border-radius:6px; font-size:0.7rem; font-weight:bold; animation:pulse 1.5s infinite;">🔴 LIVE</div>
-            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem;" onclick="shareStream()">📤 Share</button>
+          <div class="overlay-top">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="live-badge">🔴 LIVE</div>
+              <div class="guest-slots">
+                <div class="guest-slot">👤</div><div class="guest-slot">👤</div><div class="guest-slot">👤</div>
+              </div>
+            </div>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer;" onclick="openModal('coinModal')">+ Buy Coins</button>
           </div>
           <div class="overlay-bottom">
-            <div class="chat-area" id="chatArea"></div>
+            <div class="chat-area" id="chatArea">
+              <div class="chat-msg"><b style="color:var(--accent)">System:</b> Welcome to the room! 🚀</div>
+            </div>
             <div class="action-bar">
-              <div class="chat-input-wrapper" style="flex:1; display:flex; gap:10px;">
-                <input type="text" id="chatInput" class="chat-input" placeholder="Say something..." onclick="this.focus()">
-              </div>
-              <button class="gift-mall-btn" onclick="openModal('giftMallModal')">🎁</button>
+              <input type="text" id="chatInput" style="flex:1; padding:10px; border-radius:20px; border:none; background:rgba(255,255,255,0.2); color:white;" placeholder="Say something...">
+              <button class="gift-btn" onclick="sendGroupGift('Rose 🌹', 10)">🌹</button>
+              <button class="gift-btn" onclick="sendGroupGift('Crown 👑', 50)">👑</button>
+              <button class="gift-btn" onclick="sendGroupGift('Car 🏎️', 200)">🏎️</button>
+              <button class="gift-btn" onclick="sendGroupGift('Lion 🦁', 500)">🦁</button>
             </div>
           </div>
         </div>
       </div>
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <button class="btn-main" id="btnStreamToggle" onclick="toggleStream()" style="flex:1; padding:14px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">Start Live</button>
-        <button class="btn-main" id="btnJoinStage" onclick="joinStage()" style="flex:1; padding:14px; background:#3182ce; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">Join Stage</button>
+        <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
+        <button class="btn-main" style="background: #3182ce;" onclick="joinAsCoHost()">Join Stage</button>
       </div>
     </div>
 
-    <!-- INBOX TAB -->
-    <div id="inboxTab" class="tab-content">
-      <h3 style="margin-bottom:15px;">Messages</h3>
-      <div class="inbox-list" id="inboxList">
-        <p style="text-align:center; color:var(--text-dim); margin-top:20px;">Loading conversations...</p>
-      </div>
-    </div>
-
-    <!-- EARN TAB -->
     <div id="earnTab" class="tab-content">
-      <div class="card" style="background:var(--card); padding:20px; border-radius:20px; border:1px solid var(--border);">
-        <h3 style="margin-bottom:15px; text-align:center; color:var(--accent);">🏆 Top Gifters</h3>
-        <div id="leaderboardList"></div>
+      <div class="card">
+        <span class="badge">🎁 Referral Bonus</span>
+        <h3>Invite & Earn ₦200</h3>
+        <p>Get rewarded for every friend who joins!</p>
+        <div style="background:#0f172a; padding:15px; border-radius:12px; text-align:center; border:1px dashed var(--accent);">
+          <div id="userRefLink" style="font-weight:bold; margin-bottom:10px; word-break:break-all;">Generating...</div>
+          <button class="btn-main" onclick="copyRefLink()">Copy Link</button>
+        </div>
       </div>
     </div>
 
-    <!-- PROFILE TAB -->
+    <div id="utilsTab" class="tab-content">
+      <div class="card">
+        <h3>WhatsApp Direct</h3>
+        <p>Chat without saving contacts.</p>
+        <input type="tel" id="waPhone" class="auth-input" placeholder="080...">
+        <button class="btn-main" onclick="openWhatsApp()">Open Chat</button>
+      </div>
+    </div>
+
     <div id="profileTab" class="tab-content">
-      <div class="profile-header">
-        <div class="profile-pic-container">
-          <img src="https://via.placeholder.com/120" id="myProfilePic" class="profile-pic">
-          <div class="emoji-reaction" onclick="reactPhoto('❤️')">❤️</div>
-        </div>
-        <h3 id="userNameDisplay">Loading...</h3>
-        <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.8rem;"></p>
-        <div style="margin-top:15px;">
-          <label class="btn-main" style="display:inline-block; width:auto; padding:8px 20px; cursor:pointer; font-size:0.8rem; background:var(--primary); color:white; border-radius:12px; font-weight:bold;">
-            Upload Photo <input type="file" id="picUpload" style="display:none" onchange="uploadPhoto(this)">
-          </label>
-        </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
+        <h3 id="userNameDisplay">User Account</h3>
+        <p id="userIdDisplay" style="color:var(--text-dim);">Agent ID: Loading...</p>
+        <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
       </div>
     </div>
   </div>
 
   <!-- MODALS -->
-  <div id="createPostModal" class="modal-bg">
+  <div id="withdrawModal" class="modal-bg">
     <div class="modal-card">
-      <h3>📝 Create Post</h3>
-      <textarea id="postContent" class="auth-input" style="height:100px; resize:none;" placeholder="What's on your mind?"></textarea>
-      <input type="text" id="postMedia" class="auth-input" placeholder="Image/Video URL (Optional)">
-      <select id="postVisibility" class="auth-input">
-        <option value="public">Public Wall</option>
-        <option value="profile">My Profile Only</option>
-      </select>
-      <button class="btn-auth" onclick="submitPost()">Post Now</button>
-      <button class="btn-auth" style="margin-top:10px; background:none; color:white;" onclick="closeModal('createPostModal')">Cancel</button>
-    </div>
-  </div>
-
-  <div id="giftMallModal" class="modal-bg">
-    <div class="modal-card">
-      <h3 style="margin-bottom:10px;">🎁 Gift Mall</h3>
-      <div class="gift-grid" id="giftGrid"></div>
-      <button class="btn-auth" style="margin-top:20px; background:var(--border);" onclick="closeModal('giftMallModal')">Close</button>
+      <h3>🏦 Bank Withdrawal</h3>
+      <label>Select Bank</label>
+      <select id="bankSelect" class="auth-input"><option value="OPay">OPay</option><option value="Moniepoint">Moniepoint</option><option value="Kuda">Kuda</option></select>
+      <input type="tel" id="accountNum" class="auth-input" maxlength="10" placeholder="Account Number">
+      <button class="btn-main" onclick="submitWithdrawal()">Confirm Withdrawal</button>
+      <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('withdrawModal')">Cancel</button>
     </div>
   </div>
 
   <div id="coinModal" class="modal-bg">
     <div class="modal-card">
-      <h3 style="margin-bottom:10px;">🪙 Buy Coins</h3>
-      <select id="coinPack" class="auth-input" style="width:100%; padding:12px; background:#0f172a; border:1px solid var(--border); border-radius:12px; color:white; margin-bottom:15px;">
-        <option value="1000">100 Coins - ₦1,000</option>
-        <option value="2500">260 Coins - ₦2,500</option>
-        <option value="5000">550 Coins - ₦5,000</option>
-      </select>
-      <input type="email" id="userEmail" class="auth-input" placeholder="Email" style="width:100%; padding:12px; background:#0f172a; border:1px solid var(--border); border-radius:12px; color:white; margin-bottom:15px;">
-      <button class="btn-auth" onclick="payWithPaystack()">Pay Now</button>
-      <button class="btn-auth" style="margin-top:10px; background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
-    </div>
-  </div>
-
-  <div id="chatWindow" class="chat-window">
-    <div class="chat-header">
-      <button onclick="closeChat()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">←</button>
-      <img src="https://via.placeholder.com/40" class="avatar-circle">
-      <div style="flex:1;">
-        <h4 id="chatTargetName">User</h4>
-        <span style="font-size:0.7rem; color:var(--primary);">Online</span>
-      </div>
-      <div style="display:flex; gap:15px; font-size:1.2rem; cursor:pointer;">
-        <span>📞</span><span>📹</span>
-      </div>
-    </div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="action-bar" style="padding:15px; background:var(--card); border-top:1px solid var(--border);">
-      <input type="text" id="privateChatInput" class="chat-input" placeholder="Type a message..." onclick="this.focus()">
-      <button onclick="sendPrivateMessage()" style="background:var(--primary); color:white; border:none; padding:10px 15px; border-radius:20px; cursor:pointer; font-weight:bold;">Send</button>
+      <h3>🪙 Buy Coins</h3>
+      <select id="coinPack" class="auth-input"><option value="1000">100 Coins - ₦1,000</option><option value="2500">260 Coins - ₦2,500</option><option value="5000">550 Coins - ₦5,000</option></select>
+      <input type="email" id="userEmail" class="auth-input" placeholder="Email">
+      <button class="btn-main" onclick="payWithPaystack()">Pay with Paystack</button>
+      <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('coinModal')">Cancel</button>
     </div>
   </div>
 
   <div class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('postTab', this)"><div>🌍</div>Post</div>
-    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
-    <div class="nav-item" onclick="switchTab('inboxTab', this)"><div>💬</div>Inbox</div>
+    <div class="nav-item active" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
     <div class="nav-item" onclick="switchTab('earnTab', this)"><div>🎯</div>Earn</div>
+    <div class="nav-item" onclick="switchTab('utilsTab', this)"><div>🛠️</div>Utils</div>
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
   </div>
 
   <script>
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
-    let supabase, userId, agentId;
-    let isStreaming = false;
-    let isOnStage = false;
-    let currentChatUser = null;
+    
+    let supabase;
+    let isLoginMode = true;
+    let currentBalance = 0;
     let userCoins = 0;
-
-    const gifts = [
-      { name: 'Rose 🌹', cost: 10 }, { name: 'Crown 👑', cost: 50 },
-      { name: 'Car 🏎️', cost: 200 }, { name: 'Lion 🦁', cost: 500 },
-      { name: 'Diamond 💎', cost: 1000 }, { name: 'Jet ✈️', cost: 5000 }
-    ];
-
-    const giftSound = new Audio('https://www.myinstants.com/media/sounds/cash-register-purchase.mp3');
+    let userId = null;
+    let agentId = '';
 
     async function initSupabase() {
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         document.getElementById('loadingScreen').style.display = 'none';
         checkSession();
-        setupRealtimeChat();
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error('Supabase Init Error:', e);
+        document.getElementById('loadingScreen').innerHTML = '<p style="color:red">Failed to connect to database. Please refresh.</p>';
+      }
+    }
+
+    function setAuthMode(mode) {
+      isLoginMode = (mode === 'login');
+      document.getElementById('tabLogin').classList.toggle('active', isLoginMode);
+      document.getElementById('tabSignup').classList.toggle('active', !isLoginMode);
+      document.getElementById('btnAuthAction').textContent = isLoginMode ? 'Login' : 'Sign Up';
+    }
+
+    async function handleAuth() {
+      const identifier = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPass').value;
+      if (!identifier || !password) return alert('Please fill in all fields');
+
+      try {
+        if (isLoginMode) {
+          const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
+          if (error) throw error;
+        } else {
+          const { data, error } = await supabase.auth.signUp({ email: identifier, password });
+          if (error) throw error;
+        }
+        checkSession();
+      } catch (error) {
+        alert('Auth Error: ' + error.message);
+      }
     }
 
     async function checkSession() {
@@ -308,238 +329,78 @@
       }
     }
 
-    async function handleAuth() {
-      const email = document.getElementById('authEmail').value;
-      const pass = document.getElementById('authPass').value;
-      if(!email || !pass) return alert('Fill all fields');
-      try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-        if (error) await supabase.auth.signUp({ email, password: pass });
-        location.reload();
-      } catch (e) { alert(e.message); }
+    async function handleLogout() {
+      await supabase.auth.signOut();
+      location.reload();
     }
 
     async function initHub() {
       agentId = 'NL-' + Math.floor(100000 + Math.random() * 900000);
-      await supabase.from('profiles').upsert({ id: userId, agent_id: agentId });
-      await fetchWallet();
-      document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
-      updateUI();
-      loadPostWall();
-      loadInbox();
-      loadProfile();
+      try {
+        await supabase.from('profiles').upsert({ id: userId, agent_id: agentId });
+        await fetchWallet();
+        document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
+        document.getElementById('userRefLink').textContent = window.location.origin + window.location.pathname + '?ref=' + agentId;
+        updateUI();
+      } catch (err) { console.error(err); }
     }
 
     async function fetchWallet() {
       const { data } = await supabase.from('wallets').select('*').eq('id', userId).single();
-      if (data) { userCoins = data.coin_balance; } 
-      else { await supabase.from('wallets').insert([{ id: userId, cash_balance: 1000, coin_balance: 100 }]); userCoins = 100; }
+      if (data) {
+        currentBalance = data.cash_balance;
+        userCoins = data.coin_balance;
+      } else {
+        await supabase.from('wallets').insert([{ id: userId, cash_balance: 1650, coin_balance: 100 }]);
+        currentBalance = 1650; userCoins = 100;
+      }
     }
 
     function updateUI() {
+      document.getElementById('walletBalance').textContent = '₦' + currentBalance.toLocaleString();
       document.getElementById('userCoins').textContent = userCoins;
     }
 
-    /* POST WALL LOGIC */
-    async function loadPostWall() {
-      const { data, error } = await supabase.from('posts').select('*, profiles(username, avatar_url)').eq('visibility', 'public').order('created_at', { ascending: false });
-      const wall = document.getElementById('postWall');
-      wall.innerHTML = '';
-      if(!data || data.length === 0) {
-        wall.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin-top:20px;">No posts yet. Be the first!</p>';
-        return;
-      }
-      data.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'post-card';
-        const mediaHtml = p.media_url ? (p.media_url.match(/\.(jpg|jpeg|png|gif)$/i) ? `<img src="${p.media_url}">` : `<video src="${p.media_url}" controls></video>`) : '';
-        card.innerHTML = `
-          <div class="post-header">
-            <img src="${p.profiles?.avatar_url || 'https://via.placeholder.com/35'}" class="post-user-pic">
-            <strong>${p.profiles?.username || 'User'}</strong>
-          </div>
-          <div class="post-media">${mediaHtml}</div>
-          <div class="post-body"><p class="post-text">${p.content}</p></div>
-          <div class="post-footer">
-            <span>${new Date(p.created_at).toLocaleDateString()}</span>
-            <span style="cursor:pointer; color:var(--primary);" onclick="reactPost('${p.id}')">❤️ Like</span>
-          </div>
-        `;
-        wall.appendChild(card);
-      });
-    }
-
-    async function submitPost() {
-      const content = document.getElementById('postContent').value;
-      const media = document.getElementById('postMedia').value;
-      const visibility = document.getElementById('postVisibility').value;
-      if(!content && !media) return alert('Post cannot be empty');
+    async function sendGroupGift(name, cost) {
+      if (userCoins < cost) return alert('Insufficient coins!');
+      userCoins -= cost;
       try {
-        await supabase.from('posts').insert([{ user_id: userId, content, media_url: media, visibility }]);
-        closeModal('createPostModal');
-        loadPostWall();
-      } catch (e) { alert(e.message); }
+        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+        const anim = document.createElement('div');
+        anim.className = 'gift-animation animate__animated animate__fadeInUp';
+        anim.textContent = name.split(' ')[1] || name;
+        document.querySelector('.live-container').appendChild(anim);
+        addChatMessage(`Sent a ${name}! 🚀`, true);
+        setTimeout(() => anim.remove(), 3000);
+        updateUI();
+      } catch (err) { alert('Error: ' + err.message); }
     }
 
-    /* STREAMING LOGIC */
-    async function toggleStream() {
-      const btn = document.getElementById('btnStreamToggle');
-      const joinBtn = document.getElementById('btnJoinStage');
-      const video = document.getElementById('hostVideo');
+    function addChatMessage(msg, isGift = false) {
+      const chat = document.getElementById('chatArea');
+      const div = document.createElement('div');
+      div.className = 'chat-msg';
+      div.innerHTML = isGift ? `<b style="color:var(--accent)">Gift:</b> ${msg}` : `<b style="color:var(--accent)">You:</b> ${msg}`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
 
-      if (!isStreaming) {
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const video = document.getElementById('hostVideo');
+      if (btn.textContent === 'Start Live') {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
           video.srcObject = stream;
-          isStreaming = true;
           btn.textContent = 'End Live';
           btn.style.background = 'var(--danger)';
-          joinBtn.disabled = true;
-          joinBtn.style.opacity = '0.5';
-        } catch (e) { alert('Camera access required'); }
+        } catch (err) { alert('Camera access required.'); }
       } else {
         if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
         video.srcObject = null;
-        isStreaming = false;
         btn.textContent = 'Start Live';
         btn.style.background = 'var(--primary)';
-        joinBtn.disabled = false;
-        joinBtn.style.opacity = '1';
       }
-    }
-
-    function joinStage() {
-      if (isStreaming) return alert('You cannot join another stage while streaming!');
-      isOnStage = true;
-      document.getElementById('btnJoinStage').textContent = 'Leave Stage';
-      document.getElementById('btnStreamToggle').disabled = true;
-      document.getElementById('btnStreamToggle').style.opacity = '0.5';
-      addChatMessage("You joined the stage! 🎤");
-    }
-
-    function shareStream() {
-      const url = window.location.href;
-      navigator.clipboard.writeText(url);
-      alert('Stream link copied! Share it in the inbox.');
-    }
-
-    /* GIFT MALL */
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='giftMallModal') loadGiftMall(); }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function loadGiftMall() {
-      const grid = document.getElementById('giftGrid');
-      grid.innerHTML = '';
-      gifts.forEach(g => {
-        const div = document.createElement('div');
-        div.className = 'gift-item';
-        div.innerHTML = `<div style="font-size:1.5rem;">${g.name.split(' ')[1] || g.name}</div><div style="color:var(--accent); font-weight:bold; font-size:0.8rem;">🟡 ${g.cost}</div>`;
-        div.onclick = () => sendGift(g);
-        grid.appendChild(div);
-      });
-    }
-
-    async function sendGift(gift) {
-      if (userCoins < gift.cost) return alert('Not enough coins!');
-      giftSound.play().catch(e => {});
-      userCoins -= gift.cost;
-      await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
-      
-      const anim = document.createElement('div');
-      anim.className = 'gift-animation animate__animated animate__fadeInUp';
-      anim.textContent = gift.name;
-      document.querySelector('.live-container').appendChild(anim);
-      setTimeout(() => anim.remove(), 3000);
-      
-      await supabase.from('messages').insert([{ sender_id: userId, content: `Sent a ${gift.name}! 🎁` }]);
-      updateUI();
-      closeModal('giftMallModal');
-    }
-
-    /* REALTIME CHAT */
-    function setupRealtimeChat() {
-      supabase.channel('live_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        const msg = payload.new.content;
-        addChatMessage(msg);
-      }).subscribe();
-    }
-
-    function addChatMessage(msg) {
-      const area = document.getElementById('chatArea');
-      const div = document.createElement('div');
-      div.className = 'chat-msg';
-      div.textContent = msg;
-      area.appendChild(div);
-      area.scrollTop = area.scrollHeight;
-    }
-
-    /* INBOX & MESSAGING */
-    async function loadInbox() {
-      const { data } = await supabase.from('profiles').select('*').neq('id', userId);
-      const list = document.getElementById('inboxList');
-      list.innerHTML = '';
-      if(!data || data.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin-top:20px;">No conversations yet.</p>';
-        return;
-      }
-      data.forEach(u => {
-        const div = document.createElement('div');
-        div.className = 'chat-preview';
-        div.innerHTML = `<img src="${u.avatar_url || 'https://via.placeholder.com/50'}" class="avatar-circle">
-                         <div class="chat-info"><h4>${u.username || 'User'}</h4><p>Tap to chat...</p></div>`;
-        div.onclick = () => openChat(u);
-        list.appendChild(div);
-      });
-    }
-
-    function openChat(user) {
-      currentChatUser = user;
-      document.getElementById('chatTargetName').textContent = user.username || 'User';
-      document.getElementById('chatWindow').style.display = 'flex';
-      loadPrivateMessages(user.id);
-    }
-
-    function closeChat() { document.getElementById('chatWindow').style.display = 'none'; }
-
-    async function loadPrivateMessages(targetId) {
-      const { data } = await supabase.from('messages').select('*').or(`and(sender_id.eq.${userId},receiver_id.eq.${targetId}),and(sender_id.eq.${targetId},receiver_id.eq.${userId})`).order('created_at', { ascending: true });
-      const area = document.getElementById('chatMessages');
-      area.innerHTML = '';
-      (data || []).forEach(m => {
-        const div = document.createElement('div');
-        div.className = `msg ${m.sender_id === userId ? 'sent' : 'received'}`;
-        div.textContent = m.content;
-        area.appendChild(div);
-      });
-      area.scrollTop = area.scrollHeight;
-    }
-
-    async function sendPrivateMessage() {
-      const input = document.getElementById('privateChatInput');
-      const text = input.value.trim();
-      if (!text) return;
-      await supabase.from('messages').insert([{ sender_id: userId, receiver_id: currentChatUser.id, content: text }]);
-      input.value = '';
-      loadPrivateMessages(currentChatUser.id);
-    }
-
-    /* PROFILE SOCIAL */
-    async function loadProfile() {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      if (data) {
-        document.getElementById('userNameDisplay').textContent = data.username || 'User';
-        document.getElementById('myProfilePic').src = data.avatar_url || 'https://via.placeholder.com/120';
-      }
-    }
-
-    async function uploadPhoto(input) {
-      const file = input.files[0];
-      if (!file) return;
-      alert('Photo uploaded successfully!');
-    }
-
-    function reactPhoto(emoji) {
-      alert('Reacted with ' + emoji + ' ❤️');
     }
 
     function switchTab(id, el) {
@@ -547,14 +408,39 @@
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       el.classList.add('active');
-      if (id === 'postTab') loadPostWall();
-      if (id === 'inboxTab') loadInbox();
     }
 
-    window.onload = () => {
-      initSupabase();
-      loadGiftMall();
-    };
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function payWithPaystack() {
+      const email = document.getElementById('userEmail').value;
+      const amount = parseInt(document.getElementById('coinPack').value);
+      if (!email) return alert('Email required');
+      PaystackPop.setup({
+        key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', email, amount: amount * 100, currency: "NGN",
+        callback: async () => {
+          userCoins += Math.floor(amount/10);
+          await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+          updateUI();
+          closeModal('coinModal');
+        }
+      }).openIframe();
+    }
+
+    function openWhatsApp() {
+      let num = document.getElementById('waPhone').value.trim();
+      if (!num) return;
+      if (num.startsWith('0')) num = num.substring(1);
+      window.open('https://wa.me/234' + num, '_blank');
+    }
+
+    function copyRefLink() {
+      navigator.clipboard.writeText(document.getElementById('userRefLink').textContent);
+      alert('Link Copied!');
+    }
+
+    window.onload = initSupabase;
   </script>
 </body>
 </html>
