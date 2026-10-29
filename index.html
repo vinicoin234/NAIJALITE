@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>NAIJALITE | Production</title>
+  <title>NAIJALITE | Live, Chat & Earn</title>
   <meta name="theme-color" content="#008751">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
@@ -31,7 +31,7 @@
     /* AUTH */
     #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .auth-wrapper { width: 100%; max-width: 340px; text-align: center; }
-    .auth-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; border: 2px solid var(--primary); background: white; margin-bottom: 15px; }
+    .auth-logo { width: 100px; height: 100px; border-radius: 20px; object-fit: cover; border: 3px solid var(--primary); background: white; margin-bottom: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
     .auth-card { background: var(--card); padding: 24px; border-radius: 24px; border: 1px solid var(--border); }
     .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; font-size: 1rem; }
     .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; }
@@ -40,10 +40,10 @@
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; z-index: 100; shrink: 0; }
     .wallet-card { background: rgba(255, 255, 255, 0.15); padding: 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
 
-    /* CONTAINER */
-    .main-content { flex: 1; overflow-y: auto; padding: 16px; position: relative; }
-    .tab-content { display: none; height: 100%; }
-    .tab-content.active { display: block; }
+    /* MAIN CONTENT AREA */
+    .main-content { flex: 1; overflow-y: auto; padding: 16px; position: relative; padding-bottom: 80px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s; }
 
     /* LIVE STREAMING */
     .live-container { position: relative; width: 100%; height: 65vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
@@ -105,8 +105,8 @@
   <div id="authScreen">
     <div class="auth-wrapper">
       <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo">
-      <h2 class="auth-title">NAIJALITE</h2>
-      <p class="auth-subtitle">Live, Chat & Earn</p>
+      <h2 class="auth-title" style="font-size:1.6rem; font-weight:800; color:white; margin-bottom:5px;">NAIJALITE</h2>
+      <p class="auth-subtitle" style="color:var(--text-dim); font-size:0.85rem; margin-bottom:20px;">Live, Chat & Earn</p>
       <div class="auth-card">
         <input type="text" id="authEmail" class="auth-input" placeholder="Email, Phone or Username">
         <input type="password" id="authPass" class="auth-input" placeholder="Password">
@@ -158,8 +158,9 @@
 
     <!-- INBOX TAB -->
     <div id="inboxTab" class="tab-content">
+      <h3 style="margin-bottom:15px;">Messages</h3>
       <div class="inbox-list" id="inboxList">
-        <p style="text-align:center; color:var(--text-dim); margin-top:20px;">Loading messages...</p>
+        <p style="text-align:center; color:var(--text-dim); margin-top:20px;">Loading conversations...</p>
       </div>
     </div>
 
@@ -382,7 +383,7 @@
       closeModal('giftMallModal');
     }
 
-    /* REALTIME CHAT & ALERTS */
+    /* REALTIME CHAT */
     function setupRealtimeChat() {
       supabase.channel('live_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const msg = payload.new.content;
@@ -461,7 +462,7 @@
     async function uploadPhoto(input) {
       const file = input.files[0];
       if (!file) return;
-      alert('Photo uploaded successfully! (Linked to Supabase Storage)');
+      alert('Photo uploaded successfully!');
     }
 
     function reactPhoto(emoji) {
