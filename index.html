@@ -1,276 +1,149 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NAIJALITE | Live & Earn (DEBUG MODE)</title>
-  <meta name="theme-color" content="#008751">
+const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
-  <!-- Paystack SDK -->
-  <script src="https://js.paystack.co/v1/inline.js"></script>
-  <!-- Animate.css -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+let supabase;
+let userId = null;
+let currentAuthMode = 'login'; // Track auth mode
 
-  <style>
-    :root {
-      --primary: #008751; --primary-dark: #006b40; --accent: #ffc107; --danger: #ff4757;
-      --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
+async function safeCall(fnName, promise) {
+  try {
+    const result = await promise;
+    if (result && result.error) throw result.error;
+    return result;
+  } catch (err) {
+    console.error(`Error in ${fnName}:`, err);
+    alert(`🚨 ERROR in ${fnName}:\n${err.message || err}`);
+    throw err;
+  }
+}
+
+async function initSupabase() {
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    document.getElementById('loadingScreen').style.display = 'none';
+    checkSession();
+  } catch (e) {
+    alert("CRITICAL: Could not initialize Supabase. Check your internet connection.");
+  }
+}
+
+async function checkSession() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    alert("Session Error: " + error.message);
+    return;
+  }
+  if (session) {
+    userId = session.user.id;
+    document.getElementById('authScreen').style.display = 'none';
+    initHub();
+  } else {
+    document.getElementById('authScreen').style.display = 'flex';
+  }
+}
+
+async function initHub() {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (profile) {
+    document.getElementById('userNameDisplay').textContent = profile.username || 'User';
+    document.getElementById('userCoins').textContent = profile.coins || 0;
+    if (document.getElementById('coinsCount')) {
+      document.getElementById('coinsCount').textContent = profile.coins || 0;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
+  }
+}
 
-    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+function setAuthMode(mode) {
+  currentAuthMode = mode;
+  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+  document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
+  document.getElementById('btnAuthAction').textContent = mode === 'login' ? 'Login' : 'Sign Up';
+  document.getElementById('authUsername').style.display = mode === 'signup' ? 'block' : 'none';
+}
 
-    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .auth-wrapper { width: 100%; max-width: 340px; text-align: center; animation: fadeIn 0.5s; }
-    .auth-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; }
-    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; }
-    .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); }
-    .auth-tab.active { background: var(--primary); color: white; }
-    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); }
-    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; }
-    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+async function handleAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass = document.getElementById('authPass').value.trim();
+  const username = document.getElementById('authUsername').value.trim();
 
-    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
-    .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-    .menu-dropdown { position: absolute; top: 60px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 200px; z-index: 1000; display: none; }
-    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+  if (!email || !pass) return alert("Please enter email and password.");
 
-    .container { padding: 16px; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; }
-    .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; }
-    .nav-item.active { color: var(--primary); }
-
-    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); }
-    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; color: var(--text-dim); }
-    .profile-menu-item.active { background: var(--primary); color: white; }
-    .profile-sub-tab { display: none; }
-    .profile-sub-tab.active { display: block; }
-
-    .floating-btn { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; z-index: 1000; }
-    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
-    .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; }
-
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  </style>
-</head>
-<body>
-
-  <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
-
-  <div id="authScreen">
-    <div class="auth-wrapper">
-      <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo">
-      <h2 class="auth-title">NAIJALITE</h2>
-      <div class="auth-tabs">
-        <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
-        <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
-      </div>
-      <div class="auth-card">
-        <input type="text" id="authUsername" class="auth-input" style="display:none" placeholder="Username">
-        <input type="text" id="authEmail" class="auth-input" placeholder="Email">
-        <input type="password" id="authPass" class="auth-input" placeholder="Password">
-        <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
-      </div>
-    </div>
-  </div>
-
-  <header>
-    <div class="header-top">
-      <h1>🇳🇬 NAIJALITE</h1>
-      <div class="header-actions">
-        <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
-        <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
-      </div>
-    </div>
-  </header>
-
-  <div id="headerMenu" class="menu-dropdown">
-    <div class="menu-item" onclick="openSettings('account')">Manage account</div>
-    <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
-    <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
-    <div class="menu-item" onclick="openSettings('verification')">Verification</div>
-    <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
-    <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
-  </div>
-
-  <div class="container">
-    <div id="homeTab" class="tab-content active">
-      <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
-    </div>
-    <div id="liveTab" class="tab-content"><div class="card">Live Stream Area</div></div>
-    <div id="inboxTab" class="tab-content"><div class="card">Inbox Area</div></div>
-    <div id="earnTab" class="tab-content"><div class="card">Earn Area</div></div>
-    <div id="utilsTab" class="tab-content"><div class="card">Utils Area</div></div>
-    <div id="profileTab" class="tab-content">
-      <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem;">👤</div>
-        <h3 id="userNameDisplay">User</h3>
-        <div class="profile-menu">
-          <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
-          <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
-          <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
-        </div>
-        <div id="profilePosts" class="profile-sub-tab active"><p>Your Posts</p></div>
-        <div id="profileInbox" class="profile-sub-tab"><p>Your Messages</p></div>
-        <div id="profileCoins" class="profile-sub-tab">
-          <div id="coinDashboard">Coins: <span id="coinsCount">0</span></div>
-          <div style="margin-top:10px; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;">
-            <h4>🏦 Withdrawal</h4>
-            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number">
-            <button class="btn-main" onclick="submitWithdrawal()">Confirm</button>
-          </div>
-        </div>
-        <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="settingsModal" class="settings-modal">
-    <div class="settings-card">
-      <h3 id="settingsTitle">Settings</h3>
-      <div id="settingsContent"><p>Setting content...</p></div>
-      <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
-    </div>
-  </div>
-
-  <div class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('homeTab', this)">🏠 Home</div>
-    <div class="nav-item" onclick="switchTab('liveTab', this)">🔴 Live</div>
-    <div class="nav-item" onclick="switchTab('inboxTab', this)">💬 Inbox</div>
-    <div class="nav-item" onclick="switchTab('earnTab', this)">🎯 Earn</div>
-    <div class="nav-item" onclick="switchTab('utilsTab', this)">🛠️ Utils</div>
-    <div class="nav-item" onclick="switchTab('profileTab', this)">⚙️ Profile</div>
-  </div>
-
-  <div class="floating-btn" onclick="triggerFileUpload()">+</div>
-
-  <script>
-    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
+  if (currentAuthMode === 'login') {
+    await safeCall('Login', supabase.auth.signInWithPassword({ email, password: pass }));
+  } else {
+    if (!username) return alert("Please enter a username.");
+    const { data } = await safeCall('SignUp', supabase.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { username } }
+    }));
     
-    let supabase;
-    let userId = null;
-
-    // DEBUG WRAPPER: This catches every error and tells us what it is
-    async function safeCall(fnName, promise) {
-      try {
-        const result = await promise;
-        return result;
-      } catch (err) {
-        console.error(`Error in ${fnName}:`, err);
-        alert(`🚨 ERROR in ${fnName}:\n${err.message}\n\nSend this message to the AI!`);
-        throw err;
-      }
+    // Create profile entry upon signup
+    if (data?.user) {
+      await supabase.from('profiles').insert([{ id: data.user.id, username, coins: 0 }]);
     }
+  }
+  location.reload();
+}
 
-    async function initSupabase() {
-      try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        document.getElementById('loadingScreen').style.display = 'none';
-        checkSession();
-      } catch (e) {
-        alert("CRITICAL: Could not initialize Supabase. Check your internet.");
-      }
+async function handleLogout() {
+  await safeCall('Logout', supabase.auth.signOut());
+  location.reload();
+}
+
+function triggerFileUpload() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*,video/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const ext = file.name.split('.').pop();
+      const filePath = `${userId}/${Date.now()}.${ext}`;
+      await safeCall('FileUpload', supabase.storage.from('posts').upload(filePath, file));
+      alert("Uploaded successfully!");
     }
+  };
+  input.click();
+}
 
-    async function checkSession() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        alert("Session Error: " + error.message);
-        return;
-      }
-      if (session) {
-        userId = session.user.id;
-        document.getElementById('authScreen').style.display = 'none';
-        initHub();
-      } else {
-        document.getElementById('authScreen').style.display = 'flex';
-      }
-    }
+async function submitWithdrawal() {
+  const acc = document.getElementById('bankAcc').value.trim();
+  if (!acc) return alert("Enter account number");
+  await safeCall('Withdrawal', supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]));
+  alert("Withdrawal requested!");
+}
 
-    async function initHub() {
-      await safeCall('initHub', supabase.from('profiles').select('*').eq('id', userId).single());
-    }
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
 
-    async function handleAuth() {
-      const email = document.getElementById('authEmail').value;
-      const pass = document.getElementById('authPass').value;
-      await safeCall('Auth', supabase.auth.signInWithPassword({ email, password: pass }));
-      location.reload();
-    }
+function switchProfileTab(id, el) {
+  document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
 
-    async function handleLogout() {
-      await safeCall('Logout', supabase.auth.signOut());
-      location.reload();
-    }
+function toggleHeaderMenu() {
+  const m = document.getElementById('headerMenu');
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
 
-    function switchTab(id, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      el.classList.add('active');
-    }
+function openSettings(type) {
+  document.getElementById('settingsTitle').textContent = type.toUpperCase();
+  document.getElementById('settingsModal').style.display = 'flex';
+  document.getElementById('headerMenu').style.display = 'none';
+}
 
-    function switchProfileTab(id, el) {
-      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      el.classList.add('active');
-    }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function toggleHeaderMenu() {
-      const m = document.getElementById('headerMenu');
-      m.style.display = m.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function openSettings(type) {
-      document.getElementById('settingsTitle').textContent = type.toUpperCase();
-      document.getElementById('settingsModal').style.display = 'flex';
-      document.getElementById('headerMenu').style.display = 'none';
-    }
-
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function triggerFileUpload() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          await safeCall('FileUpload', supabase.storage.from('posts').upload(`${userId}/${Date.now()}`, file));
-          alert("Uploaded!");
-        }
-      };
-      input.click();
-    }
-
-    async function submitWithdrawal() {
-      const acc = document.getElementById('bankAcc').value;
-      if (!acc) return alert("Enter account number");
-      await safeCall('Withdrawal', supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]));
-      alert("Withdrawal requested!");
-    }
-
-    function setAuthMode(m) {
-      document.getElementById('tabLogin').classList.toggle('active', m==='login');
-      document.getElementById('tabSignup').classList.toggle('active', m==='signup');
-      document.getElementById('btnAuthAction').textContent = m==='login' ? 'Login' : 'Sign Up';
-      document.getElementById('authUsername').style.display = m==='signup' ? 'block' : 'none';
-    }
-
-    window.onload = initSupabase;
-  </script>
-</body>
-</html>
+window.onload = initSupabase;
