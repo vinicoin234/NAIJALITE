@@ -64,6 +64,13 @@
     .post-media { width: 100%; max-height: 500px; object-fit: cover; background: #000; }
     .post-content { padding: 15px; }
 
+    /* Profile Sub Tabs */
+    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); }
+    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; color: var(--text-dim); }
+    .profile-menu-item.active { background: var(--primary); color: white; }
+    .profile-sub-tab { display: none; }
+    .profile-sub-tab.active { display: block; }
+
     /* Inbox Styles */
     .inbox-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; gap: 10px; align-items: center; cursor: pointer; }
     .inbox-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
@@ -90,7 +97,7 @@
     .btn-unfollow { background: var(--border); color: white; }
     .btn-message { background: var(--accent); color: black; }
 
-    /* FIXED FLOATING BUTTON */
+    /* FLOATING BUTTON */
     .floating-btn { 
       position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; 
       background: var(--primary); color: white; border-radius: 50%; 
@@ -99,6 +106,19 @@
       box-shadow: 0 8px 20px rgba(0,135,81,0.6); transition: 0.3s; 
     }
     .floating-btn:active { transform: scale(0.9); }
+
+    /* Live Video Styling */
+    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; }
+    .main-video { width: 100%; height: 350px; object-fit: cover; }
+    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
+    .live-overlay * { pointer-events: auto; }
+    .overlay-top { display: flex; justify-content: space-between; align-items: center; }
+    .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; }
+    .overlay-bottom { display: flex; flex-direction: column; gap: 10px; }
+    .chat-area { max-height: 120px; overflow-y: auto; color: white; font-size: 0.8rem; }
+    .action-bar { display: flex; gap: 8px; align-items: center; }
+    .action-bar input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: white; font-size: 0.8rem; }
+    .gift-btn { background: rgba(0,0,0,0.6); border: 1px solid var(--border); font-size: 1.2rem; padding: 6px; border-radius: 50%; cursor: pointer; }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
@@ -119,7 +139,7 @@
       </div>
       <div class="auth-card">
         <input type="text" id="authUsername" class="auth-input" style="display:none" placeholder="Username">
-        <input type="email" id="authEmail" class="auth-input" placeholder="Email address">
+        <input type="text" id="authEmail" class="auth-input" placeholder="Email or Phone">
         <input type="password" id="authPass" class="auth-input" placeholder="Password">
         <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
       </div>
@@ -156,12 +176,26 @@
     </div>
 
     <div id="liveTab" class="tab-content">
-      <div class="card" style="text-align: center;">
-        <video id="hostVideo" style="width:100%; border-radius:15px; background:#000; max-height:300px;" autoplay playsinline muted></video>
-        <div style="margin-top:15px; display:flex; gap:10px;">
-          <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
-          <button class="btn-main" style="background:var(--accent); color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
+      <div class="live-container">
+        <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
+        <div class="live-overlay">
+          <div class="overlay-top">
+            <div class="live-badge">🔴 LIVE</div>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer;" onclick="openModal('coinModal')">+ Buy Coins</button>
+          </div>
+          <div class="overlay-bottom">
+            <div class="chat-area" id="chatArea"></div>
+            <div class="action-bar">
+              <input type="text" id="chatInput" placeholder="Say something...">
+              <button class="gift-btn" onclick="sendGroupGift('Rose 🌹', 10)">🌹</button>
+              <button class="gift-btn" onclick="sendGroupGift('Crown 👑', 50)">👑</button>
+            </div>
+          </div>
         </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
+        <button class="btn-main" style="background: #3182ce;" onclick="alert('Joining stage...')">Join Stage</button>
       </div>
     </div>
 
@@ -176,7 +210,7 @@
         <h3>🎁 Referral Program</h3>
         <p>Invite friends and earn coins!</p>
         <div style="margin-top:15px; background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; text-align:center; border:1px dashed var(--accent);">
-          <div id="userRefLink" style="font-weight:bold; margin-bottom:10px; word-break:break-all;">Loading referral link...</div>
+          <div id="userRefLink" style="font-weight:bold; margin-bottom:10px; word-break:break-all;">Generating...</div>
           <button class="btn-main" onclick="copyRefLink()">Copy Referral Link</button>
         </div>
       </div>
@@ -196,8 +230,23 @@
         <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
         <h3 id="userNameDisplay">User Account</h3>
         <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.8rem; margin-bottom:15px;">ID: Loading...</p>
-        <div id="coinDashboard" style="margin-bottom:15px; font-weight:bold;">Coins: <span id="coinsCount">0</span></div>
-        <button class="btn-main" style="background:var(--danger);" onclick="handleLogout()">Logout</button>
+        <div class="profile-menu">
+          <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileInbox', this)">Inbox</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
+        </div>
+        <div id="profilePosts" class="profile-sub-tab active"><p>Your shared posts will appear here.</p></div>
+        <div id="profileInbox" class="profile-sub-tab"><p>Your private messages.</p></div>
+        <div id="profileCoins" class="profile-sub-tab">
+          <div id="coinDashboard" style="margin-bottom:15px; font-weight:bold;">Coins: <span id="coinsCount">0</span></div>
+          <div style="text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
+            <h4 style="font-size:0.9rem; margin-bottom:10px;">🏦 Bank Withdrawal</h4>
+            <label style="font-size:0.7rem; color:var(--text-dim);">Account Number</label>
+            <input type="text" id="bankAcc" class="auth-input" placeholder="Enter account number">
+            <button class="btn-main" onclick="submitWithdrawal()">Confirm Withdrawal</button>
+          </div>
+        </div>
+        <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
       </div>
     </div>
   </div>
@@ -222,6 +271,8 @@
         <b id="chatUser">Username</b>
       </div>
       <div class="chat-header-actions">
+        <button class="chat-header-btn" onclick="alert('Starting Audio Call...')">📞</button>
+        <button class="chat-header-btn" onclick="alert('Starting Video Call...')">📹</button>
         <button class="chat-header-btn" onclick="toggleChatMenu()">⋮</button>
       </div>
     </div>
@@ -230,6 +281,7 @@
     </div>
     <div class="chat-messages" id="chatMessages"></div>
     <div class="chat-input-area">
+      <button class="chat-plus-btn" onclick="triggerChatUpload()">+</button>
       <input type="text" id="chatInputText" placeholder="Type a message...">
       <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="sendMessage()">Send</button>
     </div>
@@ -239,7 +291,7 @@
   <div id="coinModal" class="profile-modal" style="display:none;">
     <div class="profile-modal-card">
       <h3 style="margin-bottom:15px">🪙 Buy Coins</h3>
-      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email for Receipt">
+      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
       <button class="btn-main" onclick="payWithPaystack()">Pay ₦1,000 for 100 Coins</button>
       <button class="profile-modal-btn" style="background:none; color:white; margin-top:10px;" onclick="closeModal('coinModal')">Cancel</button>
     </div>
@@ -264,96 +316,47 @@
     let userCoins = 0;
     let activeChatUser = null;
     let activeProfileUser = null;
-    let currentAuthMode = 'login';
+    let authMode = 'login';
 
-    async function safeCall(name, promise) {
-      try {
-        const result = await promise;
-        if (result && result.error) throw result.error;
-        return result;
-      } catch (err) {
-        console.error(`Error in ${name}:`, err);
-        alert(`🚨 ${name} Error:\n${err.message || err}`);
-        return null;
-      }
+    // 1. Navigation Functions (Guaranteed Never to Crash)
+    function switchTab(id, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.add('active');
+      if (el) el.classList.add('active');
+      if (id === 'inboxTab') loadInbox();
     }
 
-    async function initSupabase() {
-      try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        document.getElementById('loadingScreen').style.display = 'none';
-        checkSession();
-      } catch (e) { alert("Supabase failed to load. Please refresh."); }
+    function switchProfileTab(id, el) {
+      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.add('active');
+      if (el) el.classList.add('active');
     }
 
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        userId = session.user.id;
-        document.getElementById('authScreen').style.display = 'none';
-        document.getElementById('userIdDisplay').textContent = `ID: ${userId.substring(0, 8)}...`;
-        document.getElementById('userRefLink').textContent = `https://naijalite.vercel.app/?ref=${userId}`;
-        initHub();
-      } else {
-        document.getElementById('authScreen').style.display = 'flex';
-      }
+    function toggleHeaderMenu() {
+      const m = document.getElementById('headerMenu');
+      if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
     }
 
-    async function initHub() {
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
-      if (profile && profile.username) {
-        document.getElementById('userNameDisplay').textContent = profile.username;
-      }
-      await fetchWallet();
-      await loadFeed();
-      await loadSuggestedUsers();
+    function openModal(id) { 
+      const m = document.getElementById(id); 
+      if (m) m.style.display = 'flex'; 
+    }
+    function closeModal(id) { 
+      const m = document.getElementById(id); 
+      if (m) m.style.display = 'none'; 
     }
 
-    async function fetchWallet() {
-      const { data } = await supabase.from('wallets').select('*').eq('id', userId).maybeSingle();
-      if (data) {
-        userCoins = data.coin_balance || 0;
-      } else {
-        // Fallback: create wallet record if missing
-        await supabase.from('wallets').insert([{ id: userId, coin_balance: 0 }]);
-        userCoins = 0;
-      }
-      updateUI();
-    }
-
-    async function loadFeed() {
-      const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
-      const feed = document.getElementById('homeFeed');
-      if (!data || data.length === 0) {
-        feed.innerHTML = '<p style="text-align:center; color:var(--text-dim);">No posts yet.</p>';
-        return;
-      }
-      feed.innerHTML = data.map(p => `
-        <div class="post-card">
-          ${p.media_url ? `<img src="${p.media_url}" class="post-media">` : ''}
-          <div class="post-content">
-            <p style="font-size:0.9rem; margin-top:5px;">${p.caption || 'Shared post'}</p>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function loadSuggestedUsers() {
-      const { data } = await supabase.from('profiles').select('username, id').neq('id', userId).limit(10);
-      const box = document.getElementById('suggestedUsers');
-      if (data && data.length > 0) {
-        box.innerHTML = data.map(u => `<div class="suggested-user" onclick="openUserProfile('${u.id}', '${u.username || 'User'}')">👤 ${u.username || 'User'}</div>`).join('');
-      } else {
-        box.innerHTML = '<p style="font-size: 0.75rem; color: var(--text-dim);">No suggested users found.</p>';
-      }
-    }
-
-    function setAuthMode(mode) {
-      currentAuthMode = mode;
-      document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
-      document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
-      document.getElementById('btnAuthAction').textContent = mode === 'login' ? 'Login' : 'Sign Up';
-      document.getElementById('authUsername').style.display = mode === 'signup' ? 'block' : 'none';
+    // 2. Auth Logic
+    function setAuthMode(m) {
+      authMode = m;
+      document.getElementById('tabLogin').classList.toggle('active', m === 'login');
+      document.getElementById('tabSignup').classList.toggle('active', m === 'signup');
+      document.getElementById('btnAuthAction').textContent = m === 'login' ? 'Login' : 'Sign Up';
+      document.getElementById('authUsername').style.display = m === 'signup' ? 'block' : 'none';
     }
 
     async function handleAuth() {
@@ -363,40 +366,157 @@
 
       if (!email || !pass) return alert("Please fill in email and password");
 
-      if (currentAuthMode === 'login') {
-        const res = await safeCall('Login', supabase.auth.signInWithPassword({ email, password: pass }));
-        if (res) location.reload();
-      } else {
-        if (!username) return alert("Please enter a username.");
-        const res = await safeCall('Sign Up', supabase.auth.signUp({ email, password: pass }));
-        if (res?.data?.user) {
-          await supabase.from('profiles').insert([{ id: res.data.user.id, username }]);
-          await supabase.from('wallets').insert([{ id: res.data.user.id, coin_balance: 0 }]);
-          alert("Account created successfully! Logging in...");
-          location.reload();
+      try {
+        if (authMode === 'login') {
+          const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+          if (error) alert("Login error: " + error.message);
+          else location.reload();
+        } else {
+          if (!username) return alert("Please enter a username.");
+          const { data, error } = await supabase.auth.signUp({ email, password: pass });
+          if (error) alert("Sign up error: " + error.message);
+          else {
+            if (data?.user) {
+              await supabase.from('profiles').insert([{ id: data.user.id, username }]);
+            }
+            alert("Account created!");
+            location.reload();
+          }
         }
+      } catch (e) {
+        alert("Auth failed: " + e.message);
       }
     }
 
     async function handleLogout() {
-      await safeCall('Logout', supabase.auth.signOut());
+      if (supabase) await supabase.auth.signOut();
       location.reload();
     }
 
+    // 3. Supabase Initialization & Data Fetching
+    async function initSupabase() {
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        document.getElementById('loadingScreen').style.display = 'none';
+        checkSession();
+      } catch (e) { 
+        document.getElementById('loadingScreen').style.display = 'none';
+        console.error("Initialization error:", e);
+      }
+    }
+
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          userId = session.user.id;
+          document.getElementById('authScreen').style.display = 'none';
+          document.getElementById('userIdDisplay').textContent = `ID: ${userId.substring(0, 8)}...`;
+          document.getElementById('userRefLink').textContent = `https://naijalite.vercel.app/?ref=${userId}`;
+          initHub();
+        } else {
+          document.getElementById('authScreen').style.display = 'flex';
+        }
+      } catch (e) {
+        document.getElementById('authScreen').style.display = 'flex';
+      }
+    }
+
+    async function initHub() {
+      try {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+        if (profile && profile.username) {
+          document.getElementById('userNameDisplay').textContent = profile.username;
+        }
+      } catch (e) {}
+
+      fetchWallet();
+      loadFeed();
+      loadSuggestedUsers();
+    }
+
+    async function fetchWallet() {
+      try {
+        const { data } = await supabase.from('wallets').select('*').eq('id', userId).maybeSingle();
+        if (data) {
+          userCoins = data.coin_balance || 0;
+          updateUI();
+        }
+      } catch (e) {}
+    }
+
+    async function loadFeed() {
+      const feed = document.getElementById('homeFeed');
+      try {
+        const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+        if (!data || data.length === 0) {
+          feed.innerHTML = '<p style="text-align:center; color:var(--text-dim);">No posts yet.</p>';
+          return;
+        }
+        feed.innerHTML = data.map(p => `
+          <div class="post-card">
+            ${p.media_url ? `<img src="${p.media_url}" class="post-media">` : ''}
+            <div class="post-content">
+              <p style="font-size:0.9rem; margin-top:5px;">${p.caption || 'Post'}</p>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        feed.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Unable to load feed.</p>';
+      }
+    }
+
+    async function loadSuggestedUsers() {
+      const box = document.getElementById('suggestedUsers');
+      try {
+        const { data } = await supabase.from('profiles').select('username, id').neq('id', userId).limit(10);
+        if (data && data.length > 0) {
+          box.innerHTML = data.map(u => `<div class="suggested-user" onclick="openUserProfile('${u.id}', '${u.username || 'User'}')">👤 ${u.username || 'User'}</div>`).join('');
+        } else {
+          box.innerHTML = '<p style="font-size: 0.75rem; color: var(--text-dim);">No suggested users found.</p>';
+        }
+      } catch (e) {}
+    }
+
+    async function loadInbox() {
+      const inbox = document.getElementById('inboxList');
+      try {
+        const { data } = await supabase.from('messages').select('*').eq('receiver_id', userId);
+        if (!data || data.length === 0) {
+          inbox.innerHTML = '<p style="text-align:center; color:var(--text-dim);">No messages yet.</p>';
+          return;
+        }
+        inbox.innerHTML = data.map(m => `
+          <div class="inbox-item" onclick="openChat('${m.sender_id}', 'User')">
+            <div class="inbox-avatar">U</div>
+            <div style="flex:1">
+              <b>User</b>
+              <span style="font-size:0.8rem; color:var(--text-dim); display:block">${(m.content || '').substring(0, 30)}...</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        inbox.innerHTML = '<p style="text-align:center; color:var(--text-dim);">No messages yet.</p>';
+      }
+    }
+
+    // 4. Utility & Chat Features
     function triggerFileUpload() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*,video/*';
       input.onchange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-          const fileName = `${userId}/${Date.now()}_${file.name}`;
-          const uploadRes = await safeCall('Upload', supabase.storage.from('posts').upload(fileName, file));
-          if (uploadRes) {
+        if (file && userId) {
+          try {
+            const fileName = `${userId}/${Date.now()}_${file.name}`;
+            await supabase.storage.from('posts').upload(fileName, file);
             const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
-            await safeCall('Create Post', supabase.from('posts').insert([{ user_id: userId, media_url: publicUrl, caption: 'New post' }]));
-            alert("Uploaded successfully!");
+            await supabase.from('posts').insert([{ user_id: userId, media_url: publicUrl, caption: 'New post' }]);
+            alert("Uploaded!");
             loadFeed();
+          } catch(err) {
+            alert("Upload error: " + err.message);
           }
         }
       };
@@ -409,9 +529,8 @@
       document.getElementById('profileModal').style.display = 'flex';
     }
 
-    async function toggleFollow() {
-      if (!activeProfileUser) return;
-      alert(`Followed ${activeProfileUser.name}`);
+    function toggleFollow() {
+      if (activeProfileUser) alert(`Followed ${activeProfileUser.name}`);
       closeModal('profileModal');
     }
 
@@ -425,51 +544,43 @@
       activeChatUser = { id: targetId, name: targetName };
       document.getElementById('chatUser').textContent = targetName;
       document.getElementById('chatWindow').style.display = 'flex';
-      loadMessages();
-    }
-
-    async function loadMessages() {
-      if (!activeChatUser) return;
-      const { data } = await supabase.from('messages').select('*')
-        .or(`and(sender_id.eq.${userId},receiver_id.eq.${activeChatUser.id}),and(sender_id.eq.${activeChatUser.id},receiver_id.eq.${userId})`)
-        .order('created_at', { ascending: true });
-
-      const container = document.getElementById('chatMessages');
-      container.innerHTML = (data || []).map(m => `
-        <div class="msg ${m.sender_id === userId ? 'sent' : 'received'}">${m.content}</div>
-      `).join('');
-      container.scrollTop = container.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const text = document.getElementById('chatInputText').value.trim();
-      if (!text || !activeChatUser) return;
-      await safeCall('SendMessage', supabase.from('messages').insert([{ 
-        sender_id: userId, receiver_id: activeChatUser.id, content: text 
-      }]));
-      document.getElementById('chatInputText').value = '';
-      loadMessages();
     }
 
     function closeChat() { document.getElementById('chatWindow').style.display = 'none'; }
     function toggleChatMenu() {
       const m = document.getElementById('chatMenu');
-      m.style.display = m.style.display === 'block' ? 'none' : 'block';
+      if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
     }
 
-    function switchTab(id, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      el.classList.add('active');
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const video = document.getElementById('hostVideo');
+      if (btn.textContent === 'Start Live') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          video.srcObject = stream;
+          btn.textContent = 'End Live';
+          btn.style.background = 'var(--danger)';
+        } catch (err) { alert("Camera access required for live streaming."); }
+      } else {
+        if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+        btn.textContent = 'Start Live';
+        btn.style.background = 'var(--primary)';
+      }
     }
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function sendGroupGift(name, cost) {
+      if (userCoins < cost) return alert("Insufficient coins!");
+      userCoins -= cost;
+      updateUI();
+      alert(`Sent ${name}!`);
+    }
 
-    function updateUI() {
-      document.getElementById('userCoins').textContent = userCoins;
-      document.getElementById('coinsCount').textContent = userCoins;
+    function submitWithdrawal() {
+      const acc = document.getElementById('bankAcc').value.trim();
+      if (!acc) return alert("Enter account number");
+      alert("Withdrawal requested!");
     }
 
     function copyRefLink() {
@@ -482,6 +593,11 @@
       const num = document.getElementById('waPhone').value.trim();
       if (!num) return alert("Enter a phone number");
       window.open(`https://wa.me/${num}`, '_blank');
+    }
+
+    function updateUI() {
+      document.getElementById('userCoins').textContent = userCoins;
+      document.getElementById('coinsCount').textContent = userCoins;
     }
 
     window.onload = initSupabase;
