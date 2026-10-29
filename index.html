@@ -45,6 +45,7 @@
     .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
     .menu-dropdown { position: absolute; top: 65px; right: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 220px; z-index: 1000; display: none; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
     .menu-item { padding: 14px 18px; font-size: 0.9rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+    .menu-item.danger { color: var(--danger); }
 
     .container { padding: 16px; }
     .tab-content { display: none; animation: fadeIn 0.3s ease; }
@@ -63,13 +64,12 @@
     .profile-sub-tab { display: none; }
     .profile-sub-tab.active { display: block; }
 
-    /* Floating (+) Button - Only visible on Home tab */
     .floating-btn { position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; z-index: 1000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
     
     .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
     .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
 
-    /* Permanent Profile Avatar */
+    /* Profile Avatar */
     .avatar-wrapper { position: relative; width: 110px; height: 110px; margin: 0 auto 15px; cursor: pointer; }
     .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; border: 3px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     .avatar-plus-btn { position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
@@ -82,6 +82,7 @@
     .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; }
     .msg.sent { align-self: flex-end; background: var(--primary); color: white; }
     .msg.received { align-self: flex-start; background: var(--card); color: white; }
+    .msg.call-log { align-self: center; background: rgba(255, 193, 7, 0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 0.8rem; text-align: center; border-radius: 10px; padding: 6px 14px; }
     .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
     .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
 
@@ -110,7 +111,7 @@
     .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
     .package-card { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; }
 
-    /* Call Modal & Incoming Alert with Photo */
+    /* Call Modal & Incoming Alert */
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
     .video-box video { width: 100%; height: 100%; object-fit: cover; }
@@ -129,8 +130,8 @@
 
   <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
 
-  <!-- Hidden Remote Audio Element for Calls -->
-  <audio id="remoteAudioPlayer" autoplay></audio>
+  <!-- Audio Element for Remote Call Speaker Output -->
+  <audio id="remoteAudioPlayer" autoplay playsinline></audio>
 
   <!-- Incoming Call Popup -->
   <div id="incomingCallBox">
@@ -199,6 +200,7 @@
     <div class="menu-item" onclick="openSettings('verification')">Verification</div>
     <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
     <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
+    <div class="menu-item danger" onclick="handleLogout()">Logout</div>
   </div>
 
   <div class="container">
@@ -242,7 +244,7 @@
     <div id="earnTab" class="tab-content">
       <div class="card">
         <h3>💰 Earn Rewards & Coins</h3>
-        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Invite friends or complete daily tasks to earn coins.</p>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Invite friends or complete tasks to earn coins.</p>
         
         <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; text-align:center; border:1px dashed var(--accent); margin-bottom:15px;">
           <div style="font-size:0.8rem; color:var(--text-dim);">Your Referral Link:</div>
@@ -253,10 +255,10 @@
         <div style="display:flex; flex-direction:column; gap:10px;">
           <div style="background:var(--bg); padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <b style="font-size:0.9rem;">Daily Check-in</b>
-              <p style="font-size:0.75rem; color:var(--text-dim);">Claim +5 coins daily</p>
+              <b style="font-size:0.9rem;">Weekly Monday Check-in</b>
+              <p style="font-size:0.75rem; color:var(--text-dim);">Claim +5 coins every Monday</p>
             </div>
-            <button class="btn-main" style="width:auto; padding:8px 14px; font-size:0.8rem;" onclick="claimDailyReward()">Claim</button>
+            <button class="btn-main" id="weeklyClaimBtn" style="width:auto; padding:8px 14px; font-size:0.8rem;" onclick="claimWeeklyReward()">Claim</button>
           </div>
         </div>
       </div>
@@ -265,9 +267,16 @@
     <!-- Utils Tab -->
     <div id="utilsTab" class="tab-content">
       <div class="card">
-        <h3>🛠️ Community Utilities</h3>
-        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Quick tools for members.</p>
+        <h3>🛠️ Community Utilities & Stream Activity</h3>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Monitor live stream activity and quick utilities.</p>
         
+        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; margin-bottom:15px;">
+          <h4 style="font-size:0.9rem; margin-bottom:8px;">📡 Live Stream Activity Feed</h4>
+          <div id="streamActivityList" style="font-size:0.8rem; color:var(--text-dim);">
+            <p>No recent stream activity recorded.</p>
+          </div>
+        </div>
+
         <div style="margin-bottom:15px;">
           <label class="auth-label">WhatsApp Direct Message</label>
           <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:8px;">
@@ -281,7 +290,6 @@
       <div class="card" style="text-align: center; position: relative;">
         <div style="position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.3rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
 
-        <!-- Permanent Avatar Box -->
         <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
           <img id="profileAvatarImg" src="" class="profile-avatar" style="display:none;">
           <div id="profileAvatarPlaceholder" class="profile-avatar">👤</div>
@@ -291,19 +299,16 @@
         <h3 id="userNameDisplay">User <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;"></span></h3>
         <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.75rem; margin-bottom:10px;"></p>
 
-        <!-- Profile Sub-Navigation: Posts, Bio, Coin -->
         <div class="profile-menu">
           <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileBioTab', this)">Bio</div>
           <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
         </div>
         
-        <!-- User's Feed Posts -->
         <div id="profilePosts" class="profile-sub-tab active">
           <div id="userPostsList"><p style="color:var(--text-dim);">Loading your posts...</p></div>
         </div>
 
-        <!-- User's Bio & Clickable Business Links -->
         <div id="profileBioTab" class="profile-sub-tab">
           <div style="text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
             <h4 style="font-size:0.9rem; margin-bottom:8px;">📝 About Me</h4>
@@ -316,16 +321,34 @@
           </div>
         </div>
 
-        <div id="profileCoins" class="profile-sub-tab">
-          <div id="coinDashboard">Coins: <span id="coinsCount">0</span></div>
-          <div style="margin-top:10px; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;">
+        <div id="profileCoins" class="profile-sub-tab" style="text-align:left;">
+          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <h4 style="margin-bottom:10px;">📊 Coin Dashboard</h4>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.9rem;">
+              <span>Current Balance:</span> <b style="color:var(--accent);">🟡 <span id="coinsCount">0</span> Coins</b>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; color:var(--text-dim);">
+              <span>Total Spent:</span> <span id="totalSpentCoins">0 Coins</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-dim);">
+              <span>Total Earned:</span> <span id="totalEarnedCoins">0 Coins</span>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <h4 style="margin-bottom:8px; font-size:0.9rem;">📜 Transaction History</h4>
+            <div id="transactionLedger" style="max-height:150px; overflow-y:auto; font-size:0.8rem; color:var(--text-dim);">
+              <p>No transactions yet.</p>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
             <h4>🏦 Withdrawal</h4>
-            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number" style="margin-top: 8px;">
-            <button class="btn-main" onclick="submitWithdrawal()">Confirm</button>
+            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number" style="margin-top: 8px; margin-bottom:10px;">
+            <button class="btn-main" onclick="submitWithdrawal()">Confirm Withdrawal</button>
           </div>
         </div>
 
-        <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
       </div>
     </div>
   </div>
@@ -361,53 +384,38 @@
         <h3>🎁 Live Gifts Catalog</h3>
         <span style="font-size:0.85rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
       </div>
-      <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Tap a gift to send it live to the streamer.</p>
+      <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Tap a gift to send live.</p>
 
       <div class="gift-grid">
         <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 1)">
           <div class="gift-icon">🌹</div>
           <div class="gift-title">Rose</div>
-          <div class="gift-price">1 Coin (₦10)</div>
+          <div class="gift-price">1 Coin</div>
         </div>
-        <div class="gift-card" onclick="sendGroupGift('Finger Heart 🫰', 5)">
+        <div class="gift-card" onclick="sendGroupGift('Heart 🫰', 5)">
           <div class="gift-icon">🫰</div>
           <div class="gift-title">Heart</div>
-          <div class="gift-price">5 Coins (₦50)</div>
+          <div class="gift-price">5 Coins</div>
         </div>
         <div class="gift-card" onclick="sendGroupGift('Fire 🔥', 10)">
           <div class="gift-icon">🔥</div>
           <div class="gift-title">Fire</div>
-          <div class="gift-price">10 Coins (₦100)</div>
+          <div class="gift-price">10 Coins</div>
         </div>
-        <div class="gift-card" onclick="sendGroupGift('Champagne 🍾', 50)">
+        <div class="gift-card" onclick="sendGroupGift('Bottle 🍾', 50)">
           <div class="gift-icon">🍾</div>
           <div class="gift-title">Bottle</div>
-          <div class="gift-price">50 Coins (₦500)</div>
+          <div class="gift-price">50 Coins</div>
         </div>
         <div class="gift-card" onclick="sendGroupGift('Crown 👑', 100)">
           <div class="gift-icon">👑</div>
           <div class="gift-title">Crown</div>
-          <div class="gift-price">100 Coins (₦1k)</div>
+          <div class="gift-price">100 Coins</div>
         </div>
         <div class="gift-card" onclick="sendGroupGift('Diamond 💎', 500)">
           <div class="gift-icon">💎</div>
           <div class="gift-title">Diamond</div>
-          <div class="gift-price">500 Coins (₦5k)</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Sports Car 🏎️', 1000)">
-          <div class="gift-icon">🏎️</div>
-          <div class="gift-title">Sports Car</div>
-          <div class="gift-price">1k Coins (₦10k)</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Private Jet 🛩️', 5000)">
-          <div class="gift-icon">🛩️</div>
-          <div class="gift-title">Private Jet</div>
-          <div class="gift-price">5k Coins (₦50k)</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Naija Castle 🏰', 10000)">
-          <div class="gift-icon">🏰</div>
-          <div class="gift-title">Castle</div>
-          <div class="gift-price">10k Coins (₦100k)</div>
+          <div class="gift-price">500 Coins</div>
         </div>
       </div>
 
@@ -416,11 +424,11 @@
     </div>
   </div>
 
-  <!-- Simplified Coin Purchase Modal (No Paystack Key required) -->
+  <!-- Coin Purchase Modal -->
   <div id="coinModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
       <h3 style="margin-bottom:10px">🪙 Buy Coins</h3>
-      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin. Select package or enter amount.</p>
+      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin.</p>
       
       <div class="package-grid">
         <div class="package-card" onclick="selectPackage(10, 1)">
@@ -439,20 +447,12 @@
           <b>₦10,000</b>
           <div style="font-size:0.75rem; color:var(--accent);">1,000 Coins</div>
         </div>
-        <div class="package-card" onclick="selectPackage(50000, 5000)">
-          <b>₦50,000</b>
-          <div style="font-size:0.75rem; color:var(--accent);">5,000 Coins</div>
-        </div>
-        <div class="package-card" onclick="selectPackage(100000, 10000)">
-          <b>₦100,000</b>
-          <div style="font-size:0.75rem; color:var(--accent);">10,000 Coins</div>
-        </div>
       </div>
 
       <label class="auth-label">Amount in Naira (₦10 to ₦100,000)</label>
-      <input type="number" id="customNairaAmount" class="auth-input" placeholder="e.g. 500" value="1000">
+      <input type="number" id="customNairaAmount" class="auth-input" value="1000">
 
-      <label class="auth-label">Email for Payment Receipt</label>
+      <label class="auth-label">Email for Receipt</label>
       <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
       
       <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay with Paystack</button>
@@ -460,7 +460,7 @@
     </div>
   </div>
 
-  <!-- Edit Profile Modal with Bio & Business Link Inputs -->
+  <!-- Edit Profile Modal -->
   <div id="editProfileModal" class="settings-modal">
     <div class="settings-card">
       <h3>Edit Profile</h3>
@@ -468,11 +468,11 @@
         <label class="auth-label">Username</label>
         <input type="text" id="editUsername" class="auth-input">
         
-        <label class="auth-label">Bio (Tell people about yourself)</label>
+        <label class="auth-label">Bio</label>
         <textarea id="editBio" class="auth-input" style="height:80px; resize:none;" placeholder="Write a short bio..."></textarea>
 
-        <label class="auth-label">Business / Website Link Title</label>
-        <input type="text" id="editLinkTitle" class="auth-input" placeholder="e.g. My YouTube Channel / Store">
+        <label class="auth-label">Business / Link Title</label>
+        <input type="text" id="editLinkTitle" class="auth-input" placeholder="e.g. YouTube Channel">
 
         <label class="auth-label">Business / Website URL</label>
         <input type="url" id="editBusinessLink" class="auth-input" placeholder="https://...">
@@ -491,9 +491,12 @@
     </div>
   </div>
 
-  <!-- Call Modal -->
+  <!-- Call Modal with Active Status Indicators -->
   <div id="callModal" class="call-modal">
-    <h3 id="callStatus" style="color:white; margin-bottom:15px;">In Call...</h3>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+      <div style="width:12px; height:12px; background:var(--danger); border-radius:50%; animation: pulse 1.5s infinite;"></div>
+      <h3 id="callStatus" style="color:white; font-size:1.1rem;">You are on a call...</h3>
+    </div>
     <div class="video-box">
       <video id="callVideo" autoplay playsinline muted></video>
     </div>
@@ -518,13 +521,12 @@
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
   </div>
 
-  <!-- Floating Upload (+) Button (Visible strictly on Home tab) -->
   <div class="floating-btn" id="floatingUploadBtn" onclick="triggerFeedUpload()">+</div>
 
   <script>
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
-    const PAYSTACK_PUBLIC_KEY = 'pk_test_a08906bd35a09e0783f06cb7507304859a0f025e'; // Default Paystack key placeholder
+    const PAYSTACK_PUBLIC_KEY = 'pk_test_a08906bd35a09e0783f06cb7507304859a0f025e';
     
     let supabase;
     let userId = null;
@@ -537,6 +539,8 @@
     let realtimeChannel = null;
     let incomingCallData = null;
     let ringtoneAudioContext = null;
+    let callStartTime = null;
+    let activeCallType = 'audio';
 
     const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
@@ -559,6 +563,7 @@
           document.getElementById('userRefLink').textContent = `https://naijalite.app/?ref=${userId}`;
           initHub();
           setupRealtimeCalls();
+          checkWeeklyClaimStatus();
         } else {
           document.getElementById('authScreen').style.display = 'flex';
         }
@@ -582,19 +587,15 @@
             document.getElementById('profileAvatarPlaceholder').style.display = 'none';
           }
 
-          // Populate Bio
           if (profile.bio) {
             document.getElementById('bioTextDisplay').textContent = profile.bio;
           }
 
-          // Populate Clickable Business Link
           if (profile.business_link) {
             const linkTitle = profile.link_title || 'Visit Business Webpage';
             let formattedUrl = profile.business_link.startsWith('http') ? profile.business_link : `https://${profile.business_link}`;
             document.getElementById('businessLinkDisplay').innerHTML = `
-              <a href="${formattedUrl}" target="_blank" class="biz-link-btn">
-                🔗 ${linkTitle}
-              </a>
+              <a href="${formattedUrl}" target="_blank" class="biz-link-btn">🔗 ${linkTitle}</a>
             `;
           }
         }
@@ -603,6 +604,7 @@
       loadFeed();
       loadUserPosts();
       loadConversations();
+      loadTransactions();
     }
 
     async function fetchWallet() {
@@ -615,7 +617,92 @@
       } catch (e) {}
     }
 
-    // --- Home Feed Loader ---
+    async function loadTransactions() {
+      try {
+        const { data } = await supabase.from('transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+        const ledger = document.getElementById('transactionLedger');
+        let totalSpent = 0;
+        let totalEarned = 0;
+
+        if (!data || data.length === 0) {
+          ledger.innerHTML = '<p style="color:var(--text-dim);">No transactions yet.</p>';
+          return;
+        }
+
+        ledger.innerHTML = data.map(tx => {
+          if (tx.type === 'spent') totalSpent += tx.amount;
+          if (tx.type === 'earned' || tx.type === 'purchased') totalEarned += tx.amount;
+          
+          const color = tx.type === 'spent' ? 'var(--danger)' : 'var(--primary)';
+          return `<div style="display:flex; justify-content:space-between; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:3px;">
+            <span>${tx.description}</span>
+            <b style="color:${color};">${tx.type === 'spent' ? '-' : '+'}${tx.amount}</b>
+          </div>`;
+        }).join('');
+
+        document.getElementById('totalSpentCoins').textContent = `${totalSpent} Coins`;
+        document.getElementById('totalEarnedCoins').textContent = `${totalEarned} Coins`;
+      } catch (e) {}
+    }
+
+    async function logTransaction(type, amount, description) {
+      try {
+        await supabase.from('transactions').insert([{ user_id: userId, type, amount, description }]);
+        loadTransactions();
+      } catch(e) {}
+    }
+
+    function getMondayDateStr() {
+      const d = new Date();
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d.setDate(diff));
+      return monday.toISOString().split('T')[0];
+    }
+
+    function checkWeeklyClaimStatus() {
+      const currentMonday = getMondayDateStr();
+      const lastClaim = currentUserProfile?.last_weekly_claim;
+      const btn = document.getElementById('weeklyClaimBtn');
+      
+      const today = new Date().getDay();
+      if (today !== 1) {
+        btn.textContent = 'Claim on Monday';
+        btn.style.opacity = '0.6';
+        return;
+      }
+
+      if (lastClaim === currentMonday) {
+        btn.textContent = 'Claimed';
+        btn.style.opacity = '0.5';
+        btn.disabled = true;
+      }
+    }
+
+    async function claimWeeklyReward() {
+      const today = new Date().getDay();
+      if (today !== 1) return alert("Weekly bonus can only be claimed on Mondays!");
+
+      const currentMonday = getMondayDateStr();
+      if (currentUserProfile?.last_weekly_claim === currentMonday) {
+        return alert("You already claimed your bonus this Monday!");
+      }
+
+      userCoins += 5;
+      updateUI();
+      
+      try {
+        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+        await supabase.from('profiles').update({ last_weekly_claim: currentMonday }).eq('id', userId);
+        await logTransaction('earned', 5, 'Weekly Monday Check-in Bonus');
+        alert("Claimed +5 coins successfully!");
+        currentUserProfile.last_weekly_claim = currentMonday;
+        checkWeeklyClaimStatus();
+      } catch(e) {
+        alert("Failed to claim reward");
+      }
+    }
+
     async function loadFeed() {
       const feed = document.getElementById('homeFeed');
       try {
@@ -635,7 +722,6 @@
       }
     }
 
-    // --- User's Profile Posts Loader ---
     async function loadUserPosts() {
       const userFeed = document.getElementById('userPostsList');
       if (!userId) return;
@@ -656,7 +742,6 @@
       }
     }
 
-    // --- Feed Upload (Posts go to Home Feed & Profile Posts) ---
     function triggerFeedUpload() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -681,7 +766,6 @@
       input.click();
     }
 
-    // --- Permanent Profile Photo Upload ---
     function triggerAvatarUpload() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -708,7 +792,6 @@
       input.click();
     }
 
-    // --- Conversations & Messaging ---
     async function loadConversations() {
       const container = document.getElementById('conversationsList');
       try {
@@ -751,9 +834,12 @@
           .order('created_at', { ascending: true });
 
         const container = document.getElementById('chatMessages');
-        container.innerHTML = (data || []).map(m => `
-          <div class="msg ${m.sender_id === userId ? 'sent' : 'received'}">${m.content}</div>
-        `).join('');
+        container.innerHTML = (data || []).map(m => {
+          if (m.is_call_log) {
+            return `<div class="msg call-log">${m.content}</div>`;
+          }
+          return `<div class="msg ${m.sender_id === userId ? 'sent' : 'received'}">${m.content}</div>`;
+        }).join('');
         container.scrollTop = container.scrollHeight;
       } catch(e) {}
     }
@@ -762,7 +848,7 @@
       const text = document.getElementById('chatInputText').value.trim();
       if (!text || !activeChatUser) return;
       try {
-        await supabase.from('messages').insert([{ sender_id: userId, receiver_id: activeChatUser.id, content: text }]);
+        await supabase.from('messages').insert([{ sender_id: userId, receiver_id: activeChatUser.id, content: text, is_call_log: false }]);
         document.getElementById('chatInputText').value = '';
         loadMessages();
       } catch(e) {
@@ -770,7 +856,27 @@
       }
     }
 
-    // --- WebRTC Ringing & Calling ---
+    // --- Outgoing & Incoming Ringing Sound System ---
+    function startOutgoingRingback() {
+      stopRingtone();
+      try {
+        ringtoneAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        function playRingbackTone() {
+          if (!ringtoneAudioContext) return;
+          const osc = ringtoneAudioContext.createOscillator();
+          const gain = ringtoneAudioContext.createGain();
+          osc.frequency.value = 400;
+          osc.connect(gain);
+          gain.connect(ringtoneAudioContext.destination);
+          gain.gain.setValueAtTime(0.08, ringtoneAudioContext.currentTime);
+          osc.start();
+          osc.stop(ringtoneAudioContext.currentTime + 1.0);
+        }
+        playRingbackTone();
+        ringtoneAudioContext.ringInterval = setInterval(playRingbackTone, 4000);
+      } catch (e) {}
+    }
+
     function startRingtone() {
       stopRingtone();
       try {
@@ -824,21 +930,27 @@
         } else if (data.type === 'sdp_offer') {
           handleOffer(data);
         } else if (data.type === 'sdp_answer') {
+          stopRingtone();
           if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+          document.getElementById('callStatus').textContent = "You are on a call (Connected)";
+          callStartTime = new Date();
         } else if (data.type === 'ice_candidate') {
           if (peerConnection && data.candidate) {
             await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
           }
         } else if (data.type === 'end_call') {
-          endCall();
+          endCall(false);
         }
       }).subscribe();
     }
 
     async function startCall(callType) {
       if (!activeChatUser) return;
-      document.getElementById('callStatus').textContent = `Calling ${activeChatUser.name}...`;
+      activeCallType = callType;
+      callStartTime = new Date();
+      document.getElementById('callStatus').textContent = `Calling ${activeChatUser.name} (Ringing)...`;
       document.getElementById('callModal').style.display = 'flex';
+      startOutgoingRingback();
 
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
@@ -848,7 +960,9 @@
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
         peerConnection.ontrack = event => {
-          document.getElementById('remoteAudioPlayer').srcObject = event.streams[0];
+          const remoteAudio = document.getElementById('remoteAudioPlayer');
+          remoteAudio.srcObject = event.streams[0];
+          remoteAudio.play().catch(err => console.log("Audio autoplay restriction handled:", err));
         };
 
         peerConnection.onicecandidate = event => {
@@ -873,10 +987,12 @@
 
       } catch(e) {
         alert("Camera/Mic access required for calling.");
+        endCall();
       }
     }
 
     async function handleOffer(data) {
+      activeCallType = data.callType;
       peerConnection = new RTCPeerConnection(rtcConfig);
       
       try {
@@ -886,7 +1002,9 @@
       } catch (e) {}
 
       peerConnection.ontrack = event => {
-        document.getElementById('remoteAudioPlayer').srcObject = event.streams[0];
+        const remoteAudio = document.getElementById('remoteAudioPlayer');
+        remoteAudio.srcObject = event.streams[0];
+        remoteAudio.play().catch(err => console.log("Audio autoplay restriction handled:", err));
       };
 
       peerConnection.onicecandidate = event => {
@@ -915,7 +1033,9 @@
       document.getElementById('incomingCallBox').style.display = 'none';
       if (!incomingCallData) return;
       
-      document.getElementById('callStatus').textContent = `Connected with ${incomingCallData.callerName}`;
+      callStartTime = new Date();
+      activeCallType = incomingCallData.callType;
+      document.getElementById('callStatus').textContent = `You are on a call with ${incomingCallData.callerName}`;
       document.getElementById('callModal').style.display = 'flex';
     }
 
@@ -928,8 +1048,29 @@
       incomingCallData = null;
     }
 
-    function endCall() {
+    async function endCall(notifyRemote = true) {
       stopRingtone();
+      if (notifyRemote && activeChatUser) {
+        sendCallSignal({ type: 'end_call', targetId: activeChatUser.id });
+      }
+
+      // Log Call to Chat Messages with Time
+      if (callStartTime && activeChatUser) {
+        const timeStr = callStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const callTitle = activeCallType === 'video' ? '📹 Video Call' : '📞 Audio Call';
+        const logText = `${callTitle} completed at ${timeStr}`;
+        
+        try {
+          await supabase.from('messages').insert([{
+            sender_id: userId,
+            receiver_id: activeChatUser.id,
+            content: logText,
+            is_call_log: true
+          }]);
+          loadMessages();
+        } catch(e) {}
+      }
+
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
         localStream = null;
@@ -938,11 +1079,11 @@
         peerConnection.close();
         peerConnection = null;
       }
+      callStartTime = null;
       document.getElementById('callModal').style.display = 'none';
       document.getElementById('incomingCallBox').style.display = 'none';
     }
 
-    // --- Tab Switching ---
     function switchTab(id, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -969,7 +1110,6 @@
       if (el) el.classList.add('active');
     }
 
-    // --- Send Coins ---
     async function shareCoinsPrompt() {
       if (!activeChatUser) return;
       const amount = prompt(`Enter coins to send to ${activeChatUser.name}:`);
@@ -989,12 +1129,14 @@
 
         userCoins -= cost;
         updateUI();
-        alert(`Sent ${cost} coins to ${activeChatUser.name}!`);
+        await logTransaction('spent', cost, `Sent coins to ${activeChatUser.name}`);
+        alert(`Sent ${cost} coins successfully!`);
         
         await supabase.from('messages').insert([{
           sender_id: userId,
           receiver_id: activeChatUser.id,
-          content: `🎁 Sent ${cost} coins!`
+          content: `🎁 Sent ${cost} coins!`,
+          is_call_log: false
         }]);
         loadMessages();
       } catch(e) {
@@ -1003,8 +1145,7 @@
       toggleChatMenu();
     }
 
-    // --- Live Stream Gifts ---
-    function sendGroupGift(name, cost) {
+    async function sendGroupGift(name, cost) {
       if (userCoins < cost) {
         alert(`Insufficient coins to send ${name}! You need ${cost} coins.`);
         openModal('coinModal');
@@ -1012,6 +1153,7 @@
       }
       userCoins -= cost;
       updateUI();
+      await logTransaction('spent', cost, `Gift sent in stream: ${name}`);
       
       const chatArea = document.getElementById('liveChatArea');
       const giftMsg = document.createElement('div');
@@ -1020,11 +1162,13 @@
       chatArea.appendChild(giftMsg);
       chatArea.scrollTop = chatArea.scrollHeight;
 
+      const actList = document.getElementById('streamActivityList');
+      actList.innerHTML = `<p style="color:var(--accent);">🎁 ${currentUserProfile?.username || 'Someone'} sent ${name} (-${cost} coins)</p>` + actList.innerHTML;
+
       closeModal('giftCatalogModal');
       alert(`Sent ${name}!`);
     }
 
-    // --- Package Selection & Simplified Paystack Payment ---
     function selectPackage(naira, coins) {
       document.getElementById('customNairaAmount').value = naira;
     }
@@ -1047,6 +1191,7 @@
           alert(`Payment of ₦${naira} complete! Added ${coinsToAdd} coins.`);
           userCoins += coinsToAdd;
           supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+          logTransaction('purchased', coinsToAdd, `Purchased via Paystack (₦${naira})`);
           updateUI();
           closeModal('coinModal');
         },
@@ -1057,7 +1202,6 @@
       handler.openIframe();
     }
 
-    // --- Edit Profile (Bio, Username, Business Link) ---
     function openEditProfileModal() {
       if (currentUserProfile) {
         document.getElementById('editUsername').value = currentUserProfile.username || '';
@@ -1081,7 +1225,7 @@
       if (!username) return alert("Username cannot be empty");
 
       try {
-        await supabase.from('profiles').update({ 
+        const { error } = await supabase.from('profiles').update({ 
           username, 
           bio, 
           link_title, 
@@ -1090,6 +1234,8 @@
           sex 
         }).eq('id', userId);
         
+        if (error) throw error;
+
         alert("Profile updated successfully!");
         closeModal('editProfileModal');
         initHub();
@@ -1098,7 +1244,6 @@
       }
     }
 
-    // --- Stream Toggle ---
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       const video = document.getElementById('hostVideo');
@@ -1189,12 +1334,6 @@
       alert("Referral link copied!");
     }
 
-    function claimDailyReward() {
-      userCoins += 5;
-      updateUI();
-      alert("Claimed +5 coins!");
-    }
-
     function openWhatsApp() {
       const num = document.getElementById('waPhone').value.trim();
       if (!num) return alert("Enter a phone number");
@@ -1206,7 +1345,7 @@
       if (!acc) return alert("Enter account number");
       try {
         await supabase.from('withdrawals').insert([{ user_id: userId, account: acc }]);
-        alert("Withdrawal requested!");
+        alert("Withdrawal requested successfully!");
       } catch(err) {
         alert("Withdrawal failed");
       }
