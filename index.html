@@ -6,8 +6,11 @@
   <title>NAIJALITE | Live & Earn</title>
   <meta name="theme-color" content="#008751">
 
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+  <!-- Paystack SDK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
   <style>
@@ -25,39 +28,97 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 480px; margin: 0 auto; overflow-x: hidden; }
 
+    /* Loading Overlay */
     #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .auth-wrapper { width: 100%; max-width: 340px; text-align: center; animation: fadeIn 0.5s; }
+    /* --- COMPACT AUTH SCREEN --- */
+    #authScreen { 
+      position: fixed; inset: 0; background: var(--bg); z-index: 2000; 
+      display: none; flex-direction: column; align-items: center; justify-content: center; 
+      padding: 20px;
+    }
+    .auth-wrapper { 
+      width: 100%; max-width: 340px; text-align: center; 
+      animation: fadeIn 0.5s;
+    }
     .auth-logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
-    .auth-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.4); animation: bounceIn 1s; border: 2px solid var(--primary); background: white; }
-    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; }
+    .auth-logo { 
+      width: 80px; height: 80px; border-radius: 20px; 
+      object-fit: cover; 
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      animation: bounceIn 1s;
+      border: 2px solid var(--primary);
+      background: white;
+    }
+    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; letter-spacing: 1px; }
     .auth-subtitle { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px; }
+    
     .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
     .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: 0.3s; color: var(--text-dim); }
-    .auth-tab.active { background: var(--primary); color: white; }
-    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); }
+    .auth-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,135,81,0.3); }
+
+    .auth-card { 
+      background: var(--card); padding: 24px; border-radius: 24px; width: 100%; 
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); border: 1px solid var(--border); 
+    }
     .auth-input-group { position: relative; margin-bottom: 15px; text-align: left; }
     .auth-input-group label { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px; margin-left: 4px; font-weight: 600; }
-    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; font-size: 0.95rem; }
-    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; }
-    .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; font-size: 0.95rem; transition: 0.3s; }
+    .auth-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,135,81,0.2); }
+    
+    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; transition: 0.3s; }
+    .btn-auth:active { transform: scale(0.97); background: var(--primary-dark); }
+    
+    .auth-footer { margin-top: 15px; font-size: 0.8rem; color: var(--text-dim); }
+    .auth-footer span { color: var(--accent); font-weight: bold; cursor: pointer; }
 
+    /* --- MAIN HUB --- */
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .header-top h1 { font-size: 1.3rem; font-weight: 800; }
-    .btn-logout-top { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; font-weight: bold; }
+    .wallet-card { background: rgba(255, 255, 255, 0.15); padding: 12px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    .wallet-info span { font-size: 0.75rem; opacity: 0.9; display: block; }
+    .wallet-info strong { font-size: 1.2rem; font-weight: 700; }
+    .btn-withdraw { background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
 
     .container { padding: 16px; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* HOME FEED */
-    .search-bar { background: var(--card); padding: 10px; border-radius: 15px; display: flex; gap: 10px; margin-bottom: 20px; border: 1px solid var(--border); }
-    .search-bar input { flex: 1; background: none; border: none; color: white; padding: 5px 10px; outline: none; }
-    .search-bar button { background: var(--primary); border: none; color: white; padding: 5px 15px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; }
+    /* TIKTOK LIVE */
+    .live-container { position: relative; width: 100%; height: 80vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
+    .main-video { width: 100%; height: 100%; object-fit: cover; }
+    .live-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+    .overlay-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
+    .live-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
+    .guest-slots { display: flex; gap: 10px; margin-top: 10px; }
+    .guest-slot { width: 50px; height: 50px; border-radius: 50%; background: #334155; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; }
+    .overlay-bottom { pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
+    .chat-area { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; mask-image: linear-gradient(transparent, black 20%); }
+    .chat-msg { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); animation: fadeInUp 0.3s; }
+    .action-bar { display: flex; align-items: center; gap: 12px; }
+    .gift-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; backdrop-filter: blur(10px); }
+
+    .gift-animation { position: absolute; bottom: 100px; right: -100px; font-size: 3rem; pointer-events: none; z-index: 1000; animation: giftFly 3s linear forwards; }
+    @keyframes giftFly { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(-300px, -400px) rotate(360deg); opacity: 0; } }
+
+    .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; }
+    .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item div { font-size: 1.3rem; margin-bottom: 4px; }
+
+    /* HOME FEED STYLES */
+    .home-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
+    .suggested-users-box { flex: 1; overflow-x: auto; display: flex; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
+    .suggested-users-box::-webkit-scrollbar { display: none; }
+    .suggested-user { background: var(--card); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+    .suggested-user:hover { background: var(--primary); }
+    .suggested-user span { font-weight: bold; }
+
     .feed-container { display: flex; flex-direction: column; gap: 20px; }
     .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); position: relative; }
     .post-media { width: 100%; max-height: 500px; object-fit: cover; background: #000; }
@@ -68,50 +129,37 @@
     .action-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
     .action-btn.active { color: var(--danger); }
 
-    /* LIVE */
-    .live-container { position: relative; width: 100%; height: 80vh; background: #000; border-radius: 24px; overflow: hidden; margin-bottom: 20px; }
-    .main-video { width: 100%; height: 100%; object-fit: cover; }
-    .live-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
-    .overlay-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
-    .live-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
-    .guest-slots { display: flex; gap: 10px; margin-top: 10px; }
-    .guest-slot { width: 50px; height: 50px; border-radius: 50%; background: #334155; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; }
-    .overlay-bottom { pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
-    .chat-area { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; mask-image: linear-gradient(transparent, black 20%); }
-    .chat-msg { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); }
-    .action-bar { display: flex; align-items: center; gap: 12px; }
-    .gift-box-btn { background: var(--accent); border: none; color: #000; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 10px rgba(255,193,7,0.4); z-index: 10; }
-
-    /* GIFT MALL */
-    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
-    .gift-item { background: #0f172a; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-    .gift-item:hover { border-color: var(--accent); background: #1e293b; }
-    .gift-item div { font-size: 1.5rem; margin-bottom: 5px; }
-    .gift-item span { font-size: 0.7rem; color: var(--accent); font-weight: bold; }
-    .gift-animation { position: absolute; bottom: 100px; right: -100px; font-size: 3rem; pointer-events: none; z-index: 1000; animation: giftFly 3s linear forwards; }
-    @keyframes giftFly { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(-300px, -400px) rotate(360deg); opacity: 0; } }
-
-    /* INBOX */
+    /* INBOX STYLES */
     .inbox-list { display: flex; flex-direction: column; gap: 10px; }
-    .chat-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; border: 1px solid var(--border); }
+    .chat-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
+    .chat-item:hover { background: #2d3a4f; }
     .chat-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .chat-info { flex: 1; }
     .chat-name { font-weight: bold; display: block; font-size: 0.9rem; }
-    .chat-preview { font-size: 0.75rem; color: var(--text-dim); }
-    .send-coin-btn { background: var(--accent); color: #000; border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: 10px; }
+    .chat-preview { font-size: 0.75rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    
+    .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
+    .chat-header { background: var(--primary); padding: 15px; display: flex; align-items: center; gap: 15px; color: white; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; }
+    .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+    .msg.received { align-self: flex-start; background: var(--card); color: white; border-bottom-left-radius: 2px; }
+    .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
+    .chat-input-area input { flex: 1; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 20px; }
 
-    /* PROFILE & DASHBOARD */
-    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-    .dash-card { background: #0f172a; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
-    .dash-card span { font-size: 0.7rem; color: var(--text-dim); display: block; margin-bottom: 5px; }
-    .dash-card strong { font-size: 1.1rem; color: white; }
+    /* AUTH BUTTONS */
+    .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; transition: 0.3s; }
+    .btn-google:hover { background: #f8f8f8; }
+    
+    .floating-btn { 
+      position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; 
+      background: var(--primary); color: white; border-radius: 50%; 
+      display: flex; align-items: center; justify-content: center; 
+      font-size: 2rem; font-weight: bold; cursor: pointer; 
+      box-shadow: 0 8px 20px rgba(0,135,81,0.4); z-index: 1000; transition: 0.3s; 
+    }
+    .floating-btn:active { transform: scale(0.9); }
 
-    .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 100; }
-    .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; }
-    .nav-item.active { color: var(--primary); }
-    .nav-item div { font-size: 1.3rem; margin-bottom: 4px; opacity: 0.7; }
     .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
     .modal-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 24px; padding: 24px; color: white; }
 
@@ -124,21 +172,23 @@
 
   <div id="loadingScreen">
     <div class="spinner"></div>
-    <p id="loadingText">Connecting to Hub...</p>
+    <p>Loading NAIJALITE...</p>
   </div>
 
-  <!-- Auth Screen -->
+  <!-- TikTok-Style Auth Screen -->
   <div id="authScreen">
     <div class="auth-wrapper">
       <div class="auth-logo-container">
-        <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" alt="NAIJALITE Logo" class="auth-logo">
+        <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" alt="NAIJALITE Logo" class="auth-logo" onerror="this.src='https://flagcdn.com/w160/ng.png'">
       </div>
       <h2 class="auth-title">NAIJALITE</h2>
       <p class="auth-subtitle">Join the community and earn rewards!</p>
+
       <div class="auth-tabs">
         <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
         <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
       </div>
+
       <div class="auth-card">
         <div class="auth-input-group" id="usernameGroup" style="display: none;">
           <label>Username</label>
@@ -152,10 +202,18 @@
           <label>Password</label>
           <input type="password" id="authPass" class="auth-input" placeholder="••••••••">
         </div>
+        
         <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
         <button class="btn-google" onclick="signInWithGoogle()">
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18"> Sign in with Google
         </button>
+        
+        <div class="auth-footer">
+          <span id="forgotPass" style="display:block; margin-bottom:10px;">Forgot password?</span>
+          <div id="authFooterText">
+            By continuing, you agree to our <span style="color:var(--primary)">Terms of Service</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -163,24 +221,29 @@
   <header>
     <div class="header-top">
       <h1>🇳🇬 NAIJALITE</h1>
-      <button class="btn-logout-top" onclick="handleLogout()">Logout</button>
+      <span style="font-size: 0.8rem; opacity: 0.9;">Online 🟢</span>
+    </div>
+    <div class="wallet-card">
+      <div class="wallet-info">
+        <span>Available Cash | Coins</span>
+        <strong><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></strong>
+      </div>
+      <button class="btn-withdraw" onclick="openModal('withdrawModal')">Withdraw</button>
     </div>
   </header>
 
   <div class="container">
-    <!-- HOME FEED -->
     <div id="homeTab" class="tab-content active">
-      <div class="search-bar">
-        <input type="text" id="userSearch" placeholder="Search users by username...">
-        <button onclick="searchUsers()">Search</button>
+      <div class="home-header">
+        <div class="suggested-users-box" id="suggestedUsers">
+          <p style="font-size: 0.7rem; color: var(--text-dim);">Suggested Users...</p>
+        </div>
       </div>
       <div class="feed-container" id="homeFeed">
         <p style="text-align:center; color:var(--text-dim); margin: 20px 0;">Loading feed...</p>
       </div>
-      <button class="btn-main" style="margin-top:20px; background:var(--accent); color:#000;" onclick="openModal('postModal')">➕ Create Post</button>
     </div>
 
-    <!-- LIVE SECTION -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
@@ -200,7 +263,10 @@
             </div>
             <div class="action-bar">
               <input type="text" id="chatInput" style="flex:1; padding:10px; border-radius:20px; border:none; background:rgba(255,255,255,0.2); color:white;" placeholder="Say something...">
-              <button class="gift-box-btn" onclick="openGiftMall()">🎁</button>
+              <button class="gift-btn" onclick="sendGroupGift('Rose 🌹', 10)">🌹</button>
+              <button class="gift-btn" onclick="sendGroupGift('Crown 👑', 50)">👑</button>
+              <button class="gift-btn" onclick="sendGroupGift('Car 🏎️', 200)">🏎️</button>
+              <button class="gift-btn" onclick="sendGroupGift('Lion 🦁', 500)">🦁</button>
             </div>
           </div>
         </div>
@@ -211,14 +277,12 @@
       </div>
     </div>
 
-    <!-- INBOX SECTION -->
     <div id="inboxTab" class="tab-content">
       <div class="inbox-list" id="inboxList">
         <p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No messages yet.</p>
       </div>
     </div>
 
-    <!-- EARN SECTION -->
     <div id="earnTab" class="tab-content">
       <div class="card">
         <span class="badge">🎁 Referral Bonus</span>
@@ -231,7 +295,6 @@
       </div>
     </div>
 
-    <!-- UTILS SECTION -->
     <div id="utilsTab" class="tab-content">
       <div class="card">
         <h3>WhatsApp Direct</h3>
@@ -241,32 +304,18 @@
       </div>
     </div>
 
-    <!-- PROFILE SECTION -->
     <div id="profileTab" class="tab-content">
       <div class="card" style="text-align: center;">
         <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
         <h3 id="userNameDisplay">User Account</h3>
-        <p id="userIdDisplay" style="color:var(--text-dim); margin-bottom:20px;">Agent ID: Loading...</p>
+        <p id="userIdDisplay" style="color:var(--text-dim);">Agent ID: Loading...</p>
         
-        <div class="wallet-card" style="margin-bottom: 20px; background: rgba(0,135,81,0.2); color: white; border: 1px solid var(--primary);">
-          <div class="wallet-info" style="text-align: center; width: 100%;">
-            <span style="color: white;">Current Balance | Coins</span>
-            <strong style="font-size: 1.5rem;"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></strong>
-          </div>
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+          <input type="text" id="newUsernameInput" class="auth-input" placeholder="New username...">
+          <button class="btn-main" style="background: var(--primary);" onclick="updateUsername()">Update Username</button>
         </div>
 
-        <div class="dashboard-grid">
-          <div class="dash-card">
-            <span>Spent this Month</span>
-            <strong id="spentCoins">0</strong>
-          </div>
-          <div class="dash-card">
-            <span>Earned this Month</span>
-            <strong id="earnedCoins">0</strong>
-          </div>
-        </div>
-
-        <button class="btn-main" style="background:var(--accent); color:#000; margin-top:10px;" onclick="openModal('withdrawModal')">🏦 Withdraw Funds</button>
+        <button class="btn-main" style="background:var(--danger); margin-top:20px;" onclick="handleLogout()">Logout</button>
       </div>
     </div>
   </div>
@@ -288,34 +337,8 @@
       <h3>🪙 Buy Coins</h3>
       <select id="coinPack" class="auth-input"><option value="1000">100 Coins - ₦1,000</option><option value="2500">260 Coins - ₦2,500</option><option value="5000">550 Coins - ₦5,000</option></select>
       <input type="email" id="userEmail" class="auth-input" placeholder="Email">
-      <button class="btn-main" id="payBtn" onclick="payWithPaystack()">Pay with Paystack</button>
+      <button class="btn-main" onclick="payWithPaystack()">Pay with Paystack</button>
       <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('coinModal')">Cancel</button>
-    </div>
-  </div>
-
-  <div id="giftMallModal" class="modal-bg">
-    <div class="modal-card">
-      <h3>🎁 Gift Mall</h3>
-      <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 15px;">Choose a gift to send to the host!</p>
-      <div class="gift-grid" id="giftGrid"></div>
-      <button class="btn-main" style="background:none; color:white; margin-top:20px;" onclick="closeModal('giftMallModal')">Close</button>
-    </div>
-  </div>
-
-  <!-- POST MODAL (UPDATED FOR FILE UPLOAD) -->
-  <div id="postModal" class="modal-bg">
-    <div class="modal-card">
-      <h3>🚀 Create Post</h3>
-      <div class="auth-input-group">
-        <label>Caption</label>
-        <input type="text" id="postCaption" class="auth-input" placeholder="What's on your mind?">
-      </div>
-      <div class="auth-input-group">
-        <label>Upload Photo or Video</label>
-        <input type="file" id="postFile" class="auth-input" accept="image/*,video/*">
-      </div>
-      <button class="btn-main" id="btnPostAction" onclick="submitPost()">Post to Feed</button>
-      <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('postModal')">Cancel</button>
     </div>
   </div>
 
@@ -328,6 +351,8 @@
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>⚙️</div>Profile</div>
   </div>
 
+  <div class="floating-btn" onclick="triggerFileUpload()">+</div>
+
   <script>
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_yMXYUylVnkixM7Y-qWdiaA_a0hBx9R4';
@@ -339,30 +364,14 @@
     let userId = null;
     let agentId = '';
 
-    const GIFTS = [
-      { name: 'Rose', icon: '🌹', cost: 10 },
-      { name: 'Crown', icon: '👑', cost: 50 },
-      { name: 'Car', icon: '🏎️', cost: 200 },
-      { name: 'Lion', icon: '🦁', cost: 500 },
-      { name: 'Diamond', icon: '💎', cost: 1000 },
-      { name: 'Rocket', icon: '🚀', cost: 2000 },
-    ];
-
     async function initSupabase() {
-      const forceHideTimeout = setTimeout(() => {
-        document.getElementById('loadingScreen').style.display = 'none';
-      }, 6000);
-
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const { error } = await supabase.from('profiles').select('id').limit(1);
-        if (error) throw error;
         document.getElementById('loadingScreen').style.display = 'none';
-        clearTimeout(forceHideTimeout);
         checkSession();
       } catch (e) {
         console.error('Supabase Init Error:', e);
-        document.getElementById('loadingText').innerHTML = `<span style="color:var(--danger)">Connection Error: ${e.message}</span>`;
+        document.getElementById('loadingScreen').innerHTML = '<p style="color:red">Failed to connect to database. Please refresh.</p>';
       }
     }
 
@@ -378,20 +387,24 @@
       const username = document.getElementById('authUsername').value;
       const identifier = document.getElementById('authEmail').value;
       const password = document.getElementById('authPass').value;
+      
       if (isLoginMode) {
         if (!identifier || !password) return alert('Please fill in all fields');
       } else {
         if (!username || !identifier || !password) return alert('Please fill in all fields');
       }
+
       try {
         if (isLoginMode) {
           const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
           if (error) throw error;
         } else {
           const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
-          if (existing) return alert('Username already taken.');
+          if (existing) return alert('Username already taken. Please choose another.');
+
           const { data, error } = await supabase.auth.signUp({ email: identifier, password });
           if (error) throw error;
+
           const { error: profileError } = await supabase.from('profiles').upsert({ id: data.user.id, username: username });
           if (profileError) throw profileError;
         }
@@ -436,10 +449,19 @@
         document.getElementById('userIdDisplay').textContent = 'Agent ID: ' + agentId;
         document.getElementById('userRefLink').textContent = window.location.origin + window.location.pathname + '?ref=' + agentId;
         updateUI();
-        loadHomeFeed();
-        loadInbox();
-        loadDashboard();
+        await loadSuggestedUsers();
       } catch (err) { console.error(err); }
+    }
+
+    async function loadSuggestedUsers() {
+      const { data, error } = await supabase.from('profiles').select('username').neq('id', userId).limit(10);
+      if (error) return console.error(error);
+      const box = document.getElementById('suggestedUsers');
+      if (!data || data.length === 0) {
+        box.innerHTML = '<p style="font-size: 0.7rem; color: var(--text-dim);">No users found.</p>';
+        return;
+      }
+      box.innerHTML = data.map(u => `<div class="suggested-user" onclick="alert('Following ${u.username}...')">👤 <span>${u.username}</span></div>`).join('');
     }
 
     async function fetchWallet() {
@@ -458,34 +480,18 @@
       document.getElementById('userCoins').textContent = userCoins;
     }
 
-    /* GIFT MALL LOGIC */
-    function openGiftMall() {
-      const grid = document.getElementById('giftGrid');
-      grid.innerHTML = '';
-      GIFTS.forEach(gift => {
-        const div = document.createElement('div');
-        div.className = 'gift-item';
-        div.innerHTML = `<div>${gift.icon}</div><span>${gift.cost} Coins</span>`;
-        div.onclick = () => sendGroupGift(gift.name, gift.cost, gift.icon);
-        grid.appendChild(div);
-      });
-      openModal('giftMallModal');
-    }
-
-    async function sendGroupGift(name, cost, icon) {
+    async function sendGroupGift(name, cost) {
       if (userCoins < cost) return alert('Insufficient coins!');
       userCoins -= cost;
       try {
         await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
-        await supabase.from('coin_transactions').insert([{ sender_id: userId, amount: cost, type: 'gift' }]);
         const anim = document.createElement('div');
         anim.className = 'gift-animation animate__animated animate__fadeInUp';
-        anim.textContent = icon;
+        anim.textContent = name.split(' ')[1] || name;
         document.querySelector('.live-container').appendChild(anim);
         addChatMessage(`Sent a ${name}! 🚀`, true);
         setTimeout(() => anim.remove(), 3000);
         updateUI();
-        closeModal('giftMallModal');
       } catch (err) { alert('Error: ' + err.message); }
     }
 
@@ -496,141 +502,6 @@
       div.innerHTML = isGift ? `<b style="color:var(--accent)">Gift:</b> ${msg}` : `<b style="color:var(--accent)">You:</b> ${msg}`;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
-    }
-
-    /* HOME FEED & USER SEARCH */
-    async function loadHomeFeed() {
-      const feed = document.getElementById('homeFeed');
-      try {
-        const { data: posts, error } = await supabase.from('posts').select('*, profiles(username)').order('created_at', { ascending: false });
-        if (error) throw error;
-        if (!posts || posts.length === 0) {
-          feed.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No posts yet.</p>';
-          return;
-        }
-        feed.innerHTML = '';
-        posts.forEach(post => {
-          const card = document.createElement('div');
-          card.className = 'post-card';
-          card.innerHTML = `
-            <img src="${post.media_url}" class="post-media" onerror="this.src='https://via.placeholder.com/400x500?text=No+Media'">
-            <div class="post-content">
-              <span class="post-user">@${post.profiles?.username || 'unknown'}</span>
-              <p class="post-text">${post.caption}</p>
-            </div>
-            <div class="post-actions">
-              <button class="action-btn" onclick="likePost('${post.id}', this)">❤️ <span>0</span></button>
-              <button class="action-btn">💬 Comment</button>
-            </div>
-          `;
-          feed.appendChild(card);
-        });
-      } catch (err) {
-        feed.innerHTML = '<p style="text-align:center; color:var(--danger);">Failed to load feed.</p>';
-      }
-    }
-
-    async function searchUsers() {
-      const query = document.getElementById('userSearch').value;
-      if(!query) return loadHomeFeed();
-      const { data: users, error } = await supabase.from('profiles').select('username').ilike('username', `%${query}%`);
-      if(error) return alert('Search failed');
-      const feed = document.getElementById('homeFeed');
-      feed.innerHTML = '<h3>Users Found:</h3>';
-      users.forEach(u => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `<strong>@${u.username}</strong> <button class="send-coin-btn" style="float:right" onclick="shareCoins('${u.id}', '${u.username}')">🪙 Send</button>`;
-        feed.appendChild(div);
-      });
-    }
-
-    async function submitPost() {
-      const caption = document.getElementById('postCaption').value;
-      const fileInput = document.getElementById('postFile');
-      const file = fileInput.files[0];
-      if (!caption || !file) return alert('Please add a caption and a file!');
-
-      const btn = document.getElementById('btnPostAction');
-      btn.textContent = 'Uploading...';
-      btn.disabled = true;
-
-      try {
-        // 1. Upload to Supabase Storage
-        const fileName = `${userId}/${Date.now()}_${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage.from('posts').upload(fileName, file);
-        if (uploadError) throw uploadError;
-
-        // 2. Get Public URL
-        const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
-
-        // 3. Save to DB
-        const { error: dbError } = await supabase.from('posts').insert([{ user_id: userId, caption, media_url: publicUrl }]);
-        if (dbError) throw dbError;
-
-        alert('Post shared successfully!');
-        closeModal('postModal');
-        loadHomeFeed();
-      } catch (err) { 
-        alert('Upload failed: ' + err.message); 
-      } finally {
-        btn.textContent = 'Post to Feed';
-        btn.disabled = false;
-      }
-    }
-
-    /* INBOX & COIN SHARING */
-    async function loadInbox() {
-      const list = document.getElementById('inboxList');
-      try {
-        const { data: msgs, error } = await supabase.from('messages').select('*, profiles(username)').eq('receiver_id', userId).order('created_at', { ascending: false });
-        if (error) throw error;
-        if (!msgs || msgs.length === 0) {
-          list.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin: 20px 0;">No messages yet.</p>';
-          return;
-        }
-        list.innerHTML = '';
-        msgs.forEach(m => {
-          const item = document.createElement('div');
-          item.className = 'chat-item';
-          item.innerHTML = `
-            <div class="chat-avatar">${(m.profiles?.username || 'U')[0].toUpperCase()}</div>
-            <div class="chat-info">
-              <span class="chat-name">${m.profiles?.username || 'Unknown'}</span>
-              <span class="chat-preview">${m.content}</span>
-            </div>
-            <button class="send-coin-btn" onclick="shareCoins('${m.sender_id}', '${m.profiles?.username || 'User'}')">🪙 Send</button>
-          `;
-          list.appendChild(item);
-        });
-      } catch (err) {
-        list.innerHTML = '<p style="text-align:center; color:var(--danger);">Failed to load messages. Check RLS settings.</p>';
-      }
-    }
-
-    async function shareCoins(targetId, targetName) {
-      const amount = prompt(`Enter amount of coins to share with ${targetName}:`);
-      if (!amount || isNaN(amount) || amount <= 0) return;
-      const coinAmount = parseInt(amount);
-      if (userCoins < coinAmount) return alert('Insufficient coins!');
-      try {
-        userCoins -= coinAmount;
-        await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
-        const { data: rec } = await supabase.from('wallets').select('coin_balance').eq('id', targetId).single();
-        await supabase.from('wallets').update({ coin_balance: (rec?.coin_balance || 0) + coinAmount }).eq('id', targetId);
-        await supabase.from('coin_transactions').insert([{ sender_id: userId, receiver_id: targetId, amount: coinAmount, type: 'share' }]);
-        updateUI();
-        alert(`Shared ${coinAmount} coins with ${targetName}!`);
-      } catch (err) { alert('Error: ' + err.message); }
-    }
-
-    async function loadDashboard() {
-      try {
-        const { data: spent } = await supabase.from('coin_transactions').select('amount').eq('sender_id', userId);
-        document.getElementById('spentCoins').textContent = spent ? spent.reduce((a, b) => a + b.amount, 0) : 0;
-        const { data: earned } = await supabase.from('coin_transactions').select('amount').eq('receiver_id', userId);
-        document.getElementById('earnedCoins').textContent = earned ? earned.reduce((a, b) => a + b.amount, 0) : 0;
-      } catch (err) { console.error(err); }
     }
 
     async function toggleGroupStream() {
@@ -658,44 +529,36 @@
       el.classList.add('active');
     }
 
-    function openModal(id) { 
-      if(id === 'giftMallModal') openGiftMall();
-      document.getElementById(id).style.display = 'flex'; 
-    }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     function payWithPaystack() {
       const email = document.getElementById('userEmail').value;
       const amount = parseInt(document.getElementById('coinPack').value);
       if (!email) return alert('Email required');
-      const payBtn = document.getElementById('payBtn');
-      const originalText = payBtn.textContent;
-      payBtn.textContent = 'Processing...';
-      payBtn.disabled = true;
-      try {
-        PaystackPop.setup({
-          key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', 
-          email: email, 
-          amount: amount * 100, 
-          currency: "NGN",
-          callback: async (res) => {
-            userCoins += Math.floor(amount / 10);
-            await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
-            updateUI();
-            closeModal('coinModal');
-            alert('Payment successful!');
-          },
-          onClose: () => {
-            payBtn.textContent = originalText;
-            payBtn.disabled = false;
-          }
-        });
-        PaystackPop.openIframe();
-      } catch (err) {
-        alert('Payment Error. Try again.');
-        payBtn.textContent = originalText;
-        payBtn.disabled = false;
-      }
+
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+
+      PaystackPop.setup({
+        key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', 
+        email, 
+        amount: amount * 100, 
+        currency: "NGN",
+        callback: async () => {
+          userCoins += Math.floor(amount/10);
+          await supabase.from('wallets').update({ coin_balance: userCoins }).eq('id', userId);
+          updateUI();
+          closeModal('coinModal');
+          alert('Payment successful! Your coins have been added.');
+        },
+        onClose: () => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      }).openIframe();
     }
 
     function openWhatsApp() {
@@ -710,7 +573,59 @@
       alert('Link Copied!');
     }
 
-    window.onload = initSupabase;
+    async function updateUsername() {
+      const newName = document.getElementById('newUsernameInput').value.trim();
+      if (!newName) return alert('Please enter a username');
+      
+      try {
+        const { error } = await supabase.from('profiles').update({ username: newName }).eq('id', userId);
+        if (error) throw error;
+        document.getElementById('userNameDisplay').textContent = newName;
+        alert('Username updated successfully!');
+      } catch (err) {
+        alert('Error updating username: ' + err.message);
+      }
+    }
+
+    function triggerFileUpload() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,video/*';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          await handleFileUpload(file);
+        }
+      };
+      input.click();
+    }
+
+    async function handleFileUpload(file) {
+      try {
+        const fileName = `${userId}/${Date.now()}_${file.name}`;
+        const { data, error: uploadError } = await supabase.storage.from('posts').upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('posts').getPublicUrl(fileName);
+        const publicUrl = urlData.publicUrl;
+
+        const { error: dbError } = await supabase.from('posts').insert([{ 
+          user_id: userId, 
+          media_url: publicUrl, 
+          caption: 'Shared via NAIJALITE' 
+        }]);
+        if (dbError) throw dbError;
+
+        alert('Post uploaded successfully!');
+      } catch (err) {
+        console.error(err);
+        alert('Upload failed: ' + err.message);
+      }
+    }
+
+    window.onload = () => {
+      initSupabase();
+    };
   </script>
 </body>
 </html>
