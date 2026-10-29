@@ -29,7 +29,6 @@
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* AUTH SCREEN */
     #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .auth-wrapper { width: 100%; max-width: 340px; text-align: center; animation: fadeIn 0.5s; }
     .auth-logo-container { margin-bottom: 15px; display: flex; justify-content: center; }
@@ -46,7 +45,6 @@
     .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; }
     .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 
-    /* HEADER (Wallet Removed) */
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 16px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
     .header-top h1 { font-size: 1.3rem; font-weight: 800; }
@@ -57,6 +55,9 @@
     .tab-content.active { display: block; }
 
     /* HOME FEED */
+    .search-bar { background: var(--card); padding: 10px; border-radius: 15px; display: flex; gap: 10px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .search-bar input { flex: 1; background: none; border: none; color: white; padding: 5px 10px; outline: none; }
+    .search-bar button { background: var(--primary); border: none; color: white; padding: 5px 15px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; }
     .feed-container { display: flex; flex-direction: column; gap: 20px; }
     .post-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); position: relative; }
     .post-media { width: 100%; max-height: 500px; object-fit: cover; background: #000; }
@@ -79,7 +80,7 @@
     .chat-area { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; mask-image: linear-gradient(transparent, black 20%); }
     .chat-msg { background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; color: white; width: fit-content; max-width: 80%; backdrop-filter: blur(5px); }
     .action-bar { display: flex; align-items: center; gap: 12px; }
-    .gift-box-btn { background: var(--accent); border: none; color: #000; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 10px rgba(255,193,7,0.4); }
+    .gift-box-btn { background: var(--accent); border: none; color: #000; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 10px rgba(255,193,7,0.4); z-index: 10; }
 
     /* GIFT MALL */
     .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
@@ -169,6 +170,10 @@
   <div class="container">
     <!-- HOME FEED -->
     <div id="homeTab" class="tab-content active">
+      <div class="search-bar">
+        <input type="text" id="userSearch" placeholder="Search users by username...">
+        <button onclick="searchUsers()">Search</button>
+      </div>
       <div class="feed-container" id="homeFeed">
         <p style="text-align:center; color:var(--text-dim); margin: 20px 0;">Loading feed...</p>
       </div>
@@ -243,7 +248,6 @@
         <h3 id="userNameDisplay">User Account</h3>
         <p id="userIdDisplay" style="color:var(--text-dim); margin-bottom:20px;">Agent ID: Loading...</p>
         
-        <!-- WALLET MOVED HERE -->
         <div class="wallet-card" style="margin-bottom: 20px; background: rgba(0,135,81,0.2); color: white; border: 1px solid var(--primary);">
           <div class="wallet-info" style="text-align: center; width: 100%;">
             <span style="color: white;">Current Balance | Coins</span>
@@ -298,6 +302,7 @@
     </div>
   </div>
 
+  <!-- POST MODAL (UPDATED FOR FILE UPLOAD) -->
   <div id="postModal" class="modal-bg">
     <div class="modal-card">
       <h3>🚀 Create Post</h3>
@@ -306,10 +311,10 @@
         <input type="text" id="postCaption" class="auth-input" placeholder="What's on your mind?">
       </div>
       <div class="auth-input-group">
-        <label>Media (Image/Video URL)</label>
-        <input type="text" id="postMedia" class="auth-input" placeholder="Paste link here...">
+        <label>Upload Photo or Video</label>
+        <input type="file" id="postFile" class="auth-input" accept="image/*,video/*">
       </div>
-      <button class="btn-main" onclick="submitPost()">Post to Feed</button>
+      <button class="btn-main" id="btnPostAction" onclick="submitPost()">Post to Feed</button>
       <button class="btn-main" style="background:none; color:white; margin-top:10px;" onclick="closeModal('postModal')">Cancel</button>
     </div>
   </div>
@@ -453,6 +458,7 @@
       document.getElementById('userCoins').textContent = userCoins;
     }
 
+    /* GIFT MALL LOGIC */
     function openGiftMall() {
       const grid = document.getElementById('giftGrid');
       grid.innerHTML = '';
@@ -492,6 +498,7 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    /* HOME FEED & USER SEARCH */
     async function loadHomeFeed() {
       const feed = document.getElementById('homeFeed');
       try {
@@ -523,19 +530,56 @@
       }
     }
 
+    async function searchUsers() {
+      const query = document.getElementById('userSearch').value;
+      if(!query) return loadHomeFeed();
+      const { data: users, error } = await supabase.from('profiles').select('username').ilike('username', `%${query}%`);
+      if(error) return alert('Search failed');
+      const feed = document.getElementById('homeFeed');
+      feed.innerHTML = '<h3>Users Found:</h3>';
+      users.forEach(u => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `<strong>@${u.username}</strong> <button class="send-coin-btn" style="float:right" onclick="shareCoins('${u.id}', '${u.username}')">🪙 Send</button>`;
+        feed.appendChild(div);
+      });
+    }
+
     async function submitPost() {
       const caption = document.getElementById('postCaption').value;
-      const media = document.getElementById('postMedia').value;
-      if (!caption || !media) return alert('Please fill in all fields');
+      const fileInput = document.getElementById('postFile');
+      const file = fileInput.files[0];
+      if (!caption || !file) return alert('Please add a caption and a file!');
+
+      const btn = document.getElementById('btnPostAction');
+      btn.textContent = 'Uploading...';
+      btn.disabled = true;
+
       try {
-        const { error } = await supabase.from('posts').insert([{ user_id: userId, caption, media_url: media }]);
-        if (error) throw error;
+        // 1. Upload to Supabase Storage
+        const fileName = `${userId}/${Date.now()}_${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage.from('posts').upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        // 2. Get Public URL
+        const { data: { publicUrl } } = supabase.storage.from('posts').getPublicUrl(fileName);
+
+        // 3. Save to DB
+        const { error: dbError } = await supabase.from('posts').insert([{ user_id: userId, caption, media_url: publicUrl }]);
+        if (dbError) throw dbError;
+
         alert('Post shared successfully!');
         closeModal('postModal');
         loadHomeFeed();
-      } catch (err) { alert('Error: ' + err.message); }
+      } catch (err) { 
+        alert('Upload failed: ' + err.message); 
+      } finally {
+        btn.textContent = 'Post to Feed';
+        btn.disabled = false;
+      }
     }
 
+    /* INBOX & COIN SHARING */
     async function loadInbox() {
       const list = document.getElementById('inboxList');
       try {
@@ -624,12 +668,10 @@
       const email = document.getElementById('userEmail').value;
       const amount = parseInt(document.getElementById('coinPack').value);
       if (!email) return alert('Email required');
-
       const payBtn = document.getElementById('payBtn');
       const originalText = payBtn.textContent;
       payBtn.textContent = 'Processing...';
       payBtn.disabled = true;
-
       try {
         PaystackPop.setup({
           key: 'pk_live_a9ad9d573bdf37b3d3162234fe832adb5fad3a28', 
