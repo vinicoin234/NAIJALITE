@@ -277,10 +277,10 @@
   <div id="headerMenu" class="menu-dropdown">
       <div class="menu-item" onclick="openSettings('account')">Manage account</div>
       <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
-      <div class="menu-item" onclick="alert('Opening Notifications...')">Notifications</div>
-      <div class="menu-item" onclick="alert('Opening Verification...')">Verification</div>
-      <div class="menu-item" onclick="alert('Opening Preferences...')">Preferences</div>
-      <div class="menu-item" onclick="alert('Opening Accessibility...')">Accessibility</div>
+      <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
+      <div class="menu-item" onclick="openSettings('verification')">Verification</div>
+      <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
+      <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
     </div>
 
   <div class="container">
@@ -386,6 +386,17 @@
           <div class="transaction-list" id="coinTxList">
             <p style="font-size: 0.7rem; color: var(--text-dim); text-align:center;">No transactions yet.</p>
           </div>
+          
+          <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 15px; border: 1px solid var(--border); text-align: left;">
+            <h4 style="font-size: 0.9rem; margin-bottom: 10px;">🏦 Bank Withdrawal</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <label style="font-size: 0.7rem; color: var(--text-dim);">Select Bank</label>
+              <select id="bankSelect" class="auth-input"><option value="OPay">OPay</option><option value="Moniepoint">Moniepoint</option><option value="Kuda">Kuda</option></select>
+              <label style="font-size: 0.7rem; color: var(--text-dim);">Account Number</label>
+              <input type="tel" id="accountNum" class="auth-input" maxlength="10" placeholder="Enter account number">
+              <button class="btn-main" style="margin-top: 10px;" onclick="submitWithdrawal()">Confirm Withdrawal</button>
+            </div>
+          </div>
         </div>
 
         <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px;">
@@ -471,8 +482,43 @@
         </div>
       </div>
 
+      <div id="settingsNotifications" class="settings-section" style="display:none;">
+        <h4>🔔 Notifications</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Push Notifications</span>
+            <small>Get instant alerts for likes and comments</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Email Alerts</span>
+            <small>Receive weekly summaries via email</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="settingsVerification" class="settings-section" style="display:none;">
+        <h4>✅ Verification</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Identity Check</span>
+            <small>Upload ID to get a verified badge</small>
+          </div>
+          <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem;">Upload</button>
+        </div>
+      </div>
+
       <div id="settingsPrefs" class="settings-section" style="display:none;">
-        <h4>🔔 Notifications & Preferences</h4>
+        <h4>⚙️ Preferences</h4>
         <div class="settings-row">
           <div class="settings-info">
             <span>Desktop notifications</span>
@@ -486,6 +532,31 @@
         <div style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.3); border-radius:12px;">
           <span style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:5px;">Your preferences</span>
           <small style="color:var(--text-dim);">Your preferences will be synced automatically: Likes, comments, new followers, mentions and tags.</small>
+        </div>
+      </div>
+
+      <div id="settingsAccessibility" class="settings-section" style="display:none;">
+        <h4>♿ Accessibility</h4>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>High Contrast Mode</span>
+            <small>Increase visibility for easier reading</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-info">
+            <span>Text Size</span>
+            <small>Adjust app font size</small>
+          </div>
+          <select class="settings-select">
+            <option>Normal</option>
+            <option>Large</option>
+            <option>Extra Large</option>
+          </select>
         </div>
       </div>
     </div>
@@ -736,7 +807,7 @@
 
     function openSettings(type) {
       const modal = document.getElementById('settingsModal');
-      const sections = ['settingsAccount', 'settingsPrivacy', 'settingsPrefs'];
+      const sections = ['settingsAccount', 'settingsPrivacy', 'settingsNotifications', 'settingsVerification', 'settingsPrefs', 'settingsAccessibility'];
       
       sections.forEach(s => document.getElementById(s).style.display = 'none');
       
@@ -746,9 +817,18 @@
       } else if (type === 'privacy') {
         document.getElementById('settingsTitle').textContent = 'Privacy Settings';
         document.getElementById('settingsPrivacy').style.display = 'block';
-      } else {
+      } else if (type === 'notifications') {
+        document.getElementById('settingsTitle').textContent = 'Notifications';
+        document.getElementById('settingsNotifications').style.display = 'block';
+      } else if (type === 'verification') {
+        document.getElementById('settingsTitle').textContent = 'Verification';
+        document.getElementById('settingsVerification').style.display = 'block';
+      } else if (type === 'prefs') {
         document.getElementById('settingsTitle').textContent = 'Preferences';
         document.getElementById('settingsPrefs').style.display = 'block';
+      } else if (type === 'accessibility') {
+        document.getElementById('settingsTitle').textContent = 'Accessibility';
+        document.getElementById('settingsAccessibility').style.display = 'block';
       }
       
       modal.style.display = 'flex';
