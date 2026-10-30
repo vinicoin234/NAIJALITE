@@ -78,7 +78,7 @@
     .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; border: 3px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     .avatar-plus-btn { position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
 
-    .user-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .user-item { background: var(--card); padding: 12px 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
     .chat-header { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
@@ -103,21 +103,6 @@
     .live-overlay * { pointer-events: auto; }
     .overlay-top { display: flex; justify-content: space-between; align-items: center; }
     .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; }
-    .overlay-bottom { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-    .chat-area { max-height: 130px; overflow-y: auto; color: white; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); overscroll-behavior: contain; }
-    .action-bar { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
-    .action-bar input { flex: 1; padding: 12px 14px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.9rem; }
-    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 10px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-
-    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-    .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 15px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; }
-    .gift-card:active { border-color: var(--accent); transform: scale(0.95); }
-    .gift-icon { font-size: 1.8rem; margin-bottom: 4px; }
-    .gift-title { font-size: 0.75rem; font-weight: bold; }
-    .gift-price { font-size: 0.7rem; color: var(--accent); font-weight: bold; margin-top: 2px; }
-
-    .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-    .package-card { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; }
 
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
@@ -209,26 +194,19 @@
   </div>
 
   <div class="container">
-    <!-- Home Feed Tab -->
+    <!-- Home Feed Tab (Only Username & Profile Photo) -->
     <div id="homeTab" class="tab-content active">
       <div id="activeLiveBannerContainer"></div>
       <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
     </div>
     
-    <!-- Live Stream Tab -->
+    <!-- Live Stream Tab (Clean Host View: No Buy Coins / No Gifts) -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
         <div class="live-overlay">
           <div class="overlay-top">
             <div class="live-badge">🔴 LIVE</div>
-            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
-          </div>
-          <div class="overlay-bottom">
-            <div class="action-bar">
-              <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
-              <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁 Gifts</button>
-            </div>
           </div>
         </div>
       </div>
@@ -371,7 +349,7 @@
         <h3 id="extUserNameDisplay">Username</h3>
         <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.8rem; margin:8px 0;"></p>
         
-        <div id="extBioContainer" style="margin: 15px 0; text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px;">
+        <div id="extBioContainer" style="margin: 15px 0; text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; display:none;">
           <h4 style="font-size:0.85rem; margin-bottom:5px;">Bio</h4>
           <p id="extBioText" style="font-size:0.8rem; color:var(--text-dim);">No bio</p>
         </div>
@@ -405,120 +383,6 @@
     <div class="chat-input-area">
       <input type="text" id="chatInputText" placeholder="Type a message...">
       <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="sendMessage()">Send</button>
-    </div>
-  </div>
-
-  <!-- Live Stream Gift Catalog Modal -->
-  <div id="giftCatalogModal" class="settings-modal" style="display:none;">
-    <div class="settings-card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>🎁 Live Gifts Catalog</h3>
-        <span style="font-size:0.85rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
-      </div>
-      <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Tap a gift to send live.</p>
-
-      <div class="gift-grid">
-        <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 1)">
-          <div class="gift-icon">🌹</div>
-          <div class="gift-title">Rose</div>
-          <div class="gift-price">1 Coin</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Heart 🫰', 5)">
-          <div class="gift-icon">🫰</div>
-          <div class="gift-title">Heart</div>
-          <div class="gift-price">5 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Fire 🔥', 10)">
-          <div class="gift-icon">🔥</div>
-          <div class="gift-title">Fire</div>
-          <div class="gift-price">10 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Bottle 🍾', 50)">
-          <div class="gift-icon">🍾</div>
-          <div class="gift-title">Bottle</div>
-          <div class="gift-price">50 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Crown 👑', 100)">
-          <div class="gift-icon">👑</div>
-          <div class="gift-title">Crown</div>
-          <div class="gift-price">100 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Diamond 💎', 500)">
-          <div class="gift-icon">💎</div>
-          <div class="gift-title">Diamond</div>
-          <div class="gift-price">500 Coins</div>
-        </div>
-      </div>
-
-      <button class="btn-main" style="background:var(--accent); color:black; margin-bottom:10px;" onclick="closeModal('giftCatalogModal'); openModal('coinModal');">+ Buy More Coins</button>
-      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('giftCatalogModal')">Close</button>
-    </div>
-  </div>
-
-  <!-- Coin Purchase Modal -->
-  <div id="coinModal" class="settings-modal" style="display:none;">
-    <div class="settings-card">
-      <h3 style="margin-bottom:10px">🪙 Buy Coins</h3>
-      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin.</p>
-      
-      <div class="package-grid">
-        <div class="package-card" onclick="selectPackage(10, 1)">
-          <b>₦10</b>
-          <div style="font-size:0.75rem; color:var(--accent);">1 Coin</div>
-        </div>
-        <div class="package-card" onclick="selectPackage(100, 10)">
-          <b>₦100</b>
-          <div style="font-size:0.75rem; color:var(--accent);">10 Coins</div>
-        </div>
-        <div class="package-card" onclick="selectPackage(1000, 100)">
-          <b>₦1,000</b>
-          <div style="font-size:0.75rem; color:var(--accent);">100 Coins</div>
-        </div>
-        <div class="package-card" onclick="selectPackage(10000, 1000)">
-          <b>₦10,000</b>
-          <div style="font-size:0.75rem; color:var(--accent);">1,000 Coins</div>
-        </div>
-      </div>
-
-      <label class="auth-label">Amount in Naira (₦10 to ₦100,000)</label>
-      <input type="number" id="customNairaAmount" class="auth-input" value="1000">
-
-      <label class="auth-label">Email for Receipt</label>
-      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
-      
-      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay with Paystack</button>
-      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Edit Profile Modal -->
-  <div id="editProfileModal" class="settings-modal" style="display:none;">
-    <div class="settings-card">
-      <h3>Edit Profile</h3>
-      <div style="margin: 15px 0; text-align: left;">
-        <label class="auth-label">Username</label>
-        <input type="text" id="editUsername" class="auth-input">
-        
-        <label class="auth-label">Bio</label>
-        <textarea id="editBio" class="auth-input" style="height:80px; resize:none;" placeholder="Write a short bio..."></textarea>
-
-        <label class="auth-label">Business / Link Title</label>
-        <input type="text" id="editLinkTitle" class="auth-input" placeholder="e.g. YouTube Channel">
-
-        <label class="auth-label">Business / Website URL</label>
-        <input type="url" id="editBusinessLink" class="auth-input" placeholder="https://...">
-
-        <label class="auth-label">Date of Birth (Private)</label>
-        <input type="date" id="editDob" class="auth-input">
-        
-        <label class="auth-label">Sex</label>
-        <select id="editSex" class="auth-input">
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
-      </div>
-      <button class="btn-main" onclick="saveProfileChanges()" style="margin-bottom:10px;">Save Changes</button>
-      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('editProfileModal')">Cancel</button>
     </div>
   </div>
 
@@ -564,7 +428,6 @@
 
     let currentUser = null;
     let authMode = 'login';
-    let activeTabName = 'homeTab';
     let myStream = null;
     let isStreaming = false;
     let currentChatUser = null;
@@ -685,7 +548,6 @@
         document.getElementById('walletBalance').innerText = '₦' + Number(data.wallet || 0).toLocaleString();
         document.getElementById('userCoins').innerText = data.coins || 0;
         document.getElementById('coinsCount').innerText = data.coins || 0;
-        document.getElementById('giftModalCoinCount').innerText = data.coins || 0;
         document.getElementById('userNameDisplay').innerHTML = `${data.username} <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;">${data.sex || ''}</span>`;
         document.getElementById('userIdDisplay').innerText = 'ID: ' + currentUser.id;
 
@@ -728,7 +590,6 @@
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       if (el) el.classList.add('active');
-      activeTabName = tabId;
       if (tabId === 'inboxTab') {
         loadConversations();
       }
@@ -784,6 +645,7 @@
       let html = '';
       usersData.forEach(u => {
         if (u.id === currentUser.id) return;
+        // Clean Home Feed: Only Username & Profile Photo
         html += `
           <div class="user-item" onclick="openUserProfile('${u.id}')">
             <div style="display:flex; align-items:center; gap:12px;">
@@ -792,10 +654,9 @@
               </div>
               <div>
                 <b>${u.username}</b>
-                <p style="font-size:0.75rem; color:var(--text-dim);">${u.bio ? u.bio.substring(0, 30) + '...' : 'NaijaLite Member'}</p>
               </div>
             </div>
-            <button class="btn-main" style="width:auto; padding:6px 14px; font-size:0.75rem;" onclick="event.stopPropagation(); openChat('${u.id}', '${u.username}')">Chat</button>
+            <span>→</span>
           </div>`;
       });
       feedContainer.innerHTML = html;
@@ -806,7 +667,6 @@
       if (!user) return;
       viewedUser = user;
 
-      // Check if following (mock or actual table check)
       const isFollowing = localStorage.getItem(`following_${currentUser.id}_${userId}`) === 'true';
 
       const avatarImg = document.getElementById('extProfileAvatarImg');
@@ -868,7 +728,7 @@
         .order('created_at', { ascending: false });
 
       if (!data || data.length === 0) {
-        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet. Start chatting from the Home feed!</p>';
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet.</p>';
         return;
       }
 
@@ -1221,62 +1081,6 @@
 
     function joinLiveStream(streamId) {
       switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
-    }
-
-    function handleLiveChatKey(e) {
-      if (e.key === 'Enter') {
-        const input = document.getElementById('liveChatInput');
-        input.value = '';
-      }
-    }
-
-    function triggerGiftModal() {
-      document.getElementById('giftCatalogModal').style.display = 'flex';
-    }
-
-    async function sendGroupGift(giftName, cost) {
-      const currentCoins = currentUser.profile?.coins || 0;
-      if (currentCoins < cost) {
-        alert('Insufficient coins! Please buy more coins.');
-        closeModal('giftCatalogModal');
-        openModal('coinModal');
-        return;
-      }
-
-      const newCoins = currentCoins - cost;
-      await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
-      await loadUserProfile();
-      closeModal('giftCatalogModal');
-      alert(`Sent ${giftName} successfully!`);
-    }
-
-    function selectPackage(naira, coins) {
-      document.getElementById('customNairaAmount').value = naira;
-    }
-
-    function payWithPaystack() {
-      const naira = parseInt(document.getElementById('customNairaAmount').value);
-      const email = document.getElementById('userEmail').value || currentUser.email;
-      if (isNaN(naira) || naira < 10) { alert('Minimum amount is ₦10'); return; }
-
-      const handler = PaystackPop.setup({
-        key: 'pk_live_YOUR_PAYSTACK_KEY',
-        email: email,
-        amount: naira * 100,
-        currency: 'NGN',
-        callback: async function(response) {
-          const coinsEarned = Math.floor(naira / 10);
-          const newCoins = (currentUser.profile.coins || 0) + coinsEarned;
-          await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
-          await loadUserProfile();
-          closeModal('coinModal');
-          alert(`Payment successful! Credited +${coinsEarned} coins.`);
-        },
-        onClose: function() {
-          alert('Transaction was closed.');
-        }
-      });
-      handler.openIframe();
     }
 
     function triggerAvatarUpload() {
