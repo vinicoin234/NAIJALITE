@@ -537,7 +537,7 @@
 
   <script>
     // =========================================================================
-    // CONFIGURATION WITH YOUR EXTRACTED PROJECT CREDENTIALS
+    // CONFIGURATION WITH YOUR SUPABASE CREDENTIALS
     // =========================================================================
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3aWRkZXhnaXd0ZHV1enByc2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDU1MjMsImV4cCI6MjEwODc4MTUyM30.QyzSo2eUtt0jBzW8_WRkIPutMj1wb5ex_9GgyOguwHI';
@@ -686,8 +686,11 @@
     }
 
     function setupRealtimeListeners() {
+      if (callSub) supabaseClient.removeChannel(callSub);
+      
+      // Fixed call listener to catch incoming calls reliably
       callSub = supabaseClient
-        .channel('public:calls')
+        .channel(`public:calls:${currentUser.id}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
           incomingCallPayload = payload.new;
           showIncomingCallModal(incomingCallPayload);
@@ -708,6 +711,9 @@
       document.getElementById(tabId).classList.add('active');
       el.classList.add('active');
       activeTabName = tabId;
+      if (tabId === 'inboxTab') {
+        loadConversations();
+      }
     }
 
     function switchProfileTab(subId, el) {
@@ -728,7 +734,7 @@
     }
 
     async function loadHomeFeed() {
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('livestreams')
         .select('*, profiles(username, avatar_url)')
         .eq('is_active', true);
@@ -778,14 +784,15 @@
     }
 
     async function loadConversations() {
+      // Fixed conversation loader to safely aggregate chat partners
       const { data, error } = await supabaseClient
         .from('messages')
         .select('sender_id, receiver_id, message, created_at')
         .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
         .order('created_at', { ascending: false });
 
-      if (!data) {
-        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet.</p>';
+      if (!data || data.length === 0) {
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet. Start chatting from the Home feed!</p>';
         return;
       }
 
@@ -796,13 +803,18 @@
       });
 
       if (partnerIds.size === 0) {
-        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet. Start chatting from the Home feed!</p>';
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet.</p>';
         return;
       }
 
       const { data: profilesData } = await supabaseClient.from('profiles').select('*').in('id', Array.from(partnerIds));
+      if (!profilesData || profilesData.length === 0) {
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet.</p>';
+        return;
+      }
+
       let html = '';
-      profilesData?.forEach(p => {
+      profilesData.forEach(p => {
         html += `
           <div class="user-item" onclick="openChat('${p.id}', '${p.username}')">
             <div style="display:flex; align-items:center; gap:12px;">
@@ -837,7 +849,7 @@
 
     async function loadMessages() {
       if (!currentChatUser) return;
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentChatUser.id}),and(sender_id.eq.${currentChatUser.id},receiver_id.eq.${currentUser.id})`)
@@ -915,7 +927,7 @@
       const amount = parseInt(amountStr);
       if (isNaN(amount) || amount <= 0) return;
 
-      if (currentUser.profile.coins < amount) {
+      if ((currentUser.profile.coins || 0) < amount) {
         alert('Insufficient coins balance.');
         return;
       }
@@ -1058,9 +1070,9 @@
         })
         .subscribe();
 
-      if (activeCall.isCaller) {
+      if (activeCall && activeCall.isCaller) {
         supabaseClient
-          .channel(`public:calls:${currentUser.id}`)
+          .channel(`public:calls:answer:${currentUser.id}`)
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `caller_id=eq.${currentUser.id}` }, async payload => {
             if (payload.new.answer && peerConnection && !peerConnection.remoteDescription) {
               await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
@@ -1120,7 +1132,7 @@
             is_active: true
           });
         } catch (err) {
-          alert('Could not start camera for live streaming.');
+          alert('Could not access camera for live streaming.');
         }
       } else {
         if (myStream) myStream.getTracks().forEach(t => t.stop());
@@ -1155,14 +1167,16 @@
     }
 
     async function sendGroupGift(giftName, cost) {
-      if (currentUser.profile.coins < cost) {
-        alert('Insufficient coins. Please buy more coins.');
+      // Fixed strict coin validation check before sending a gift
+      const currentCoins = currentUser.profile?.coins || 0;
+      if (currentCoins < cost) {
+        alert('Insufficient coins! Please buy more coins.');
         closeModal('giftCatalogModal');
         openModal('coinModal');
         return;
       }
 
-      const newCoins = currentUser.profile.coins - cost;
+      const newCoins = currentCoins - cost;
       await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
       await loadUserProfile();
       closeModal('giftCatalogModal');
