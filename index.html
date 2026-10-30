@@ -194,15 +194,16 @@
   </div>
 
   <div class="container">
-    <!-- Home Feed Tab (Only Username & Profile Photo) -->
+    <!-- Home Feed Tab -->
     <div id="homeTab" class="tab-content active">
       <div id="activeLiveBannerContainer"></div>
       <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
     </div>
     
-    <!-- Live Stream Tab (Clean Host View: No Buy Coins / No Gifts) -->
+    <!-- Live Stream Tab -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
+        <!-- Host video is NOT muted locally so host mic feed is active and running -->
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
         <div class="live-overlay">
           <div class="overlay-top">
@@ -645,7 +646,6 @@
       let html = '';
       usersData.forEach(u => {
         if (u.id === currentUser.id) return;
-        // Clean Home Feed: Only Username & Profile Photo
         html += `
           <div class="user-item" onclick="openUserProfile('${u.id}')">
             <div style="display:flex; align-items:center; gap:12px;">
@@ -886,7 +886,7 @@
       toggleChatMenu();
     }
 
-    // WebRTC Call Handling
+    // Robust WebRTC Call Handling
     async function startCall(type) {
       if (!currentChatUser) return;
       activeCall = { type, peerId: currentChatUser.id, isCaller: true };
@@ -994,24 +994,34 @@
     }
 
     function setupSignalingListener(peerId) {
-      supabaseClient
+      if (window.signalChannel) supabaseClient.removeChannel(window.signalChannel);
+      
+      window.signalChannel = supabaseClient
         .channel(`public:signals:${currentUser.id}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals', filter: `receiver_id=eq.${currentUser.id}` }, async payload => {
           const sig = payload.new;
-          if (sig.sender_id === peerId) {
-            if (sig.candidate && peerConnection) {
+          if (sig.sender_id === peerId && sig.candidate && peerConnection) {
+            try {
               await peerConnection.addIceCandidate(new RTCIceCandidate(sig.candidate));
+            } catch (e) {
+              console.error('Error adding received ice candidate', e);
             }
           }
         })
         .subscribe();
 
       if (activeCall && activeCall.isCaller) {
-        supabaseClient
+        if (window.callAnswerChannel) supabaseClient.removeChannel(window.callAnswerChannel);
+        
+        window.callAnswerChannel = supabaseClient
           .channel(`public:calls:answer:${currentUser.id}`)
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `caller_id=eq.${currentUser.id}` }, async payload => {
             if (payload.new.answer && peerConnection && !peerConnection.remoteDescription) {
-              await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
+              try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
+              } catch (e) {
+                console.error('Error setting remote description from answer', e);
+              }
             }
           })
           .subscribe();
@@ -1052,22 +1062,29 @@
       activeCall = null;
     }
 
+    // Active Microphone Live Streaming Toggle
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       if (!isStreaming) {
         try {
           myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-          document.getElementById('hostVideo').srcObject = myStream;
+          const hostVideo = document.getElementById('hostVideo');
+          hostVideo.srcObject = myStream;
+          // Keep video element muted locally so there's no feedback loop, 
+          // but microphone tracks are actively transmitted and captured in myStream
+          hostVideo.muted = true; 
+          
           isStreaming = true;
           btn.innerText = 'Stop Live';
           btn.style.background = 'var(--danger)';
 
+          // Upsert live status to database so notification banner instantly triggers for everyone
           await supabaseClient.from('livestreams').upsert({
             user_id: currentUser.id,
             is_active: true
           });
         } catch (err) {
-          alert('Could not access camera for live streaming.');
+          alert('Could not access microphone and camera for live streaming.');
         }
       } else {
         if (myStream) myStream.getTracks().forEach(t => t.stop());
