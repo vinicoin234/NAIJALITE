@@ -107,6 +107,16 @@
     .overlay-bottom input { flex: 1; padding: 12px 14px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.9rem; }
     .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 10px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
 
+    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+    .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 15px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .gift-card:active { border-color: var(--accent); transform: scale(0.95); }
+    .gift-icon { font-size: 1.8rem; margin-bottom: 4px; }
+    .gift-title { font-size: 0.75rem; font-weight: bold; }
+    .gift-price { font-size: 0.7rem; color: var(--accent); font-weight: bold; margin-top: 2px; }
+
+    .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+    .package-card { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; }
+
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
     .video-box video { width: 100%; height: 100%; object-fit: cover; }
@@ -206,15 +216,15 @@
     <!-- Live Stream Tab -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
-        <!-- Host video stream. Unmuted locally if viewing, muted if hosting to prevent feedback loop -->
         <video id="hostVideo" class="main-video" autoplay playsinline></video>
         <div class="live-overlay" id="liveOverlayBox">
           <div class="overlay-top">
             <div class="live-badge" id="liveBadgeEl">🔴 LIVE</div>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
           </div>
           <div class="overlay-bottom" id="liveOverlayBottom">
             <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
-            <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁</button>
+            <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁 Gifts</button>
           </div>
         </div>
       </div>
@@ -394,7 +404,7 @@
     </div>
   </div>
 
-  <!-- Gift Catalog Modal -->
+  <!-- Live Stream Gift Catalog Modal -->
   <div id="giftCatalogModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -403,24 +413,77 @@
       </div>
       <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Tap a gift to send live.</p>
 
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0;">
-        <div class="card" style="padding:10px; text-align:center; cursor:pointer; margin:0;" onclick="sendGroupGift('Rose 🌹', 1)">
-          <div style="font-size:1.8rem;">🌹</div>
-          <div style="font-size:0.75rem; font-weight:bold;">Rose</div>
-          <div style="font-size:0.7rem; color:var(--accent);">1 Coin</div>
+      <div class="gift-grid">
+        <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 1)">
+          <div class="gift-icon">🌹</div>
+          <div class="gift-title">Rose</div>
+          <div class="gift-price">1 Coin</div>
         </div>
-        <div class="card" style="padding:10px; text-align:center; cursor:pointer; margin:0;" onclick="sendGroupGift('Heart 🫰', 5)">
-          <div style="font-size:1.8rem;">🫰</div>
-          <div style="font-size:0.75rem; font-weight:bold;">Heart</div>
-          <div style="font-size:0.7rem; color:var(--accent);">5 Coins</div>
+        <div class="gift-card" onclick="sendGroupGift('Heart 🫰', 5)">
+          <div class="gift-icon">🫰</div>
+          <div class="gift-title">Heart</div>
+          <div class="gift-price">5 Coins</div>
         </div>
-        <div class="card" style="padding:10px; text-align:center; cursor:pointer; margin:0;" onclick="sendGroupGift('Fire 🔥', 10)">
-          <div style="font-size:1.8rem;">🔥</div>
-          <div style="font-size:0.75rem; font-weight:bold;">Fire</div>
-          <div style="font-size:0.7rem; color:var(--accent);">10 Coins</div>
+        <div class="gift-card" onclick="sendGroupGift('Fire 🔥', 10)">
+          <div class="gift-icon">🔥</div>
+          <div class="gift-title">Fire</div>
+          <div class="gift-price">10 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Bottle 🍾', 50)">
+          <div class="gift-icon">🍾</div>
+          <div class="gift-title">Bottle</div>
+          <div class="gift-price">50 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Crown 👑', 100)">
+          <div class="gift-icon">👑</div>
+          <div class="gift-title">Crown</div>
+          <div class="gift-price">100 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Diamond 💎', 500)">
+          <div class="gift-icon">💎</div>
+          <div class="gift-title">Diamond</div>
+          <div class="gift-price">500 Coins</div>
         </div>
       </div>
+
+      <button class="btn-main" style="background:var(--accent); color:black; margin-bottom:10px;" onclick="closeModal('giftCatalogModal'); openModal('coinModal');">+ Buy More Coins</button>
       <button class="btn-main" style="background:none; color:white;" onclick="closeModal('giftCatalogModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Coin Purchase Modal -->
+  <div id="coinModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <h3 style="margin-bottom:10px">🪙 Buy Coins</h3>
+      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin.</p>
+      
+      <div class="package-grid">
+        <div class="package-card" onclick="selectPackage(10, 1)">
+          <b>₦10</b>
+          <div style="font-size:0.75rem; color:var(--accent);">1 Coin</div>
+        </div>
+        <div class="package-card" onclick="selectPackage(100, 10)">
+          <b>₦100</b>
+          <div style="font-size:0.75rem; color:var(--accent);">10 Coins</div>
+        </div>
+        <div class="package-card" onclick="selectPackage(1000, 100)">
+          <b>₦1,000</b>
+          <div style="font-size:0.75rem; color:var(--accent);">100 Coins</div>
+        </div>
+        <div class="package-card" onclick="selectPackage(10000, 1000)">
+          <b>₦10,000</b>
+          <div style="font-size:0.75rem; color:var(--accent);">1,000 Coins</div>
+        </div>
+      </div>
+
+      <label class="auth-label">Amount in Naira (₦10 to ₦100,000)</label>
+      <input type="number" id="customNairaAmount" class="auth-input" value="1000">
+
+      <label class="auth-label">Email for Receipt</label>
+      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
+      
+      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay with Paystack</button>
+      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
     </div>
   </div>
 
@@ -477,7 +540,6 @@
     let peerConnection = null;
     let callSub = null;
     let globalLiveStreams = [];
-    let hideOverlayTimer = null;
 
     const ICE_SERVERS = {
       iceServers: [
@@ -940,7 +1002,7 @@
       toggleChatMenu();
     }
 
-    // WebRTC 1-on-1 Call Handling with audio/video stream routing
+    // WebRTC Calling
     async function startCall(type) {
       if (!currentChatUser) return;
       activeCall = { type, peerId: currentChatUser.id, isCaller: true };
@@ -1116,7 +1178,7 @@
       activeCall = null;
     }
 
-    // Active Microphone Live Streaming & Viewer Stream Playback
+    // Live Streaming
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       if (!isStreaming) {
@@ -1124,7 +1186,6 @@
           myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
           const hostVideo = document.getElementById('hostVideo');
           hostVideo.srcObject = myStream;
-          // Muted locally for the host to prevent feedback loop, but active in myStream for broadcasting
           hostVideo.muted = true; 
           
           isStreaming = true;
@@ -1135,13 +1196,6 @@
             user_id: currentUser.id,
             is_active: true
           });
-
-          if (hideOverlayTimer) clearTimeout(hideOverlayTimer);
-          hideOverlayTimer = setTimeout(() => {
-            const badge = document.getElementById('liveBadgeEl');
-            if (badge) badge.style.opacity = '0';
-          }, 3000);
-
         } catch (err) {
           alert('Could not access microphone and camera for live streaming.');
         }
@@ -1151,28 +1205,12 @@
         btn.innerText = 'Start Live';
         btn.style.background = 'var(--primary)';
 
-        const badge = document.getElementById('liveBadgeEl');
-        if (badge) badge.style.opacity = '1';
-
         await supabaseClient.from('livestreams').update({ is_active: false }).eq('user_id', currentUser.id);
       }
     }
 
-    // When a viewer taps to watch a live stream
-    async function joinLiveStream(streamId) {
+    function joinLiveStream(streamId) {
       switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
-      const stream = globalLiveStreams.find(s => s.id === streamId);
-      if (stream) {
-        try {
-          // Viewers request camera/audio or playback stream
-          const viewerStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-          const hostVideo = document.getElementById('hostVideo');
-          hostVideo.srcObject = viewerStream;
-          hostVideo.muted = false; // Viewers can hear audio
-        } catch (e) {
-          console.error("Could not bind stream view", e);
-        }
-      }
     }
 
     function handleLiveChatKey(e) {
@@ -1191,6 +1229,7 @@
       if (currentCoins < cost) {
         alert('Insufficient coins! Please buy more coins.');
         closeModal('giftCatalogModal');
+        openModal('coinModal');
         return;
       }
 
@@ -1199,6 +1238,36 @@
       await loadUserProfile();
       closeModal('giftCatalogModal');
       alert(`Sent ${giftName} successfully!`);
+    }
+
+    function selectPackage(naira, coins) {
+      document.getElementById('customNairaAmount').value = naira;
+    }
+
+    // Paystack Integration Restored
+    function payWithPaystack() {
+      const naira = parseInt(document.getElementById('customNairaAmount').value);
+      const email = document.getElementById('userEmail').value || currentUser.email;
+      if (isNaN(naira) || naira < 10) { alert('Minimum amount is ₦10'); return; }
+
+      const handler = PaystackPop.setup({
+        key: 'pk_live_YOUR_PAYSTACK_KEY',
+        email: email,
+        amount: naira * 100,
+        currency: 'NGN',
+        callback: async function(response) {
+          const coinsEarned = Math.floor(naira / 10);
+          const newCoins = (currentUser.profile.coins || 0) + coinsEarned;
+          await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
+          await loadUserProfile();
+          closeModal('coinModal');
+          alert(`Payment successful! Credited +${coinsEarned} coins.`);
+        },
+        onClose: function() {
+          alert('Transaction was closed.');
+        }
+      });
+      handler.openIframe();
     }
 
     function triggerAvatarUpload() {
