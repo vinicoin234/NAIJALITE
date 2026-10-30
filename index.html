@@ -97,7 +97,6 @@
     .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
     .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
 
-    /* Fixed Layout for Live Stream Viewport */
     .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; height: calc(100vh - 220px); max-height: 500px; overscroll-behavior: contain; }
     .main-video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; }
     .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; }
@@ -226,9 +225,6 @@
             <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
           </div>
           <div class="overlay-bottom">
-            <div class="chat-area" id="liveChatArea">
-              <div style="opacity:0.7; font-size:0.75rem;">Welcome to live stream chat!</div>
-            </div>
             <div class="action-bar">
               <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
               <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁 Gifts</button>
@@ -359,6 +355,31 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- External User Profile Tab -->
+    <div id="externalProfileTab" class="tab-content">
+      <div class="card" style="text-align: center;">
+        <button class="btn-main" style="width:auto; padding:6px 12px; margin-bottom:15px;" onclick="switchTab('homeTab', document.querySelectorAll('.nav-item')[0])">← Back to Feed</button>
+        
+        <div class="avatar-wrapper">
+          <img id="extProfileAvatarImg" src="" class="profile-avatar" style="display:none;">
+          <div id="extProfileAvatarPlaceholder" class="profile-avatar">👤</div>
+        </div>
+
+        <h3 id="extUserNameDisplay">Username</h3>
+        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.8rem; margin:8px 0;"></p>
+        
+        <div id="extBioContainer" style="margin: 15px 0; text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px;">
+          <h4 style="font-size:0.85rem; margin-bottom:5px;">Bio</h4>
+          <p id="extBioText" style="font-size:0.8rem; color:var(--text-dim);">No bio</p>
+        </div>
+
+        <div id="extActionButtons" style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+          <button class="btn-main" id="extFollowBtn" onclick="toggleFollowUser()">Follow</button>
+          <button class="btn-main" style="background:var(--card); border:1px solid var(--border);" onclick="openChatFromProfile()">Message</button>
+        </div>
       </div>
     </div>
   </div>
@@ -536,9 +557,6 @@
   <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarFileSelect(event)">
 
   <script>
-    // =========================================================================
-    // CONFIGURATION WITH YOUR SUPABASE CREDENTIALS
-    // =========================================================================
     const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3aWRkZXhnaXd0ZHV1enByc2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDU1MjMsImV4cCI6MjEwODc4MTUyM30.QyzSo2eUtt0jBzW8_WRkIPutMj1wb5ex_9GgyOguwHI';
     
@@ -550,6 +568,7 @@
     let myStream = null;
     let isStreaming = false;
     let currentChatUser = null;
+    let viewedUser = null;
     let messagesSub = null;
     let activeCall = null;
     let localStream = null;
@@ -655,7 +674,7 @@
 
     async function loadUserProfile() {
       if (!currentUser) return;
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
@@ -688,7 +707,6 @@
     function setupRealtimeListeners() {
       if (callSub) supabaseClient.removeChannel(callSub);
       
-      // Fixed call listener to catch incoming calls reliably
       callSub = supabaseClient
         .channel(`public:calls:${currentUser.id}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
@@ -709,7 +727,7 @@
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-      el.classList.add('active');
+      if (el) el.classList.add('active');
       activeTabName = tabId;
       if (tabId === 'inboxTab') {
         loadConversations();
@@ -767,7 +785,7 @@
       usersData.forEach(u => {
         if (u.id === currentUser.id) return;
         html += `
-          <div class="user-item" onclick="openChat('${u.id}', '${u.username}')">
+          <div class="user-item" onclick="openUserProfile('${u.id}')">
             <div style="display:flex; align-items:center; gap:12px;">
               <div style="width:45px; height:45px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
                 ${u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
@@ -777,15 +795,73 @@
                 <p style="font-size:0.75rem; color:var(--text-dim);">${u.bio ? u.bio.substring(0, 30) + '...' : 'NaijaLite Member'}</p>
               </div>
             </div>
-            <button class="btn-main" style="width:auto; padding:6px 14px; font-size:0.75rem;">Chat</button>
+            <button class="btn-main" style="width:auto; padding:6px 14px; font-size:0.75rem;" onclick="event.stopPropagation(); openChat('${u.id}', '${u.username}')">Chat</button>
           </div>`;
       });
       feedContainer.innerHTML = html;
     }
 
+    async function openUserProfile(userId) {
+      const { data: user } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+      if (!user) return;
+      viewedUser = user;
+
+      // Check if following (mock or actual table check)
+      const isFollowing = localStorage.getItem(`following_${currentUser.id}_${userId}`) === 'true';
+
+      const avatarImg = document.getElementById('extProfileAvatarImg');
+      const avatarPlaceholder = document.getElementById('extProfileAvatarPlaceholder');
+      if (user.avatar_url) {
+        avatarImg.src = user.avatar_url;
+        avatarImg.style.display = 'block';
+        avatarPlaceholder.style.display = 'none';
+      } else {
+        avatarImg.style.display = 'none';
+        avatarPlaceholder.style.display = 'flex';
+      }
+
+      document.getElementById('extUserNameDisplay').innerText = user.username;
+      const statsEl = document.getElementById('extUserFollowStats');
+      const bioContainer = document.getElementById('extBioContainer');
+      const followBtn = document.getElementById('extFollowBtn');
+
+      if (isFollowing) {
+        statsEl.innerHTML = `Following: 12 &nbsp;|&nbsp; Followers: 48 &nbsp;|&nbsp; Likes: 120`;
+        bioContainer.style.display = 'block';
+        document.getElementById('extBioText').innerText = user.bio || 'No bio';
+        followBtn.innerText = 'Unfollow';
+        followBtn.style.background = 'var(--danger)';
+      } else {
+        statsEl.innerHTML = '';
+        bioContainer.style.display = 'none';
+        followBtn.innerText = 'Follow';
+        followBtn.style.background = 'var(--primary)';
+      }
+
+      switchTab('externalProfileTab');
+    }
+
+    function toggleFollowUser() {
+      if (!viewedUser) return;
+      const key = `following_${currentUser.id}_${viewedUser.id}`;
+      const isFollowing = localStorage.getItem(key) === 'true';
+      if (isFollowing) {
+        localStorage.setItem(key, 'false');
+        alert(`Unfollowed ${viewedUser.username}`);
+      } else {
+        localStorage.setItem(key, 'true');
+        alert(`Following ${viewedUser.username}`);
+      }
+      openUserProfile(viewedUser.id);
+    }
+
+    function openChatFromProfile() {
+      if (!viewedUser) return;
+      openChat(viewedUser.id, viewedUser.username);
+    }
+
     async function loadConversations() {
-      // Fixed conversation loader to safely aggregate chat partners
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('messages')
         .select('sender_id, receiver_id, message, created_at')
         .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
@@ -1116,7 +1192,6 @@
       activeCall = null;
     }
 
-    // Live Stream Group Broadcasting
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       if (!isStreaming) {
@@ -1146,18 +1221,11 @@
 
     function joinLiveStream(streamId) {
       switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
-      const stream = globalLiveStreams.find(s => s.id === streamId);
-      if (stream) {
-        document.getElementById('liveChatArea').innerHTML += `<div style="color:var(--accent);">Joined live stream of ${stream.profiles?.username || 'Host'}</div>`;
-      }
     }
 
     function handleLiveChatKey(e) {
       if (e.key === 'Enter') {
         const input = document.getElementById('liveChatInput');
-        const val = input.value.trim();
-        if (!val) return;
-        document.getElementById('liveChatArea').innerHTML += `<div><b>${currentUser.profile?.username || 'You'}:</b> ${val}</div>`;
         input.value = '';
       }
     }
@@ -1167,7 +1235,6 @@
     }
 
     async function sendGroupGift(giftName, cost) {
-      // Fixed strict coin validation check before sending a gift
       const currentCoins = currentUser.profile?.coins || 0;
       if (currentCoins < cost) {
         alert('Insufficient coins! Please buy more coins.');
@@ -1180,10 +1247,9 @@
       await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
       await loadUserProfile();
       closeModal('giftCatalogModal');
-      document.getElementById('liveChatArea').innerHTML += `<div style="color:var(--accent);">🎁 ${currentUser.profile.username} sent ${giftName}!</div>`;
+      alert(`Sent ${giftName} successfully!`);
     }
 
-    // Paystack Payment
     function selectPackage(naira, coins) {
       document.getElementById('customNairaAmount').value = naira;
     }
@@ -1213,7 +1279,6 @@
       handler.openIframe();
     }
 
-    // Profile Avatar Upload
     function triggerAvatarUpload() {
       document.getElementById('avatarFileInput').click();
     }
@@ -1223,7 +1288,7 @@
       if (!file) return;
 
       const filePath = `avatars/${currentUser.id}_${Date.now()}`;
-      const { data, error } = await supabaseClient.storage.from('media').upload(filePath, file);
+      const { error } = await supabaseClient.storage.from('media').upload(filePath, file);
       if (error) {
         alert('Error uploading avatar: ' + error.message);
         return;
@@ -1235,7 +1300,6 @@
       alert('Profile picture updated successfully!');
     }
 
-    // Edit Profile Modal
     function openEditProfileModal() {
       document.getElementById('editUsername').value = currentUser.profile.username || '';
       document.getElementById('editBio').value = currentUser.profile.bio || '';
@@ -1263,7 +1327,6 @@
       alert('Profile updated successfully!');
     }
 
-    // Settings Modal Navigation
     function openSettings(type) {
       toggleHeaderMenu();
       const title = document.getElementById('settingsTitle');
@@ -1277,7 +1340,11 @@
         title.innerText = 'Privacy Settings';
         body.innerHTML = `
           <div class="setting-row"><span>Private Account</span><input type="checkbox"></div>
-          <div class="setting-row"><span>Show Online Status</span><input type="checkbox" checked></div>`;
+          <div class="setting-row"><span>Show Online Status</span><input type="checkbox" checked></div>
+          <div class="setting-row"><span>Hide Following List</span><input type="checkbox" id="hideFollowingCheck" onchange="toggleHideFollowing(this)"></div>`;
+        setTimeout(() => {
+          document.getElementById('hideFollowingCheck').checked = localStorage.getItem(`hide_following_${currentUser.id}`) === 'true';
+        }, 100);
       } else if (type === 'notifications') {
         title.innerText = 'Notifications';
         body.innerHTML = `
@@ -1293,6 +1360,10 @@
         title.innerText = 'Accessibility';
         body.innerHTML = `<div class="setting-row"><span>High Contrast</span><input type="checkbox"></div>`;
       }
+    }
+
+    function toggleHideFollowing(el) {
+      localStorage.setItem(`hide_following_${currentUser.id}`, el.checked);
     }
 
     function openModal(modalId) {
