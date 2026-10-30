@@ -1,189 +1,1542 @@
-Skip to content
-vinicoin234
-NAIJALITE
-Repository navigation
-Code
-Issues
-Pull requests
-Agents
-Actions
-Projects
-Wiki
-Security and quality
-Insights
-Settings
-Comparing changes
-Choose two branches to see what’s changed or to start a new pull request. If you need to, you can also  or learn more about diff comparisons.
-...
- 1 commit
- 1 file changed
- 1 contributor
-Commits on Oct 29, 2026
-index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>NAIJALITE | Live & Earn</title>
+  <meta name="theme-color" content="#008751">
 
-@vinicoin234
-vinicoin234 authored yesterday
- Showing  with 68 additions and 7 deletions.
-  75 changes: 68 additions & 7 deletions75  
-index.html
-Original file line number	Diff line number	Diff line change
-@@ -100,14 +100,14 @@
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+  <!-- Paystack SDK -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <style>
+    :root {
+      --primary: #008751; --primary-dark: #006b40; --accent: #ffc107; --danger: #ff4757;
+      --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 500px; margin: 0 auto; overflow-x: hidden; min-height: 100vh; position: relative; }
+
+    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .auth-wrapper { width: 100%; max-width: 340px; text-align: center; animation: fadeIn 0.5s; }
+    .auth-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; margin-bottom: 15px; }
+    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; }
+    .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); transition: 0.3s; }
+    .auth-tab.active { background: var(--primary); color: white; }
+    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: left; }
+    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; font-size: 1rem; }
+    .auth-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px; display: block; }
+    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; margin-top: 5px; }
+
+    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 20px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .header-top h1 { font-size: 1.3rem; font-weight: 800; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+    .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .menu-dropdown { position: absolute; top: 65px; right: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 220px; z-index: 1000; display: none; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .menu-item { padding: 14px 18px; font-size: 0.9rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+    .menu-item.danger { color: var(--danger); }
+
+    .container { padding: 16px; }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
+    .nav-item.active { color: var(--primary); font-weight: bold; }
+    .nav-item div { font-size: 1.4rem; margin-bottom: 4px; }
+
+    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); }
+    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; color: var(--text-dim); }
+    .profile-menu-item.active { background: var(--primary); color: white; }
+    .profile-sub-tab { display: none; }
+    .profile-sub-tab.active { display: block; }
+
+    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
+    .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
+
+    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .setting-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
+
+    .live-top-banner { background: linear-gradient(135deg, #ff4757, #ff6b81); border-radius: 16px; padding: 12px 16px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(255,71,87,0.4); animation: pulse 2s infinite; cursor: pointer; }
+    .live-banner-info { display: flex; align-items: center; gap: 10px; color: white; }
+    .live-dot { width: 10px; height: 10px; background: white; border-radius: 50%; animation: ping 1s infinite; }
+
+    .avatar-wrapper { position: relative; width: 110px; height: 110px; margin: 0 auto 15px; cursor: pointer; }
+    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; border: 3px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .avatar-plus-btn { position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+
+    .user-item { background: var(--card); padding: 12px 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
+    .chat-header { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    
+    .msg-wrapper { max-width: 80%; display: flex; flex-direction: column; margin-bottom: 2px; }
+    .msg-wrapper.sent { align-self: flex-end; align-items: flex-end; }
+    .msg-wrapper.received { align-self: flex-start; align-items: flex-start; }
+    
+    .msg { padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; word-break: break-word; }
+    .msg.sent { background: var(--primary); color: white; border-bottom-right-radius: 3px; }
+    .msg.received { background: var(--card); color: white; border-bottom-left-radius: 3px; }
+    .msg.call-log { align-self: center; background: rgba(255, 193, 7, 0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 0.8rem; text-align: center; border-radius: 10px; padding: 6px 14px; width: 100%; max-width: 300px; }
+    
+    .msg-timestamp { font-size: 0.65rem; color: rgba(255,255,255,0.45); margin-top: 3px; padding: 0 4px; font-weight: 300; }
+
+    .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
     .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
 
-    /* Live Stream UI */
-    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; }
-    .main-video { width: 100%; height: 320px; object-fit: cover; background: #000; }
-    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 10px; }
-    .main-video { width: 100%; height: 300px; object-fit: cover; background: #000; }
-    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; pointer-events: none; }
+    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; height: calc(100vh - 220px); max-height: 500px; overscroll-behavior: contain; }
+    .main-video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; }
+    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; transition: opacity 0.5s ease; }
     .live-overlay * { pointer-events: auto; }
     .overlay-top { display: flex; justify-content: space-between; align-items: center; }
-    .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; }
-    .overlay-bottom { display: flex; flex-direction: column; gap: 10px; }
-    .chat-area { max-height: 100px; overflow-y: auto; color: white; font-size: 0.8rem; }
-    .chat-area { max-height: 90px; overflow-y: auto; color: white; font-size: 0.8rem; }
-    .action-bar { display: flex; gap: 8px; align-items: center; }
-    .action-bar input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: white; font-size: 0.8rem; }
-    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-@@ -220,7 +220,7 @@ <h1>🇳🇬 NAIJALITE</h1>
+    .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; display: none; }
+    .overlay-bottom { display: flex; gap: 8px; align-items: center; margin-bottom: 15px; }
+    .overlay-bottom input { flex: 1; padding: 12px 14px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.9rem; }
+    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 10px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+
+    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+    .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 15px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .gift-card:active { border-color: var(--accent); transform: scale(0.95); }
+    .gift-icon { font-size: 1.8rem; margin-bottom: 4px; }
+    .gift-title { font-size: 0.75rem; font-weight: bold; }
+    .gift-price { font-size: 0.7rem; color: var(--accent); font-weight: bold; margin-top: 2px; }
+
+    .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+    .package-card { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; }
+
+    .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
+    .video-box video { width: 100%; height: 100%; object-fit: cover; }
+
+    #incomingCallBox { position: fixed; top: 20px; left: 20px; right: 20px; max-width: 460px; margin: 0 auto; background: var(--card); border: 2px solid var(--accent); padding: 15px; border-radius: 20px; z-index: 5000; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .caller-avatar-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); background: var(--primary); flex-shrink: 0; }
+
+    .biz-link-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,135,81,0.2); border: 1px solid var(--primary); color: var(--accent); text-decoration: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-top: 10px; word-break: break-all; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
+
+  <!-- Audio Element for Remote Call Speaker Output -->
+  <audio id="remoteAudioPlayer" autoplay playsinline></audio>
+
+  <!-- Incoming Call Popup -->
+  <div id="incomingCallBox">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <img id="incomingCallerAvatar" class="caller-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>">
+      <div style="flex:1;">
+        <b id="incomingCallerName">Caller Name</b>
+        <p style="font-size:0.8rem; color:var(--text-dim);" id="incomingCallType">Incoming Call...</p>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-main" style="background:var(--primary); padding:8px 12px; font-size:0.8rem;" onclick="acceptCall()">Accept</button>
+        <button class="btn-main" style="background:var(--danger); padding:8px 12px; font-size:0.8rem;" onclick="declineCall()">Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Screen -->
+  <div id="authScreen">
+    <div class="auth-wrapper">
+      <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo" alt="Logo">
+      <h2 class="auth-title">NAIJALITE</h2>
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
+        <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
+      </div>
+      <div class="auth-card">
+        <div id="signupFields" style="display:none;">
+          <label class="auth-label">Username</label>
+          <input type="text" id="authUsername" class="auth-input" placeholder="Username">
+          
+          <label class="auth-label">Date of Birth (Private)</label>
+          <input type="date" id="authDob" class="auth-input">
+          
+          <label class="auth-label">Sex</label>
+          <select id="authSex" class="auth-input">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <label class="auth-label">Email</label>
+        <input type="text" id="authEmail" class="auth-input" placeholder="Email">
+        
+        <label class="auth-label">Password</label>
+        <input type="password" id="authPass" class="auth-input" placeholder="Password">
+        
+        <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-top">
+      <h1>🇳🇬 NAIJALITE</h1>
+      <div class="header-actions">
+        <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
+        <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="headerMenu" class="menu-dropdown">
+    <div class="menu-item" onclick="openSettings('account')">Manage account</div>
+    <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
+    <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
+    <div class="menu-item" onclick="openSettings('verification')">Verification</div>
+    <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
+    <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
+    <div class="menu-item danger" onclick="handleLogout()">Logout</div>
+  </div>
+
+  <div class="container">
+    <!-- Home Feed Tab -->
+    <div id="homeTab" class="tab-content active">
+      <div id="activeLiveBannerContainer"></div>
       <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
     </div>
-
+    
     <!-- Live Stream Tab -->
-    <!-- Live Stream Tab with Viewer Comment Box Below Video -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
-        <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
-@@ -232,12 +232,25 @@ <h1>🇳🇬 NAIJALITE</h1>
-          <div class="overlay-bottom">
-            <div class="chat-area" id="liveChatArea"></div>
-            <div class="action-bar">
-              <input type="text" id="liveChatInput" placeholder="Say something...">
-              <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
-              <button class="gift-box-btn" onclick="openModal('giftCatalogModal')">🎁 Gifts</button>
-            </div>
+        <video id="hostVideo" class="main-video" autoplay playsinline></video>
+        <div class="live-overlay" id="liveOverlayBox">
+          <div class="overlay-top">
+            <div class="live-badge" id="liveBadgeEl">🔴 LIVE</div>
+            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
           </div>
-        </div>
-      </div>
-
-      <!-- Viewer Comment Box Section Below Video -->
-      <div class="card" style="padding:15px; margin-bottom:15px;">
-        <h4 style="font-size:0.9rem; margin-bottom:8px;">💬 Live Comments & Interaction</h4>
-        <div id="streamViewerCommentsList" style="max-height:120px; overflow-y:auto; margin-bottom:10px; font-size:0.85rem; display:flex; flex-direction:column; gap:6px;">
-          <p style="color:var(--text-dim); font-size:0.8rem;">No comments yet. Say something below!</p>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="viewerCommentInput" class="auth-input" style="margin-bottom:0;" placeholder="Type public comment...">
-          <button class="btn-main" style="width:auto; padding:10px 16px;" onclick="sendViewerComment()">Post</button>
+          <div class="overlay-bottom" id="liveOverlayBottom">
+            <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
+            <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁 Gifts</button>
+          </div>
         </div>
       </div>
 
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
         <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
+        <button class="btn-main" style="background:var(--card); border:1px solid var(--border); width:auto; padding:12px 16px;" onclick="switchCamera('stream')">📸 Flip Camera</button>
       </div>
-@@ -548,6 +561,7 @@ <h3 id="settingsTitle">Settings</h3>
+    </div>
+    
+    <!-- Inbox Tab -->
+    <div id="inboxTab" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom:15px;">💬 Conversations & Calls</h3>
+        <div id="conversationsList"><p style="color:var(--text-dim);">Loading chats...</p></div>
+      </div>
+    </div>
+    
+    <!-- Earn Tab -->
+    <div id="earnTab" class="tab-content">
+      <div class="card">
+        <h3>💰 Earn Rewards & Coins</h3>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Invite friends or complete tasks to earn coins.</p>
+        
+        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; text-align:center; border:1px dashed var(--accent); margin-bottom:15px;">
+          <div style="font-size:0.8rem; color:var(--text-dim);">Your Referral Link:</div>
+          <div id="userRefLink" style="font-weight:bold; margin:8px 0; word-break:break-all; font-size:0.85rem;">https://naijalite.app/?ref=user</div>
+          <button class="btn-main" onclick="copyRefLink()" style="padding:10px;">Copy Referral Link</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:var(--bg); padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <b style="font-size:0.9rem;">7-Day Reward Check-in</b>
+              <p style="font-size:0.75rem; color:var(--text-dim);" id="rewardTimerText">Claim +5 coins every 7 days after signup</p>
+            </div>
+            <button class="btn-main" id="weeklyClaimBtn" style="width:auto; padding:8px 14px; font-size:0.8rem;" onclick="claimWeeklyReward()">Claim</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Utils Tab -->
+    <div id="utilsTab" class="tab-content">
+      <div class="card">
+        <h3>🛠️ Community Utilities & Stream Activity</h3>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Monitor live stream activity and quick utilities.</p>
+        
+        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; margin-bottom:15px;">
+          <h4 style="font-size:0.9rem; margin-bottom:8px;">📡 Live Stream Activity Feed</h4>
+          <div id="streamActivityList" style="font-size:0.8rem; color:var(--text-dim);">
+            <p>No recent stream activity recorded.</p>
+          </div>
+        </div>
+
+        <div style="margin-bottom:15px;">
+          <label class="auth-label">WhatsApp Direct Message</label>
+          <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:8px;">
+          <button class="btn-main" onclick="openWhatsApp()">Open WhatsApp Chat</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Profile Tab -->
+    <div id="profileTab" class="tab-content">
+      <div class="card" style="text-align: center; position: relative;">
+        <div style="position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.3rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
+
+        <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
+          <img id="profileAvatarImg" src="" class="profile-avatar" style="display:none;">
+          <div id="profileAvatarPlaceholder" class="profile-avatar">👤</div>
+          <div class="avatar-plus-btn">+</div>
+        </div>
+
+        <h3 id="userNameDisplay">User <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;"></span></h3>
+        <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.75rem; margin-bottom:10px;"></p>
+
+        <div class="profile-menu">
+          <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileBioTab', this)">Bio</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
+        </div>
+        
+        <div id="profilePosts" class="profile-sub-tab active">
+          <div id="userPostsList"><p style="color:var(--text-dim);">Loading your posts...</p></div>
+        </div>
+
+        <div id="profileBioTab" class="profile-sub-tab">
+          <div style="text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
+            <h4 style="font-size:0.9rem; margin-bottom:8px;">📝 About Me</h4>
+            <p id="bioTextDisplay" style="font-size:0.85rem; color:var(--text-dim); margin-bottom:15px; white-space:pre-line;">No bio added yet. Tap ⚙️ edit profile above to write about yourself!</p>
+
+            <h4 style="font-size:0.9rem; margin-bottom:8px;">🌐 Business & Links</h4>
+            <div id="businessLinkDisplay">
+              <p style="font-size:0.8rem; color:var(--text-dim);">No link attached.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="profileCoins" class="profile-sub-tab" style="text-align:left;">
+          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <h4 style="margin-bottom:10px;">📊 Coin Dashboard</h4>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.9rem;">
+              <span>Current Balance:</span> <b style="color:var(--accent);">🟡 <span id="coinsCount">0</span> Coins</b>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; color:var(--text-dim);">
+              <span>Total Spent:</span> <span id="totalSpentCoins">0 Coins</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-dim);">
+              <span>Total Earned:</span> <span id="totalEarnedCoins">0 Coins</span>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <h4 style="margin-bottom:8px; font-size:0.9rem;">📜 Transaction History</h4>
+            <div id="transactionLedger" style="max-height:150px; overflow-y:auto; font-size:0.8rem; color:var(--text-dim);">
+              <p>No transactions yet.</p>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
+            <h4>🏦 Withdrawal</h4>
+            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number" style="margin-top: 8px; margin-bottom:10px;">
+            <button class="btn-main" onclick="submitWithdrawal()">Confirm Withdrawal</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- External User Profile Tab -->
+    <div id="externalProfileTab" class="tab-content">
+      <div class="card" style="text-align: center;">
+        <button class="btn-main" style="width:auto; padding:6px 12px; margin-bottom:15px;" onclick="switchTab('homeTab', document.querySelectorAll('.nav-item')[0])">← Back to Feed</button>
+        
+        <div class="avatar-wrapper">
+          <img id="extProfileAvatarImg" src="" class="profile-avatar" style="display:none;">
+          <div id="extProfileAvatarPlaceholder" class="profile-avatar">👤</div>
+        </div>
+
+        <h3 id="extUserNameDisplay">Username</h3>
+        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.8rem; margin:8px 0; display:none;"></p>
+        
+        <div id="extBioContainer" style="margin: 15px 0; text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; display:none;">
+          <h4 style="font-size:0.85rem; margin-bottom:5px;">Bio</h4>
+          <p id="extBioText" style="font-size:0.8rem; color:var(--text-dim);">No bio</p>
+        </div>
+
+        <div id="extActionButtons" style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+          <button class="btn-main" id="extFollowBtn" onclick="toggleFollowUser()">Follow</button>
+          <button class="btn-main" style="background:var(--card); border:1px solid var(--border);" onclick="openChatFromProfile()">Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Screen -->
+  <div id="chatWindow" class="chat-window">
+    <div class="chat-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="closeChat()">←</button>
+        <b id="chatUser">Username</b>
+      </div>
+      <div style="display:flex; gap:15px; align-items:center; position:relative;">
+        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
+        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('video')">📹</button>
+        <button style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;" onclick="toggleChatMenu()">⋮</button>
+        
+        <div id="chatMenu" class="menu-dropdown" style="top:40px; right:0;">
+          <div class="menu-item" onclick="shareCoinsPrompt()">💰 Send Coins</div>
+        </div>
+      </div>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chatInputText" placeholder="Type a message...">
+      <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <!-- Live Stream Gift Catalog Modal -->
+  <div id="giftCatalogModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>🎁 Live Gifts Catalog</h3>
+        <span style="font-size:0.85rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Tap a gift to send live.</p>
+
+      <div class="gift-grid">
+        <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 1)">
+          <div class="gift-icon">🌹</div>
+          <div class="gift-title">Rose</div>
+          <div class="gift-price">1 Coin</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Heart 🫰', 5)">
+          <div class="gift-icon">🫰</div>
+          <div class="gift-title">Heart</div>
+          <div class="gift-price">5 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Fire 🔥', 10)">
+          <div class="gift-icon">🔥</div>
+          <div class="gift-title">Fire</div>
+          <div class="gift-price">10 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Bottle 🍾', 50)">
+          <div class="gift-icon">🍾</div>
+          <div class="gift-title">Bottle</div>
+          <div class="gift-price">50 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Crown 👑', 100)">
+          <div class="gift-icon">👑</div>
+          <div class="gift-title">Crown</div>
+          <div class="gift-price">100 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Diamond 💎', 500)">
+          <div class="gift-icon">💎</div>
+          <div class="gift-title">Diamond</div>
+          <div class="gift-price">500 Coins</div>
+        </div>
+      </div>
+
+      <button class="btn-main" style="background:var(--accent); color:black; margin-bottom:10px;" onclick="closeModal('giftCatalogModal'); openModal('coinModal');">+ Buy More Coins</button>
+      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('giftCatalogModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Coin Purchase Modal -->
+  <div id="coinModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <h3 style="margin-bottom:10px">🪙 Buy Coins</h3>
+      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin.</p>
+      
+      <div class="package-grid">
+        <div class="package-card" onclick="selectPackage(10, 1)">
+          <b>₦10</b>
+          <div style="font-size:0.75rem; color:var(--accent);">1 Coin</div>
+        </div>
+        <div class="package-card" onclick="selectPackage(100, 10)">
+          <b>₦100</b>
+          <div style="font-size:0.75rem; color:var(--accent);">10 Coins</div>
+        </div>
+        <div class="package-card" onclick="selectPackage(1000, 100)">
+          <b>₦1,000</b>
+          <div style="font-size:0.75rem; color:var(--accent);">100 Coins</div>
+        </div>
+        <div class="package-card" onclick="selectPackage(10000, 1000)">
+          <b>₦10,000</b>
+          <div style="font-size:0.75rem; color:var(--accent);">1,000 Coins</div>
+        </div>
+      </div>
+
+      <label class="auth-label">Amount in Naira (₦10 to ₦100,000)</label>
+      <input type="number" id="customNairaAmount" class="auth-input" value="1000">
+
+      <label class="auth-label">Email for Receipt</label>
+      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
+      
+      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay with Paystack</button>
+      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div id="editProfileModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <h3>Edit Profile</h3>
+      <div style="margin: 15px 0; text-align: left;">
+        <label class="auth-label">Username</label>
+        <input type="text" id="editUsername" class="auth-input">
+        
+        <label class="auth-label">Bio</label>
+        <textarea id="editBio" class="auth-input" style="height:80px; resize:none;" placeholder="Write a short bio..."></textarea>
+
+        <label class="auth-label">Business / Link Title</label>
+        <input type="text" id="editLinkTitle" class="auth-input" placeholder="e.g. YouTube Channel">
+
+        <label class="auth-label">Business / Website URL</label>
+        <input type="url" id="editBusinessLink" class="auth-input" placeholder="https://...">
+
+        <label class="auth-label">Date of Birth (Private)</label>
+        <input type="date" id="editDob" class="auth-input">
+        
+        <label class="auth-label">Sex</label>
+        <select id="editSex" class="auth-input">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+      <button class="btn-main" onclick="saveProfileChanges()" style="margin-bottom:10px;">Save Changes</button>
+      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('editProfileModal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <h3 id="settingsTitle">Settings</h3>
+      <div id="settingsBody" style="margin: 15px 0;"></div>
+      <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('homeTab', this)">
+      <div>🏠</div>Home
+    </div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)">
+      <div>📺</div>Live
+    </div>
+    <div class="nav-item" onclick="switchTab('inboxTab', this)">
+      <div>💬</div>Inbox
+    </div>
+    <div class="nav-item" onclick="switchTab('earnTab', this)">
+      <div>🎁</div>Earn
+    </div>
+    <div class="nav-item" onclick="switchTab('utilsTab', this)">
+      <div>🛠️</div>Utils
+    </div>
+    <div class="nav-item" onclick="switchTab('profileTab', this)">
+      <div>👤</div>Profile
+    </div>
+  </nav>
+
+  <!-- Hidden Avatar File Input -->
+  <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarFileSelect(event)">
+
+  <script>
+    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3aWRkZXhnaXd0ZHV1enByc2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDU1MjMsImV4cCI6MjEwODc4MTUyM30.QyzSo2eUtt0jBzW8_WRkIPutMj1wb5ex_9GgyOguwHI';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let authMode = 'login';
+    let myStream = null;
+    let isStreaming = false;
+    let currentChatUser = null;
+    let viewedUser = null;
+    let messagesSub = null;
+    let activeCall = null;
+    let localStream = null;
+    let remoteStream = null;
     let peerConnection = null;
-    let currentUserProfile = null;
-    let realtimeChannel = null;
-    let liveChatChannel = null;
-    let incomingCallData = null;
-    let ringtoneAudioContext = null;
-    let callStartTime = null;
-@@ -578,6 +592,7 @@ <h3 id="settingsTitle">Settings</h3>
-          setupRealtimeCalls();
-          checkWeeklyClaimStatus();
-          setupLiveStreamBroadcasting();
-          setupLiveChatChannel();
-        } else {
-          document.getElementById('authScreen').style.display = 'flex';
-        }
-@@ -717,14 +732,21 @@ <h3 id="settingsTitle">Settings</h3>
+    let callSub = null;
+    let globalLiveStreams = [];
+    let currentFacingMode = 'user'; // 'user' for front, 'environment' for back camera
+
+    const ICE_SERVERS = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        await initApp();
+      } else {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'flex';
       }
+    });
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      const isSignup = (mode === 'signup');
+      document.getElementById('signupFields').style.display = isSignup ? 'block' : 'none';
+      document.getElementById('tabLogin').classList.toggle('active', !isSignup);
+      document.getElementById('tabSignup').classList.toggle('active', isSignup);
+      document.getElementById('btnAuthAction').innerText = isSignup ? 'Create Account' : 'Login';
     }
 
-    // --- TikTok-Style Live Stream Broadcasting & Banner ---
-    // --- Live Stream & Viewer Comment System ---
-    function setupLiveStreamBroadcasting() {
-      const globalChannel = supabase.channel('global_live_streams');
-      globalChannel.on('broadcast', { event: 'stream_status' }, payload => {
-        renderLiveTopBanner(payload.payload);
-      }).subscribe();
-    }
+    async function handleAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value;
+      if (!email || !pass) { alert('Please enter email and password.'); return; }
 
-    function setupLiveChatChannel() {
-      liveChatChannel = supabase.channel('global_live_chat');
-      liveChatChannel.on('broadcast', { event: 'new_comment' }, payload => {
-        appendViewerComment(payload.payload.username, payload.payload.comment);
-      }).subscribe();
-    }
+      document.getElementById('loadingScreen').style.display = 'flex';
 
-    async function broadcastLiveStatus(isLive) {
-      const channel = supabase.channel('global_live_streams');
-      await channel.subscribe();
-@@ -761,6 +783,46 @@ <h3 id="settingsTitle">Settings</h3>
-      }
-    }
+      if (authMode === 'signup') {
+        const username = document.getElementById('authUsername').value.trim() || 'User_' + Math.floor(Math.random()*1000);
+        const dob = document.getElementById('authDob').value;
+        const sex = document.getElementById('authSex').value;
 
-    async function sendViewerComment() {
-      const input = document.getElementById('viewerCommentInput');
-      const text = input.value.trim();
-      if (!text) return;
-
-      const username = currentUserProfile?.username || 'User';
-      appendViewerComment(username, text);
-
-      if (liveChatChannel) {
-        await liveChatChannel.send({
-          type: 'broadcast',
-          event: 'new_comment',
-          payload: { username, comment: text }
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password: pass,
+          options: {
+            data: { username, dob, sex, coins: 10, wallet: 0.00, last_claimed_at: new Date().toISOString() }
+          }
         });
+
+        if (error) {
+          alert(error.message);
+          document.getElementById('loadingScreen').style.display = 'none';
+          return;
+        }
+
+        if (data.user) {
+          await supabaseClient.from('profiles').upsert({
+            id: data.user.id,
+            username,
+            dob,
+            sex,
+            coins: 10,
+            wallet: 0.00,
+            last_claimed_at: new Date().toISOString()
+          });
+          currentUser = data.user;
+          await initApp();
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+        if (error) {
+          alert(error.message);
+          document.getElementById('loadingScreen').style.display = 'none';
+          return;
+        }
+        currentUser = data.user;
+        await initApp();
       }
-      input.value = '';
     }
 
-    function appendViewerComment(username, text) {
-      const list = document.getElementById('streamViewerCommentsList');
-      if (!list) return;
-      if (list.querySelector('p')) {
-        list.innerHTML = '';
+    async function initApp() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('loadingScreen').style.display = 'none';
+
+      await loadUserProfile();
+      setupRealtimeListeners();
+      loadHomeFeed();
+      loadConversations();
+      loadUserPosts();
+      loadStreamActivity();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const refId = urlParams.get('ref');
+      if (refId && currentUser && refId !== currentUser.id) {
+        processReferral(refId);
       }
-      const div = document.createElement('div');
-      div.innerHTML = `<b style="color:var(--accent);">${username}:</b> ${text}`;
-      list.appendChild(div);
-      list.scrollTop = list.scrollHeight;
+    }
+
+    async function loadUserProfile() {
+      if (!currentUser) return;
+      const { data } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (data) {
+        currentUser.profile = data;
+        document.getElementById('walletBalance').innerText = '₦' + Number(data.wallet || 0).toLocaleString();
+        document.getElementById('userCoins').innerText = data.coins || 0;
+        document.getElementById('coinsCount').innerText = data.coins || 0;
+        document.getElementById('giftModalCoinCount').innerText = data.coins || 0;
+        document.getElementById('userNameDisplay').innerHTML = `${data.username} <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;">${data.sex || ''}</span>`;
+        document.getElementById('userIdDisplay').innerText = 'ID: ' + currentUser.id;
+
+        if (data.avatar_url) {
+          document.getElementById('profileAvatarImg').src = data.avatar_url;
+          document.getElementById('profileAvatarImg').style.display = 'block';
+          document.getElementById('profileAvatarPlaceholder').style.display = 'none';
+        }
+
+        document.getElementById('bioTextDisplay').innerText = data.bio || 'No bio added yet. Tap ⚙️ edit profile above to write about yourself!';
+        if (data.business_link) {
+          document.getElementById('businessLinkDisplay').innerHTML = `<a href="${data.business_link}" target="_blank" class="biz-link-btn">🔗 ${data.link_title || 'Visit Link'}</a>`;
+        }
+
+        document.getElementById('userRefLink').innerText = `${window.location.origin}${window.location.pathname}?ref=${currentUser.id}`;
+        
+        checkRewardEligibility(data);
+      }
+    }
+
+    function checkRewardEligibility(profileData) {
+      const lastClaimed = profileData.last_claimed_at ? new Date(profileData.last_claimed_at).getTime() : 0;
+      const now = Date.now();
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      const nextClaim = lastClaimed + sevenDays;
+      const btn = document.getElementById('weeklyClaimBtn');
+      const text = document.getElementById('rewardTimerText');
+
+      if (now >= nextClaim) {
+        btn.disabled = false;
+        btn.innerText = 'Claim';
+        btn.style.opacity = '1';
+        text.innerText = 'Claim +5 coins reward now!';
+      } else {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        const diffHours = Math.ceil((nextClaim - now) / (1000 * 60 * 60));
+        const days = Math.floor(diffHours / 24);
+        const hours = diffHours % 24;
+        btn.innerText = 'Locked';
+        text.innerText = `Available in ${days}d ${hours}h`;
+      }
+    }
+
+    function setupRealtimeListeners() {
+      if (callSub) supabaseClient.removeChannel(callSub);
+      
+      callSub = supabaseClient
+        .channel(`public:calls:${currentUser.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
+          incomingCallPayload = payload.new;
+          showIncomingCallModal(incomingCallPayload);
+        })
+        .subscribe();
+
+      supabaseClient
+        .channel('public:livestreams')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'livestreams' }, () => {
+          loadHomeFeed();
+        })
+        .subscribe();
+    }
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (el) el.classList.add('active');
+      if (tabId === 'inboxTab') {
+        loadConversations();
+      }
+    }
+
+    function switchProfileTab(subId, el) {
+      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.profile-menu-item').forEach(m => m.classList.remove('active'));
+      document.getElementById(subId).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function toggleHeaderMenu() {
+      const menu = document.getElementById('headerMenu');
+      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function toggleChatMenu() {
+      const menu = document.getElementById('chatMenu');
+      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+    }
+
+    async function loadHomeFeed() {
+      const { data } = await supabaseClient
+        .from('livestreams')
+        .select('*, profiles(username, avatar_url)')
+        .eq('is_active', true);
+
+      globalLiveStreams = data || [];
+      const bannerContainer = document.getElementById('activeLiveBannerContainer');
+      const feedContainer = document.getElementById('homeFeed');
+
+      if (globalLiveStreams.length > 0) {
+        const liveItem = globalLiveStreams[0];
+        bannerContainer.innerHTML = `
+          <div class="live-top-banner" onclick="joinLiveStream('${liveItem.id}')">
+            <div class="live-banner-info">
+              <div class="live-dot"></div>
+              <div><b>${liveItem.profiles?.username || 'Host'} is LIVE now!</b><div style="font-size:0.75rem; opacity:0.8;">Tap to watch live stream</div></div>
+            </div>
+            <button class="btn-main" style="width:auto; padding:6px 12px; font-size:0.75rem; background:white; color:#ff4757;">Watch</button>
+          </div>`;
+      } else {
+        bannerContainer.innerHTML = '';
+      }
+
+      const { data: usersData } = await supabaseClient.from('profiles').select('*').limit(20);
+      if (!usersData || usersData.length === 0) {
+        feedContainer.innerHTML = `<p style="text-align:center; color:var(--text-dim);">No users found.</p>`;
+        return;
+      }
+
+      let html = '';
+      usersData.forEach(u => {
+        if (u.id === currentUser.id) return;
+        html += `
+          <div class="user-item" onclick="openUserProfile('${u.id}')">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:45px; height:45px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                ${u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
+              </div>
+              <div>
+                <b>${u.username}</b>
+              </div>
+            </div>
+            <span>→</span>
+          </div>`;
+      });
+      feedContainer.innerHTML = html;
+    }
+
+    async function openUserProfile(userId) {
+      const { data: user } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+      if (!user) return;
+      viewedUser = user;
+
+      const myFollowKey = `following_${currentUser.id}_${userId}`;
+      const theirFollowKey = `following_${userId}_${currentUser.id}`;
+      const iAmFollowing = localStorage.getItem(myFollowKey) === 'true';
+      const theyAreFollowing = localStorage.getItem(theirFollowKey) === 'true';
+      const isMutual = iAmFollowing && theyAreFollowing;
+
+      const avatarImg = document.getElementById('extProfileAvatarImg');
+      const avatarPlaceholder = document.getElementById('extProfileAvatarPlaceholder');
+      if (user.avatar_url) {
+        avatarImg.src = user.avatar_url;
+        avatarImg.style.display = 'block';
+        avatarPlaceholder.style.display = 'none';
+      } else {
+        avatarImg.style.display = 'none';
+        avatarPlaceholder.style.display = 'flex';
+      }
+
+      document.getElementById('extUserNameDisplay').innerText = user.username;
+      const statsEl = document.getElementById('extUserFollowStats');
+      const bioContainer = document.getElementById('extBioContainer');
+      const followBtn = document.getElementById('extFollowBtn');
+
+      if (isMutual) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 1 &nbsp;|&nbsp; Likes: 0`;
+        bioContainer.style.display = 'block';
+        document.getElementById('extBioText').innerText = user.bio || 'No bio';
+        followBtn.innerText = 'Following';
+        followBtn.style.background = 'var(--card)';
+        followBtn.style.border = '1px solid var(--border)';
+      } else if (iAmFollowing) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 0 &nbsp;|&nbsp; Likes: 0`;
+        bioContainer.style.display = 'block';
+        document.getElementById('extBioText').innerText = user.bio || 'No bio';
+        followBtn.innerText = 'Requested / Followed';
+        followBtn.style.background = 'var(--card)';
+      } else {
+        statsEl.style.display = 'none';
+        bioContainer.style.display = 'none';
+        followBtn.innerText = 'Follow';
+        followBtn.style.background = 'var(--primary)';
+        followBtn.style.border = 'none';
+      }
+
+      switchTab('externalProfileTab');
+    }
+
+    function toggleFollowUser() {
+      if (!viewedUser) return;
+      const myFollowKey = `following_${currentUser.id}_${viewedUser.id}`;
+      const currentState = localStorage.getItem(myFollowKey) === 'true';
+      
+      if (currentState) {
+        localStorage.setItem(myFollowKey, 'false');
+        alert(`Unfollowed ${viewedUser.username}`);
+      } else {
+        localStorage.setItem(myFollowKey, 'true');
+        alert(`Follow request sent to ${viewedUser.username}. Once they accept, you will be mutual followers.`);
+      }
+      openUserProfile(viewedUser.id);
+    }
+
+    function openChatFromProfile() {
+      if (!viewedUser) return;
+      openChat(viewedUser.id, viewedUser.username);
+    }
+
+    async function loadConversations() {
+      const { data: messages } = await supabaseClient
+        .from('messages')
+        .select('sender_id, receiver_id, message, created_at, is_call_log')
+        .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+        .order('created_at', { ascending: false });
+
+      if (!messages || messages.length === 0) {
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations or call logs yet.</p>';
+        return;
+      }
+
+      const partnerMap = new Map();
+      messages.forEach(m => {
+        const partnerId = (m.sender_id === currentUser.id) ? m.receiver_id : m.sender_id;
+        if (!partnerMap.has(partnerId)) {
+          partnerMap.set(partnerId, m);
+        }
+      });
+
+      const partnerIds = Array.from(partnerMap.keys());
+      if (partnerIds.length === 0) {
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations or call logs yet.</p>';
+        return;
+      }
+
+      const { data: profilesData } = await supabaseClient.from('profiles').select('*').in('id', partnerIds);
+      if (!profilesData || profilesData.length === 0) {
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No conversations yet.</p>';
+        return;
+      }
+
+      let html = '';
+      profilesData.forEach(p => {
+        const lastMsg = partnerMap.get(p.id);
+        const timeStr = new Date(lastMsg.created_at).toLocaleDateString([], { month:'short', day:'numeric' });
+        html += `
+          <div class="user-item" onclick="openChat('${p.id}', '${p.username}')">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:45px; height:45px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                ${p.avatar_url ? `<img src="${p.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
+              </div>
+              <div>
+                <b>${p.username}</b>
+                <p style="font-size:0.75rem; color:var(--text-dim);">${lastMsg.is_call_log ? '📞 ' + lastMsg.message : lastMsg.message}</p>
+              </div>
+            </div>
+            <span style="font-size:0.7rem; color:var(--text-dim);">${timeStr}</span>
+          </div>`;
+      });
+      document.getElementById('conversationsList').innerHTML = html;
+    }
+
+    async function openChat(userId, username) {
+      currentChatUser = { id: userId, username };
+      document.getElementById('chatUser').innerText = username;
+      document.getElementById('chatWindow').style.display = 'flex';
+      await loadMessages();
+      setupMessageListener();
+    }
+
+    function closeChat() {
+      document.getElementById('chatWindow').style.display = 'none';
+      if (messagesSub) supabaseClient.removeChannel(messagesSub);
+      currentChatUser = null;
+      loadConversations();
+    }
+
+    async function loadMessages() {
+      if (!currentChatUser) return;
+      const { data } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentChatUser.id}),and(sender_id.eq.${currentChatUser.id},receiver_id.eq.${currentUser.id})`)
+        .order('created_at', { ascending: true });
+
+      renderMessages(data || []);
+    }
+
+    function setupMessageListener() {
+      if (messagesSub) supabaseClient.removeChannel(messagesSub);
+      messagesSub = supabaseClient
+        .channel(`public:messages:${currentUser.id}-${currentChatUser.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+          const m = payload.new;
+          if ((m.sender_id === currentUser.id && m.receiver_id === currentChatUser.id) ||
+              (m.sender_id === currentChatUser.id && m.receiver_id === currentUser.id)) {
+            appendMessageToDOM(m);
+          }
+        })
+        .subscribe();
+    }
+
+    function renderMessages(msgs) {
+      const container = document.getElementById('chatMessages');
+      let html = '';
+      msgs.forEach(m => {
+        const isSent = m.sender_id === currentUser.id;
+        const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (m.is_call_log) {
+          html += `<div class="msg call-log">${m.message}</div>`;
+        } else {
+          html += `
+            <div class="msg-wrapper ${isSent ? 'sent' : 'received'}">
+              <div class="msg ${isSent ? 'sent' : 'received'}">${m.message}</div>
+              <div class="msg-timestamp">${timeStr}</div>
+            </div>`;
+        }
+      });
+      container.innerHTML = html;
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function appendMessageToDOM(m) {
+      const container = document.getElementById('chatMessages');
+      const isSent = m.sender_id === currentUser.id;
+      const timeStr = new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (m.is_call_log) {
+        container.innerHTML += `<div class="msg call-log">${m.message}</div>`;
+      } else {
+        container.innerHTML += `
+          <div class="msg-wrapper ${isSent ? 'sent' : 'received'}">
+            <div class="msg ${isSent ? 'sent' : 'received'}">${m.message}</div>
+            <div class="msg-timestamp">${timeStr}</div>
+          </div>`;
+      }
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInputText');
+      const text = input.value.trim();
+      if (!text || !currentChatUser) return;
+      input.value = '';
+
+      await supabaseClient.from('messages').insert({
+        sender_id: currentUser.id,
+        receiver_id: currentChatUser.id,
+        message: text,
+        is_call_log: false
+      });
+    }
+
+    async function shareCoinsPrompt() {
+      const amountStr = prompt('Enter number of coins to send:');
+      const amount = parseInt(amountStr);
+      if (isNaN(amount) || amount <= 0) return;
+
+      if ((currentUser.profile.coins || 0) < amount) {
+        alert('Insufficient coins balance.');
+        return;
+      }
+
+      const newSenderCoins = currentUser.profile.coins - amount;
+      await supabaseClient.from('profiles').update({ coins: newSenderCoins }).eq('id', currentUser.id);
+
+      const { data: recData } = await supabaseClient.from('profiles').select('coins').eq('id', currentChatUser.id).single();
+      const newRecCoins = (recData?.coins || 0) + amount;
+      await supabaseClient.from('profiles').update({ coins: newRecCoins }).eq('id', currentChatUser.id);
+
+      await supabaseClient.from('messages').insert({
+        sender_id: currentUser.id,
+        receiver_id: currentChatUser.id,
+        message: `🎁 Sent ${amount} coins gift!`,
+        is_call_log: false
+      });
+
+      await loadUserProfile();
+      toggleChatMenu();
+    }
+
+    // Camera Flip Functionality for Live Streams & Calls
+    async function switchCamera(mode) {
+      currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+      if (mode === 'stream' && isStreaming) {
+        if (myStream) myStream.getTracks().forEach(t => t.stop());
+        myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
+        document.getElementById('hostVideo').srcObject = myStream;
+      } else if (mode === 'call' && localStream) {
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
+        document.getElementById('localVideo').srcObject = localStream;
+        if (peerConnection) {
+          const videoTrack = localStream.getVideoTracks()[0];
+          const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender && videoTrack) sender.replaceTrack(videoTrack);
+        }
+      }
+    }
+
+    // WebRTC Calling & Call Logging to Inbox
+    async function startCall(type) {
+      if (!currentChatUser) return;
+      activeCall = { type, peerId: currentChatUser.id, isCaller: true };
+      showCallModal(type);
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (type === 'video' ? { facingMode: currentFacingMode } : false) });
+        document.getElementById('localVideo').srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+          remoteStream = event.streams[0];
+          document.getElementById('remoteVideo').srcObject = remoteStream;
+          document.getElementById('remoteAudioPlayer').srcObject = remoteStream;
+        };
+
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            supabaseClient.from('signals').insert({
+              sender_id: currentUser.id,
+              receiver_id: currentChatUser.id,
+              candidate: event.candidate
+            });
+          }
+        };
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        await supabaseClient.from('calls').insert({
+          caller_id: currentUser.id,
+          receiver_id: currentChatUser.id,
+          call_type: type,
+          offer: offer,
+          status: 'ringing'
+        });
+
+        await supabaseClient.from('messages').insert({
+          sender_id: currentUser.id,
+          receiver_id: currentChatUser.id,
+          message: `${type.toUpperCase()} call initiated`,
+          is_call_log: true
+        });
+
+        setupSignalingListener(currentChatUser.id);
+      } catch (err) {
+        console.error(err);
+        alert('Could not access media devices for calling.');
+        endCall();
+      }
+    }
+
+    let incomingCallPayload = null;
+    function showIncomingCallModal(call) {
+      incomingCallPayload = call;
+      document.getElementById('incomingCallerName').innerText = 'Incoming ' + call.call_type + ' call';
+      document.getElementById('incomingCallType').innerText = 'Tap Accept to answer';
+      document.getElementById('incomingCallBox').style.display = 'block';
+    }
+
+    async function acceptCall() {
+      document.getElementById('incomingCallBox').style.display = 'none';
+      if (!incomingCallPayload) return;
+
+      activeCall = { type: incomingCallPayload.call_type, peerId: incomingCallPayload.caller_id, isCaller: false };
+      showCallModal(incomingCallPayload.call_type);
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (incomingCallPayload.call_type === 'video' ? { facingMode: currentFacingMode } : false) });
+        document.getElementById('localVideo').srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+          remoteStream = event.streams[0];
+          document.getElementById('remoteVideo').srcObject = remoteStream;
+          document.getElementById('remoteAudioPlayer').srcObject = remoteStream;
+        };
+
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            supabaseClient.from('signals').insert({
+              sender_id: currentUser.id,
+              receiver_id: incomingCallPayload.caller_id,
+              candidate: event.candidate
+            });
+          }
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingCallPayload.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        await supabaseClient.from('calls').update({ answer: answer, status: 'answered' }).eq('id', incomingCallPayload.id);
+
+        setupSignalingListener(incomingCallPayload.caller_id);
+      } catch (err) {
+        console.error(err);
+        endCall();
+      }
+    }
+
+    function declineCall() {
+      document.getElementById('incomingCallBox').style.display = 'none';
+      if (incomingCallPayload) {
+        supabaseClient.from('calls').update({ status: 'declined' }).eq('id', incomingCallPayload.id);
+      }
+      incomingCallPayload = null;
+    }
+
+    function setupSignalingListener(peerId) {
+      if (window.signalChannel) supabaseClient.removeChannel(window.signalChannel);
+      
+      window.signalChannel = supabaseClient
+        .channel(`public:signals:${currentUser.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals', filter: `receiver_id=eq.${currentUser.id}` }, async payload => {
+          const sig = payload.new;
+          if (sig.sender_id === peerId && sig.candidate && peerConnection) {
+            try {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(sig.candidate));
+            } catch (e) {
+              console.error('Error adding received ice candidate', e);
+            }
+          }
+        })
+        .subscribe();
+
+      if (activeCall && activeCall.isCaller) {
+        if (window.callAnswerChannel) supabaseClient.removeChannel(window.callAnswerChannel);
+        
+        window.callAnswerChannel = supabaseClient
+          .channel(`public:calls:answer:${currentUser.id}`)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `caller_id=eq.${currentUser.id}` }, async payload => {
+            if (payload.new.answer && peerConnection && !peerConnection.remoteDescription) {
+              try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
+              } catch (e) {
+                console.error('Error setting remote description from answer', e);
+              }
+            }
+          })
+          .subscribe();
+      }
+    }
+
+    function showCallModal(type) {
+      let modal = document.getElementById('activeCallModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'activeCallModal';
+        modal.className = 'call-modal';
+        modal.innerHTML = `
+          <div class="video-box">
+            <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+            <video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:10px; right:10px; width:90px; height:120px; object-fit:cover; border-radius:10px; border:2px solid white;"></video>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:10px 14px;" onclick="switchCamera('call')">📸 Flip</button>
+            <button class="btn-main" style="background:var(--danger); max-width:200px;" onclick="endCall()">End Call</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      modal.style.display = 'flex';
+      if (type === 'audio') {
+        document.getElementById('localVideo').style.display = 'none';
+      } else {
+        document.getElementById('localVideo').style.display = 'block';
+      }
+    }
+
+    function endCall() {
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      if (peerConnection) peerConnection.close();
+      peerConnection = null;
+      localStream = null;
+      remoteStream = null;
+      const modal = document.getElementById('activeCallModal');
+      if (modal) modal.style.display = 'none';
+      activeCall = null;
+    }
+
+    // Live Streaming
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const giftBtn = document.getElementById('streamGiftBtn');
+      const badge = document.getElementById('liveBadgeEl');
+
+      if (!isStreaming) {
+        try {
+          myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
+          const hostVideo = document.getElementById('hostVideo');
+          hostVideo.srcObject = myStream;
+          hostVideo.muted = true; 
+          
+          isStreaming = true;
+          btn.innerText = 'Stop Live';
+          btn.style.background = 'var(--danger)';
+
+          // Hide gift box and LIVE badge for the Host
+          if (giftBtn) giftBtn.style.display = 'none';
+          if (badge) badge.style.display = 'none';
+
+          await supabaseClient.from('livestreams').upsert({
+            user_id: currentUser.id,
+            is_active: true
+          });
+        } catch (err) {
+          alert('Could not access microphone and camera for live streaming.');
+        }
+      } else {
+        if (myStream) myStream.getTracks().forEach(t => t.stop());
+        isStreaming = false;
+        btn.innerText = 'Start Live';
+        btn.style.background = 'var(--primary)';
+
+        if (giftBtn) giftBtn.style.display = 'flex';
+        if (badge) badge.style.display = 'none';
+
+        await supabaseClient.from('livestreams').update({ is_active: false }).eq('user_id', currentUser.id);
+      }
+    }
+
+    function joinLiveStream(streamId) {
+      // When joining someone else's live stream as a viewer:
+      const giftBtn = document.getElementById('streamGiftBtn');
+      const badge = document.getElementById('liveBadgeEl');
+      
+      if (giftBtn) giftBtn.style.display = 'flex';
+      if (badge) badge.style.display = 'block'; // Display 🔴 LIVE badge to viewers only
+
+      switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
     }
 
     function handleLiveChatKey(e) {
       if (e.key === 'Enter') {
         const input = document.getElementById('liveChatInput');
-        if (input.value.trim()) {
-          appendViewerComment(currentUserProfile?.username || 'User', input.value.trim());
-          input.value = '';
-        }
+        input.value = '';
       }
     }
 
-    async function loadFeed() {
-      const feed = document.getElementById('homeFeed');
-      try {
-@@ -1022,7 +1084,6 @@ <h3 id="settingsTitle">Settings</h3>
-      document.getElementById('callModal').style.display = 'flex';
-      startOutgoingRingback();
+    function triggerGiftModal() {
+      document.getElementById('giftCatalogModal').style.display = 'flex';
+    }
 
-      // Ring out for 30 seconds if offline
-      outgoingRingTimeout = setTimeout(() => {
-        alert("Call unanswered or user offline.");
-        endCall();
-Footer
-© 2026 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Security
-Status
-Community
-Docs
-Contact
-Manage cookies
-Do not share my personal information
+    async function sendGroupGift(giftName, cost) {
+      const currentCoins = currentUser.profile?.coins || 0;
+      if (currentCoins < cost) {
+        alert('Insufficient coins! Please buy more coins.');
+        closeModal('giftCatalogModal');
+        openModal('coinModal');
+        return;
+      }
+
+      const newCoins = currentCoins - cost;
+      await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
+      await loadUserProfile();
+      closeModal('giftCatalogModal');
+      alert(`Sent ${giftName} successfully!`);
+    }
+
+    function selectPackage(naira, coins) {
+      document.getElementById('customNairaAmount').value = naira;
+    }
+
+    // Paystack Integration
+    function payWithPaystack() {
+      const naira = parseInt(document.getElementById('customNairaAmount').value);
+      const email = document.getElementById('userEmail').value || currentUser.email;
+      if (isNaN(naira) || naira < 10) { alert('Minimum amount is ₦10'); return; }
+
+      const handler = PaystackPop.setup({
+        key: 'pk_live_YOUR_PAYSTACK_KEY',
+        email: email,
+        amount: naira * 100,
+        currency: 'NGN',
+        callback: async function(response) {
+          const coinsEarned = Math.floor(naira / 10);
+          const newCoins = (currentUser.profile.coins || 0) + coinsEarned;
+          await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
+          await loadUserProfile();
+          closeModal('coinModal');
+          alert(`Payment successful! Credited +${coinsEarned} coins.`);
+        },
+        onClose: function() {
+          alert('Transaction was closed.');
+        }
+      });
+      handler.openIframe();
+    }
+
+    function triggerAvatarUpload() {
+      document.getElementById('avatarFileInput').click();
+    }
+
+    async function handleAvatarFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const filePath = `avatars/${currentUser.id}_${Date.now()}`;
+      const { error } = await supabaseClient.storage.from('media').upload(filePath, file);
+      if (error) {
+        alert('Error uploading avatar: ' + error.message);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabaseClient.storage.from('media').getPublicUrl(filePath);
+      await supabaseClient.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
+      await loadUserProfile();
+      alert('Profile picture updated successfully!');
+    }
+
+    function openEditProfileModal() {
+      document.getElementById('editUsername').value = currentUser.profile.username || '';
+      document.getElementById('editBio').value = currentUser.profile.bio || '';
+      document.getElementById('editLinkTitle').value = currentUser.profile.link_title || '';
+      document.getElementById('editBusinessLink').value = currentUser.profile.business_link || '';
+      document.getElementById('editDob').value = currentUser.profile.dob || '';
+      document.getElementById('editSex').value = currentUser.profile.sex || 'Male';
+      document.getElementById('editProfileModal').style.display = 'flex';
+    }
+
+    async function saveProfileChanges() {
+      const username = document.getElementById('editUsername').value.trim();
+      const bio = document.getElementById('editBio').value.trim();
+      const link_title = document.getElementById('editLinkTitle').value.trim();
+      const business_link = document.getElementById('editBusinessLink').value.trim();
+      const dob = document.getElementById('editDob').value;
+      const sex = document.getElementById('editSex').value;
+
+      await supabaseClient.from('profiles').update({
+        username, bio, link_title, business_link, dob, sex
+      }).eq('id', currentUser.id);
+
+      closeModal('editProfileModal');
+      await loadUserProfile();
+      alert('Profile updated successfully!');
+    }
+
+    function openSettings(type) {
+      toggleHeaderMenu();
+      const title = document.getElementById('settingsTitle');
+      const body = document.getElementById('settingsBody');
+      document.getElementById('settingsModal').style.display = 'flex';
+
+      if (type === 'account') {
+        title.innerText = 'Manage Account';
+        body.innerHTML = `<p style="font-size:0.9rem; color:var(--text-dim);">Email: ${currentUser.email}</p><button class="btn-main" style="margin-top:15px; background:var(--danger);" onclick="handleLogout()">Logout</button>`;
+      } else if (type === 'privacy') {
+        title.innerText = 'Privacy Settings';
+        body.innerHTML = `
+          <div class="setting-row"><span>Private Account</span><input type="checkbox"></div>
+          <div class="setting-row"><span>Show Online Status</span><input type="checkbox" checked></div>
+          <div class="setting-row"><span>Hide Following List</span><input type="checkbox" id="hideFollowingCheck" onchange="toggleHideFollowing(this)"></div>`;
+        setTimeout(() => {
+          document.getElementById('hideFollowingCheck').checked = localStorage.getItem(`hide_following_${currentUser.id}`) === 'true';
+        }, 100);
+      } else if (type === 'notifications') {
+        title.innerText = 'Notifications';
+        body.innerHTML = `
+          <div class="setting-row"><span>Push Notifications</span><input type="checkbox" checked></div>
+          <div class="setting-row"><span>Live Stream Alerts</span><input type="checkbox" checked></div>`;
+      } else if (type === 'verification') {
+        title.innerText = 'Verification';
+        body.innerHTML = `<p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:15px;">Verify your account to earn the blue checkmark badge.</p><button class="btn-main">Request Verification</button>`;
+      } else if (type === 'prefs') {
+        title.innerText = 'Preferences';
+        body.innerHTML = `<div class="setting-row"><span>Dark Mode</span><input type="checkbox" checked></div>`;
+      } else if (type === 'accessibility') {
+        title.innerText = 'Accessibility';
+        body.innerHTML = `<div class="setting-row"><span>High Contrast</span><input type="checkbox"></div>`;
+      }
+    }
+
+    function toggleHideFollowing(el) {
+      localStorage.setItem(`hide_following_${currentUser.id}`, el.checked);
+    }
+
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
+      window.location.reload();
+    }
+
+    function copyRefLink() {
+      const link = document.getElementById('userRefLink').innerText;
+      navigator.clipboard.writeText(link);
+      alert('Referral link copied to clipboard!');
+    }
+
+    async function claimWeeklyReward() {
+      const lastClaimed = currentUser.profile.last_claimed_at ? new Date(currentUser.profile.last_claimed_at).getTime() : 0;
+      const now = Date.now();
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+      if (now < lastClaimed + sevenDays) {
+        alert('Reward is not available yet. Please wait until your 7-day countdown completes!');
+        return;
+      }
+
+      const newCoins = (currentUser.profile.coins || 0) + 5;
+      const newClaimTime = new Date().toISOString();
+
+      await supabaseClient.from('profiles').update({ 
+        coins: newCoins, 
+        last_claimed_at: newClaimTime 
+      }).eq('id', currentUser.id);
+
+      await loadUserProfile();
+      alert('Successfully claimed +5 reward coins!');
+    }
+
+    async function processReferral(refId) {
+      if (localStorage.getItem('referred_' + currentUser.id)) return;
+      const { data: refUser } = await supabaseClient.from('profiles').select('coins').eq('id', refId).single();
+      if (refUser) {
+        await supabaseClient.from('profiles').update({ coins: (refUser.coins || 0) + 10 }).eq('id', refId);
+        localStorage.setItem('referred_' + currentUser.id, 'true');
+      }
+    }
+
+    async function loadUserPosts() {
+      document.getElementById('userPostsList').innerHTML = '<p style="color:var(--text-dim);">No posts created yet.</p>';
+    }
+
+    async function loadStreamActivity() {
+      document.getElementById('streamActivityList').innerHTML = '<p>No recent stream activity recorded.</p>';
+    }
+
+    function openWhatsApp() {
+      const phone = document.getElementById('waPhone').value.trim();
+      if (!phone) { alert('Please enter a WhatsApp phone number.'); return; }
+      window.open(`https://wa.me/${phone}`, '_blank');
+    }
+
+    async function submitWithdrawal() {
+      const acc = document.getElementById('bankAcc').value.trim();
+      if (!acc) { alert('Please enter your account number.'); return; }
+      alert('Withdrawal request submitted successfully! Processing within 24 hours.');
+    }
+  </script>
+</body>
+</html>
