@@ -6,7 +6,7 @@
   <title>NAIJALITE | Live & Earn</title>
   <meta name="theme-color" content="#008751">
 
-  <!-- Supabase JS -->
+  <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
   <!-- Paystack SDK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
@@ -97,7 +97,7 @@
     .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
     .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
 
-    /* Locked Layout for Live Stream Viewport */
+    /* Fixed Layout for Live Stream Viewport */
     .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; height: calc(100vh - 220px); max-height: 500px; overscroll-behavior: contain; }
     .main-video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; }
     .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; }
@@ -210,13 +210,13 @@
   </div>
 
   <div class="container">
-    <!-- Home Feed Tab with TikTok-Style Live Stream Top Banner -->
+    <!-- Home Feed Tab -->
     <div id="homeTab" class="tab-content active">
       <div id="activeLiveBannerContainer"></div>
       <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
     </div>
     
-    <!-- Immersive Full-Screen Live Stream Tab with Active Overlay Chat -->
+    <!-- Live Stream Tab -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
@@ -536,9 +536,12 @@
   <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarFileSelect(event)">
 
   <script>
-    // Supabase Configuration
-    const SUPABASE_URL = 'https://YOUR_SUPABASE_URL.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    // =========================================================================
+    // CONFIGURATION WITH YOUR EXTRACTED PROJECT CREDENTIALS
+    // =========================================================================
+    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3aWRkZXhnaXd0ZHV1enByc2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDU1MjMsImV4cCI6MjEwODc4MTUyM30.QyzSo2eUtt0jBzW8_WRkIPutMj1wb5ex_9GgyOguwHI';
+    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
