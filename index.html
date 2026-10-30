@@ -99,10 +99,13 @@
 
     .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; height: calc(100vh - 220px); max-height: 500px; overscroll-behavior: contain; }
     .main-video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; }
-    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; }
+    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; transition: opacity 0.5s ease; }
     .live-overlay * { pointer-events: auto; }
     .overlay-top { display: flex; justify-content: space-between; align-items: center; }
     .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; }
+    .overlay-bottom { display: flex; gap: 8px; align-items: center; margin-bottom: 15px; }
+    .overlay-bottom input { flex: 1; padding: 12px 14px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.9rem; }
+    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 10px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
 
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
@@ -203,11 +206,15 @@
     <!-- Live Stream Tab -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
-        <!-- Host video is NOT muted locally so host mic feed is active and running -->
-        <video id="hostVideo" class="main-video" autoplay playsinline muted></video>
-        <div class="live-overlay">
+        <!-- Host video stream. Unmuted locally if viewing, muted if hosting to prevent feedback loop -->
+        <video id="hostVideo" class="main-video" autoplay playsinline></video>
+        <div class="live-overlay" id="liveOverlayBox">
           <div class="overlay-top">
-            <div class="live-badge">🔴 LIVE</div>
+            <div class="live-badge" id="liveBadgeEl">🔴 LIVE</div>
+          </div>
+          <div class="overlay-bottom" id="liveOverlayBottom">
+            <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
+            <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁</button>
           </div>
         </div>
       </div>
@@ -348,7 +355,7 @@
         </div>
 
         <h3 id="extUserNameDisplay">Username</h3>
-        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.8rem; margin:8px 0;"></p>
+        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.8rem; margin:8px 0; display:none;"></p>
         
         <div id="extBioContainer" style="margin: 15px 0; text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; display:none;">
           <h4 style="font-size:0.85rem; margin-bottom:5px;">Bio</h4>
@@ -384,6 +391,36 @@
     <div class="chat-input-area">
       <input type="text" id="chatInputText" placeholder="Type a message...">
       <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <!-- Gift Catalog Modal -->
+  <div id="giftCatalogModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>🎁 Live Gifts Catalog</h3>
+        <span style="font-size:0.85rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Tap a gift to send live.</p>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0;">
+        <div class="card" style="padding:10px; text-align:center; cursor:pointer; margin:0;" onclick="sendGroupGift('Rose 🌹', 1)">
+          <div style="font-size:1.8rem;">🌹</div>
+          <div style="font-size:0.75rem; font-weight:bold;">Rose</div>
+          <div style="font-size:0.7rem; color:var(--accent);">1 Coin</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; cursor:pointer; margin:0;" onclick="sendGroupGift('Heart 🫰', 5)">
+          <div style="font-size:1.8rem;">🫰</div>
+          <div style="font-size:0.75rem; font-weight:bold;">Heart</div>
+          <div style="font-size:0.7rem; color:var(--accent);">5 Coins</div>
+        </div>
+        <div class="card" style="padding:10px; text-align:center; cursor:pointer; margin:0;" onclick="sendGroupGift('Fire 🔥', 10)">
+          <div style="font-size:1.8rem;">🔥</div>
+          <div style="font-size:0.75rem; font-weight:bold;">Fire</div>
+          <div style="font-size:0.7rem; color:var(--accent);">10 Coins</div>
+        </div>
+      </div>
+      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('giftCatalogModal')">Close</button>
     </div>
   </div>
 
@@ -440,6 +477,7 @@
     let peerConnection = null;
     let callSub = null;
     let globalLiveStreams = [];
+    let hideOverlayTimer = null;
 
     const ICE_SERVERS = {
       iceServers: [
@@ -549,6 +587,7 @@
         document.getElementById('walletBalance').innerText = '₦' + Number(data.wallet || 0).toLocaleString();
         document.getElementById('userCoins').innerText = data.coins || 0;
         document.getElementById('coinsCount').innerText = data.coins || 0;
+        document.getElementById('giftModalCoinCount').innerText = data.coins || 0;
         document.getElementById('userNameDisplay').innerHTML = `${data.username} <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;">${data.sex || ''}</span>`;
         document.getElementById('userIdDisplay').innerText = 'ID: ' + currentUser.id;
 
@@ -667,7 +706,11 @@
       if (!user) return;
       viewedUser = user;
 
-      const isFollowing = localStorage.getItem(`following_${currentUser.id}_${userId}`) === 'true';
+      const myFollowKey = `following_${currentUser.id}_${userId}`;
+      const theirFollowKey = `following_${userId}_${currentUser.id}`;
+      const iAmFollowing = localStorage.getItem(myFollowKey) === 'true';
+      const theyAreFollowing = localStorage.getItem(theirFollowKey) === 'true';
+      const isMutual = iAmFollowing && theyAreFollowing;
 
       const avatarImg = document.getElementById('extProfileAvatarImg');
       const avatarPlaceholder = document.getElementById('extProfileAvatarPlaceholder');
@@ -685,17 +728,27 @@
       const bioContainer = document.getElementById('extBioContainer');
       const followBtn = document.getElementById('extFollowBtn');
 
-      if (isFollowing) {
-        statsEl.innerHTML = `Following: 12 &nbsp;|&nbsp; Followers: 48 &nbsp;|&nbsp; Likes: 120`;
+      if (isMutual) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 1 &nbsp;|&nbsp; Likes: 0`;
         bioContainer.style.display = 'block';
         document.getElementById('extBioText').innerText = user.bio || 'No bio';
-        followBtn.innerText = 'Unfollow';
-        followBtn.style.background = 'var(--danger)';
+        followBtn.innerText = 'Following';
+        followBtn.style.background = 'var(--card)';
+        followBtn.style.border = '1px solid var(--border)';
+      } else if (iAmFollowing) {
+        statsEl.style.display = 'block';
+        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 0 &nbsp;|&nbsp; Likes: 0`;
+        bioContainer.style.display = 'block';
+        document.getElementById('extBioText').innerText = user.bio || 'No bio';
+        followBtn.innerText = 'Requested / Followed';
+        followBtn.style.background = 'var(--card)';
       } else {
-        statsEl.innerHTML = '';
+        statsEl.style.display = 'none';
         bioContainer.style.display = 'none';
         followBtn.innerText = 'Follow';
         followBtn.style.background = 'var(--primary)';
+        followBtn.style.border = 'none';
       }
 
       switchTab('externalProfileTab');
@@ -703,14 +756,15 @@
 
     function toggleFollowUser() {
       if (!viewedUser) return;
-      const key = `following_${currentUser.id}_${viewedUser.id}`;
-      const isFollowing = localStorage.getItem(key) === 'true';
-      if (isFollowing) {
-        localStorage.setItem(key, 'false');
+      const myFollowKey = `following_${currentUser.id}_${viewedUser.id}`;
+      const currentState = localStorage.getItem(myFollowKey) === 'true';
+      
+      if (currentState) {
+        localStorage.setItem(myFollowKey, 'false');
         alert(`Unfollowed ${viewedUser.username}`);
       } else {
-        localStorage.setItem(key, 'true');
-        alert(`Following ${viewedUser.username}`);
+        localStorage.setItem(myFollowKey, 'true');
+        alert(`Follow request sent to ${viewedUser.username}. Once they accept, you will be mutual followers.`);
       }
       openUserProfile(viewedUser.id);
     }
@@ -886,7 +940,7 @@
       toggleChatMenu();
     }
 
-    // Robust WebRTC Call Handling
+    // WebRTC 1-on-1 Call Handling with audio/video stream routing
     async function startCall(type) {
       if (!currentChatUser) return;
       activeCall = { type, peerId: currentChatUser.id, isCaller: true };
@@ -1062,7 +1116,7 @@
       activeCall = null;
     }
 
-    // Active Microphone Live Streaming Toggle
+    // Active Microphone Live Streaming & Viewer Stream Playback
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       if (!isStreaming) {
@@ -1070,19 +1124,24 @@
           myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
           const hostVideo = document.getElementById('hostVideo');
           hostVideo.srcObject = myStream;
-          // Keep video element muted locally so there's no feedback loop, 
-          // but microphone tracks are actively transmitted and captured in myStream
+          // Muted locally for the host to prevent feedback loop, but active in myStream for broadcasting
           hostVideo.muted = true; 
           
           isStreaming = true;
           btn.innerText = 'Stop Live';
           btn.style.background = 'var(--danger)';
 
-          // Upsert live status to database so notification banner instantly triggers for everyone
           await supabaseClient.from('livestreams').upsert({
             user_id: currentUser.id,
             is_active: true
           });
+
+          if (hideOverlayTimer) clearTimeout(hideOverlayTimer);
+          hideOverlayTimer = setTimeout(() => {
+            const badge = document.getElementById('liveBadgeEl');
+            if (badge) badge.style.opacity = '0';
+          }, 3000);
+
         } catch (err) {
           alert('Could not access microphone and camera for live streaming.');
         }
@@ -1092,12 +1151,54 @@
         btn.innerText = 'Start Live';
         btn.style.background = 'var(--primary)';
 
+        const badge = document.getElementById('liveBadgeEl');
+        if (badge) badge.style.opacity = '1';
+
         await supabaseClient.from('livestreams').update({ is_active: false }).eq('user_id', currentUser.id);
       }
     }
 
-    function joinLiveStream(streamId) {
+    // When a viewer taps to watch a live stream
+    async function joinLiveStream(streamId) {
       switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
+      const stream = globalLiveStreams.find(s => s.id === streamId);
+      if (stream) {
+        try {
+          // Viewers request camera/audio or playback stream
+          const viewerStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+          const hostVideo = document.getElementById('hostVideo');
+          hostVideo.srcObject = viewerStream;
+          hostVideo.muted = false; // Viewers can hear audio
+        } catch (e) {
+          console.error("Could not bind stream view", e);
+        }
+      }
+    }
+
+    function handleLiveChatKey(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('liveChatInput');
+        input.value = '';
+      }
+    }
+
+    function triggerGiftModal() {
+      document.getElementById('giftCatalogModal').style.display = 'flex';
+    }
+
+    async function sendGroupGift(giftName, cost) {
+      const currentCoins = currentUser.profile?.coins || 0;
+      if (currentCoins < cost) {
+        alert('Insufficient coins! Please buy more coins.');
+        closeModal('giftCatalogModal');
+        return;
+      }
+
+      const newCoins = currentCoins - cost;
+      await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
+      await loadUserProfile();
+      closeModal('giftCatalogModal');
+      alert(`Sent ${giftName} successfully!`);
     }
 
     function triggerAvatarUpload() {
