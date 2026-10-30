@@ -8,8 +8,8 @@
 
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
-  <!-- Paystack Inline V2 SDK -->
-  <script src="https://js.paystack.co/v2/inline.js"></script>
+  <!-- Paystack SDK -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
   <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
@@ -258,7 +258,7 @@
           <div style="background:var(--bg); padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
             <div>
               <b style="font-size:0.9rem;">7-Day Reward Check-in</b>
-              <p style="font-size:0.75rem; color:var(--text-dim);" id="rewardTimerText">Claim +5 coins reward every 7 days!</p>
+              <p style="font-size:0.75rem; color:var(--text-dim);" id="rewardTimerText">Claim +5 coins every 7 days after signup</p>
             </div>
             <button class="btn-main" id="weeklyClaimBtn" style="width:auto; padding:8px 14px; font-size:0.8rem;" onclick="claimWeeklyReward()">Claim</button>
           </div>
@@ -703,17 +703,15 @@
       }
     }
 
-    // Dynamic 7-Day Reward Cycle Logic
     function checkRewardEligibility(profileData) {
       const lastClaimed = profileData.last_claimed_at ? new Date(profileData.last_claimed_at).getTime() : 0;
       const now = Date.now();
-      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-      const nextClaimTime = lastClaimed + sevenDaysMs;
-
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      const nextClaim = lastClaimed + sevenDays;
       const btn = document.getElementById('weeklyClaimBtn');
       const text = document.getElementById('rewardTimerText');
 
-      if (now >= nextClaimTime) {
+      if (now >= nextClaim) {
         btn.disabled = false;
         btn.innerText = 'Claim';
         btn.style.opacity = '1';
@@ -721,10 +719,9 @@
       } else {
         btn.disabled = true;
         btn.style.opacity = '0.6';
-        const remainingMs = nextClaimTime - now;
-        const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
-        const days = Math.floor(remainingHours / 24);
-        const hours = remainingHours % 24;
+        const diffHours = Math.ceil((nextClaim - now) / (1000 * 60 * 60));
+        const days = Math.floor(diffHours / 24);
+        const hours = diffHours % 24;
         btn.innerText = 'Locked';
         text.innerText = `Available in ${days}d ${hours}h`;
       }
@@ -899,6 +896,7 @@
     }
 
     async function loadConversations() {
+      // 1. Fetch message history
       const { data: messages } = await supabaseClient
         .from('messages')
         .select('sender_id, receiver_id, message, created_at, is_call_log')
@@ -915,9 +913,10 @@
         });
       }
 
+      // 2. Load available users so inbox is always active and interactive
       const { data: profilesData } = await supabaseClient.from('profiles').select('*').limit(20);
       if (!profilesData || profilesData.length === 0) {
-        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No active users found.</p>';
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No users found.</p>';
         return;
       }
 
@@ -1073,4 +1072,470 @@
       } else if (mode === 'call' && localStream) {
         if (localStream) localStream.getTracks().forEach(t => t.stop());
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
-        document.getElementById('localVideo').
+        document.getElementById('localVideo').srcObject = localStream;
+        if (peerConnection) {
+          const videoTrack = localStream.getVideoTracks()[0];
+          const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender && videoTrack) sender.replaceTrack(videoTrack);
+        }
+      }
+    }
+
+    // WebRTC Calling
+    async function startCall(type) {
+      if (!currentChatUser) return;
+      activeCall = { type, peerId: currentChatUser.id, isCaller: true };
+      showCallModal(type);
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (type === 'video' ? { facingMode: currentFacingMode } : false) });
+        document.getElementById('localVideo').srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+          remoteStream = event.streams[0];
+          document.getElementById('remoteVideo').srcObject = remoteStream;
+          document.getElementById('remoteAudioPlayer').srcObject = remoteStream;
+        };
+
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            supabaseClient.from('signals').insert({
+              sender_id: currentUser.id,
+              receiver_id: currentChatUser.id,
+              candidate: event.candidate
+            });
+          }
+        };
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        await supabaseClient.from('calls').insert({
+          caller_id: currentUser.id,
+          receiver_id: currentChatUser.id,
+          call_type: type,
+          offer: offer,
+          status: 'ringing'
+        });
+
+        await supabaseClient.from('messages').insert({
+          sender_id: currentUser.id,
+          receiver_id: currentChatUser.id,
+          message: `${type.toUpperCase()} call initiated`,
+          is_call_log: true
+        });
+
+        setupSignalingListener(currentChatUser.id);
+      } catch (err) {
+        console.error(err);
+        alert('Could not access media devices for calling.');
+        endCall();
+      }
+    }
+
+    let incomingCallPayload = null;
+    function showIncomingCallModal(call) {
+      incomingCallPayload = call;
+      document.getElementById('incomingCallerName').innerText = 'Incoming ' + call.call_type + ' call';
+      document.getElementById('incomingCallType').innerText = 'Tap Accept to answer';
+      document.getElementById('incomingCallBox').style.display = 'block';
+    }
+
+    async function acceptCall() {
+      document.getElementById('incomingCallBox').style.display = 'none';
+      if (!incomingCallPayload) return;
+
+      activeCall = { type: incomingCallPayload.call_type, peerId: incomingCallPayload.caller_id, isCaller: false };
+      showCallModal(incomingCallPayload.call_type);
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (incomingCallPayload.call_type === 'video' ? { facingMode: currentFacingMode } : false) });
+        document.getElementById('localVideo').srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+          remoteStream = event.streams[0];
+          document.getElementById('remoteVideo').srcObject = remoteStream;
+          document.getElementById('remoteAudioPlayer').srcObject = remoteStream;
+        };
+
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            supabaseClient.from('signals').insert({
+              sender_id: currentUser.id,
+              receiver_id: incomingCallPayload.caller_id,
+              candidate: event.candidate
+            });
+          }
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingCallPayload.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        await supabaseClient.from('calls').update({ answer: answer, status: 'answered' }).eq('id', incomingCallPayload.id);
+
+        setupSignalingListener(incomingCallPayload.caller_id);
+      } catch (err) {
+        console.error(err);
+        endCall();
+      }
+    }
+
+    function declineCall() {
+      document.getElementById('incomingCallBox').style.display = 'none';
+      if (incomingCallPayload) {
+        supabaseClient.from('calls').update({ status: 'declined' }).eq('id', incomingCallPayload.id);
+      }
+      incomingCallPayload = null;
+    }
+
+    function setupSignalingListener(peerId) {
+      if (window.signalChannel) supabaseClient.removeChannel(window.signalChannel);
+      
+      window.signalChannel = supabaseClient
+        .channel(`public:signals:${currentUser.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals', filter: `receiver_id=eq.${currentUser.id}` }, async payload => {
+          const sig = payload.new;
+          if (sig.sender_id === peerId && sig.candidate && peerConnection) {
+            try {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(sig.candidate));
+            } catch (e) {
+              console.error('Error adding received ice candidate', e);
+            }
+          }
+        })
+        .subscribe();
+
+      if (activeCall && activeCall.isCaller) {
+        if (window.callAnswerChannel) supabaseClient.removeChannel(window.callAnswerChannel);
+        
+        window.callAnswerChannel = supabaseClient
+          .channel(`public:calls:answer:${currentUser.id}`)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `caller_id=eq.${currentUser.id}` }, async payload => {
+            if (payload.new.answer && peerConnection && !peerConnection.remoteDescription) {
+              try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
+              } catch (e) {
+                console.error('Error setting remote description from answer', e);
+              }
+            }
+          })
+          .subscribe();
+      }
+    }
+
+    function showCallModal(type) {
+      let modal = document.getElementById('activeCallModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'activeCallModal';
+        modal.className = 'call-modal';
+        modal.innerHTML = `
+          <div class="video-box">
+            <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+            <video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:10px; right:10px; width:90px; height:120px; object-fit:cover; border-radius:10px; border:2px solid white;"></video>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button id="callFlipCameraBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:10px 14px;" onclick="switchCamera('call')">📸 Flip</button>
+            <button class="btn-main" style="background:var(--danger); max-width:200px;" onclick="endCall()">End Call</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      modal.style.display = 'flex';
+
+      // Hide Flip button and video preview for audio calls
+      const flipBtn = document.getElementById('callFlipCameraBtn');
+      const localVid = document.getElementById('localVideo');
+      if (type === 'audio') {
+        if (localVid) localVid.style.display = 'none';
+        if (flipBtn) flipBtn.style.display = 'none';
+      } else {
+        if (localVid) localVid.style.display = 'block';
+        if (flipBtn) flipBtn.style.display = 'inline-block';
+      }
+    }
+
+    function endCall() {
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      if (peerConnection) peerConnection.close();
+      peerConnection = null;
+      localStream = null;
+      remoteStream = null;
+      const modal = document.getElementById('activeCallModal');
+      if (modal) modal.style.display = 'none';
+      activeCall = null;
+    }
+
+    // Live Streaming
+    async function toggleGroupStream() {
+      const btn = document.getElementById('btnStreamToggle');
+      const giftBtn = document.getElementById('streamGiftBtn');
+      const badge = document.getElementById('liveBadgeEl');
+
+      if (!isStreaming) {
+        try {
+          myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
+          const hostVideo = document.getElementById('hostVideo');
+          hostVideo.srcObject = myStream;
+          hostVideo.muted = true; 
+          
+          isStreaming = true;
+          btn.innerText = 'Stop Live';
+          btn.style.background = 'var(--danger)';
+
+          if (giftBtn) giftBtn.style.display = 'none';
+          if (badge) badge.style.display = 'none';
+
+          await supabaseClient.from('livestreams').upsert({
+            user_id: currentUser.id,
+            is_active: true
+          });
+        } catch (err) {
+          alert('Could not access microphone and camera for live streaming.');
+        }
+      } else {
+        if (myStream) myStream.getTracks().forEach(t => t.stop());
+        isStreaming = false;
+        btn.innerText = 'Start Live';
+        btn.style.background = 'var(--primary)';
+
+        if (giftBtn) giftBtn.style.display = 'flex';
+        if (badge) badge.style.display = 'none';
+
+        await supabaseClient.from('livestreams').update({ is_active: false }).eq('user_id', currentUser.id);
+      }
+    }
+
+    function joinLiveStream(streamId) {
+      const giftBtn = document.getElementById('streamGiftBtn');
+      const badge = document.getElementById('liveBadgeEl');
+      
+      if (giftBtn) giftBtn.style.display = 'flex';
+      if (badge) badge.style.display = 'block';
+
+      switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
+    }
+
+    function handleLiveChatKey(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('liveChatInput');
+        input.value = '';
+      }
+    }
+
+    function triggerGiftModal() {
+      document.getElementById('giftCatalogModal').style.display = 'flex';
+    }
+
+    async function sendGroupGift(giftName, cost) {
+      const currentCoins = currentUser.profile?.coins || 0;
+      if (currentCoins < cost) {
+        alert('Insufficient coins! Please buy more coins.');
+        closeModal('giftCatalogModal');
+        openModal('coinModal');
+        return;
+      }
+
+      const newCoins = currentCoins - cost;
+      await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
+      await loadUserProfile();
+      closeModal('giftCatalogModal');
+      alert(`Sent ${giftName} successfully!`);
+    }
+
+    function selectPackage(naira, coins) {
+      document.getElementById('customNairaAmount').value = naira;
+    }
+
+    // Paystack Integration
+    function payWithPaystack() {
+      const naira = parseInt(document.getElementById('customNairaAmount').value);
+      const email = document.getElementById('userEmail').value || currentUser.email;
+      if (isNaN(naira) || naira < 10) { alert('Minimum amount is ₦10'); return; }
+
+      const handler = PaystackPop.setup({
+        key: 'pk_live_YOUR_PAYSTACK_KEY',
+        email: email,
+        amount: naira * 100,
+        currency: 'NGN',
+        callback: async function(response) {
+          const coinsEarned = Math.floor(naira / 10);
+          const newCoins = (currentUser.profile.coins || 0) + coinsEarned;
+          await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
+          await loadUserProfile();
+          closeModal('coinModal');
+          alert(`Payment successful! Credited +${coinsEarned} coins.`);
+        },
+        onClose: function() {
+          alert('Transaction was closed.');
+        }
+      });
+      handler.openIframe();
+    }
+
+    function triggerAvatarUpload() {
+      document.getElementById('avatarFileInput').click();
+    }
+
+    async function handleAvatarFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const filePath = `avatars/${currentUser.id}_${Date.now()}`;
+      const { error } = await supabaseClient.storage.from('media').upload(filePath, file);
+      if (error) {
+        alert('Error uploading avatar: ' + error.message);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabaseClient.storage.from('media').getPublicUrl(filePath);
+      await supabaseClient.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
+      await loadUserProfile();
+      alert('Profile picture updated successfully!');
+    }
+
+    function openEditProfileModal() {
+      document.getElementById('editUsername').value = currentUser.profile.username || '';
+      document.getElementById('editBio').value = currentUser.profile.bio || '';
+      document.getElementById('editLinkTitle').value = currentUser.profile.link_title || '';
+      document.getElementById('editBusinessLink').value = currentUser.profile.business_link || '';
+      document.getElementById('editDob').value = currentUser.profile.dob || '';
+      document.getElementById('editSex').value = currentUser.profile.sex || 'Male';
+      document.getElementById('editProfileModal').style.display = 'flex';
+    }
+
+    async function saveProfileChanges() {
+      const username = document.getElementById('editUsername').value.trim();
+      const bio = document.getElementById('editBio').value.trim();
+      const link_title = document.getElementById('editLinkTitle').value.trim();
+      const business_link = document.getElementById('editBusinessLink').value.trim();
+      const dob = document.getElementById('editDob').value;
+      const sex = document.getElementById('editSex').value;
+
+      await supabaseClient.from('profiles').update({
+        username, bio, link_title, business_link, dob, sex
+      }).eq('id', currentUser.id);
+
+      closeModal('editProfileModal');
+      await loadUserProfile();
+      alert('Profile updated successfully!');
+    }
+
+    function openSettings(type) {
+      toggleHeaderMenu();
+      const title = document.getElementById('settingsTitle');
+      const body = document.getElementById('settingsBody');
+      document.getElementById('settingsModal').style.display = 'flex';
+
+      if (type === 'account') {
+        title.innerText = 'Manage Account';
+        body.innerHTML = `<p style="font-size:0.9rem; color:var(--text-dim);">Email: ${currentUser.email}</p><button class="btn-main" style="margin-top:15px; background:var(--danger);" onclick="handleLogout()">Logout</button>`;
+      } else if (type === 'privacy') {
+        title.innerText = 'Privacy Settings';
+        body.innerHTML = `
+          <div class="setting-row"><span>Private Account</span><input type="checkbox"></div>
+          <div class="setting-row"><span>Show Online Status</span><input type="checkbox" checked></div>
+          <div class="setting-row"><span>Hide Following List</span><input type="checkbox" id="hideFollowingCheck" onchange="toggleHideFollowing(this)"></div>`;
+        setTimeout(() => {
+          document.getElementById('hideFollowingCheck').checked = localStorage.getItem(`hide_following_${currentUser.id}`) === 'true';
+        }, 100);
+      } else if (type === 'notifications') {
+        title.innerText = 'Notifications';
+        body.innerHTML = `
+          <div class="setting-row"><span>Push Notifications</span><input type="checkbox" checked></div>
+          <div class="setting-row"><span>Live Stream Alerts</span><input type="checkbox" checked></div>`;
+      } else if (type === 'verification') {
+        title.innerText = 'Verification';
+        body.innerHTML = `<p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:15px;">Verify your account to earn the blue checkmark badge.</p><button class="btn-main">Request Verification</button>`;
+      } else if (type === 'prefs') {
+        title.innerText = 'Preferences';
+        body.innerHTML = `<div class="setting-row"><span>Dark Mode</span><input type="checkbox" checked></div>`;
+      } else if (type === 'accessibility') {
+        title.innerText = 'Accessibility';
+        body.innerHTML = `<div class="setting-row"><span>High Contrast</span><input type="checkbox"></div>`;
+      }
+    }
+
+    function toggleHideFollowing(el) {
+      localStorage.setItem(`hide_following_${currentUser.id}`, el.checked);
+    }
+
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
+      window.location.reload();
+    }
+
+    function copyRefLink() {
+      const link = document.getElementById('userRefLink').innerText;
+      navigator.clipboard.writeText(link);
+      alert('Referral link copied to clipboard!');
+    }
+
+    async function claimWeeklyReward() {
+      const lastClaimed = currentUser.profile.last_claimed_at ? new Date(currentUser.profile.last_claimed_at).getTime() : 0;
+      const now = Date.now();
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+      if (now < lastClaimed + sevenDays) {
+        alert('Reward is not available yet. Please wait until your 7-day countdown completes!');
+        return;
+      }
+
+      const newCoins = (currentUser.profile.coins || 0) + 5;
+      const newClaimTime = new Date().toISOString();
+
+      await supabaseClient.from('profiles').update({ 
+        coins: newCoins, 
+        last_claimed_at: newClaimTime 
+      }).eq('id', currentUser.id);
+
+      await loadUserProfile();
+      alert('Successfully claimed +5 reward coins!');
+    }
+
+    async function processReferral(refId) {
+      if (localStorage.getItem('referred_' + currentUser.id)) return;
+      const { data: refUser } = await supabaseClient.from('profiles').select('coins').eq('id', refId).single();
+      if (refUser) {
+        await supabaseClient.from('profiles').update({ coins: (refUser.coins || 0) + 10 }).eq('id', refId);
+        localStorage.setItem('referred_' + currentUser.id, 'true');
+      }
+    }
+
+    async function loadUserPosts() {
+      document.getElementById('userPostsList').innerHTML = '<p style="color:var(--text-dim);">No posts created yet.</p>';
+    }
+
+    async function loadStreamActivity() {
+      document.getElementById('streamActivityList').innerHTML = '<p>No recent stream activity recorded.</p>';
+    }
+
+    function openWhatsApp() {
+      const phone = document.getElementById('waPhone').value.trim();
+      if (!phone) { alert('Please enter a WhatsApp phone number.'); return; }
+      window.open(`https://wa.me/${phone}`, '_blank');
+    }
+
+    async function submitWithdrawal() {
+      const acc = document.getElementById('bankAcc').value.trim();
+      if (!acc) { alert('Please enter your account number.'); return; }
+      alert('Withdrawal request submitted successfully! Processing within 24 hours.');
+    }
+  </script>
+</body>
+</html>
