@@ -108,4 +108,625 @@
     #dailyStreamContainer { width: 100%; height: 100%; border: 0; border-radius: 12px; overflow: hidden; }
 
     .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; pointer-events: none; transition: opacity 0.5s ease; z-index: 10; }
-    .live
+    .live-overlay * { pointer-events: auto; }
+    .overlay-top { display: flex; justify-content: space-between; align-items: center; }
+    .live-badge { background: var(--danger); color: white; padding: 3px 8px; border-radius: 10px; font-weight: bold; font-size: 0.7rem; display: none; }
+    .overlay-bottom { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+    .overlay-bottom input { flex: 1; padding: 10px 12px; border-radius: 18px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.85rem; }
+    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.1rem; padding: 8px 12px; border-radius: 18px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+
+    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+    .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .gift-card:active { border-color: var(--accent); transform: scale(0.95); }
+    .gift-icon { font-size: 1.5rem; margin-bottom: 3px; }
+    .gift-title { font-size: 0.7rem; font-weight: bold; }
+    .gift-price { font-size: 0.65rem; color: var(--accent); font-weight: bold; margin-top: 2px; }
+
+    .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .package-card { background: #0f172a; border: 1px solid var(--border); padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 0.85rem; }
+
+    .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    .video-box { width: 100%; max-width: 360px; height: 350px; background: #000; border-radius: 16px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 16px; }
+    
+    #dailyCallContainer { width: 100%; height: 100%; border: 0; border-radius: 12px; overflow: hidden; }
+
+    .avatar-placeholder { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 5; }
+    .avatar-placeholder img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); margin-bottom: 6px; }
+
+    #incomingCallBox { position: fixed; top: 16px; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; background: var(--card); border: 2px solid var(--accent); padding: 12px 16px; border-radius: 16px; z-index: 5000; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.8); }
+    .caller-avatar-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); background: var(--primary); flex-shrink: 0; }
+
+    .biz-link-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,135,81,0.2); border: 1px solid var(--primary); color: var(--accent); text-decoration: none; padding: 8px 14px; border-radius: 16px; font-weight: bold; font-size: 0.8rem; margin-top: 8px; word-break: break-all; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <div id="loadingScreen"><div class="spinner"></div><p style="font-size:0.9rem;">Loading NAIJALITE...</p></div>
+
+  <!-- Incoming Call Popup -->
+  <div id="incomingCallBox">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <img id="incomingCallerAvatar" class="caller-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>">
+      <div style="flex:1;">
+        <b id="incomingCallerName" style="font-size:0.9rem;">Caller Name</b>
+        <p style="font-size:0.75rem; color:var(--text-dim);" id="incomingCallType">Incoming Call...</p>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-main" style="background:var(--primary); padding:6px 10px; font-size:0.75rem;" onclick="acceptCall()">Accept</button>
+        <button class="btn-main" style="background:var(--danger); padding:6px 10px; font-size:0.75rem;" onclick="declineCall()">Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Screen -->
+  <div id="authScreen">
+    <div class="auth-wrapper">
+      <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo" alt="Logo">
+      <h2 class="auth-title">NAIJALITE</h2>
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
+        <div class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</div>
+      </div>
+      <div class="auth-card">
+        <div id="signupFields" style="display:none;">
+          <label class="auth-label">Username</label>
+          <input type="text" id="authUsername" class="auth-input" placeholder="Username">
+
+          <label class="auth-label">Date of Birth (Private)</label>
+          <input type="date" id="authDob" class="auth-input">
+
+          <label class="auth-label">Sex</label>
+          <select id="authSex" class="auth-input">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <label class="auth-label">Email</label>
+        <input type="text" id="authEmail" class="auth-input" placeholder="Email">
+
+        <label class="auth-label">Password</label>
+        <input type="password" id="authPass" class="auth-input" placeholder="Password">
+
+        <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+        <div id="authError" style="color:var(--danger); font-size:0.75rem; margin-top:8px; display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-top">
+      <h1>🇳🇬 NAIJALITE</h1>
+      <div class="header-actions">
+        <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
+        <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="headerMenu" class="menu-dropdown">
+    <div class="menu-item" onclick="openSettings('account')">Manage account</div>
+    <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
+    <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
+    <div class="menu-item" onclick="openSettings('verification')">Verification</div>
+    <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
+    <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
+    <div class="menu-item danger" onclick="handleLogout()">Logout</div>
+  </div>
+
+  <div class="container">
+    <!-- Home Feed Tab -->
+    <div id="homeTab" class="tab-content active">
+      <div id="activeLiveBannerContainer"></div>
+      <div id="homeFeed"><p style="text-align:center; color:var(--text-dim); font-size:0.85rem;">Loading Feed...</p></div>
+    </div>
+
+    <!-- Live Stream Tab (Daily.co Integrated) -->
+    <div id="liveTab" class="tab-content">
+      <div class="live-container">
+        <div id="dailyStreamContainer"></div>
+        <div class="live-overlay" id="liveOverlayBox">
+          <div class="overlay-top">
+            <div class="live-badge" id="liveBadgeEl">🔴 LIVE</div>
+            <button style="background:var(--accent); border:none; padding:6px 10px; border-radius:10px; font-weight:bold; font-size:0.65rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
+          </div>
+          <div class="overlay-bottom" id="liveOverlayBottom">
+            <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
+            <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁 Gifts</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button class="btn-main" id="btnStreamToggle" onclick="initDailyStream()">Join Live Stream</button>
+      </div>
+    </div>
+
+    <!-- Inbox Tab -->
+    <div id="inboxTab" class="tab-content">
+      <div class="card">
+        <div id="conversationsList"><p style="color:var(--text-dim); font-size:0.85rem;">Loading chats...</p></div>
+      </div>
+    </div>
+
+    <!-- Earn Tab -->
+    <div id="earnTab" class="tab-content">
+      <div class="card">
+        <h3 style="font-size:1.1rem;">💰 Earn Rewards & Coins</h3>
+        <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px; margin-bottom:12px;">Invite friends or complete tasks to earn coins.</p>
+
+        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:10px; text-align:center; border:1px dashed var(--accent); margin-bottom:12px;">
+          <div style="font-size:0.75rem; color:var(--text-dim);">Your Referral Link:</div>
+          <div id="userRefLink" style="font-weight:bold; margin:6px 0; word-break:break-all; font-size:0.8rem;">https://naijalite.app/?ref=user</div>
+          <button class="btn-main" onclick="copyRefLink()" style="padding:8px; font-size:0.85rem;">Copy Referral Link</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="background:var(--bg); padding:10px 12px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <b style="font-size:0.85rem;">7-Day Reward Check-in</b>
+              <p style="font-size:0.7rem; color:var(--text-dim);" id="rewardTimerText">Claim +5 coins every 7 days after signup</p>
+            </div>
+            <button class="btn-main" id="weeklyClaimBtn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="claimWeeklyReward()">Claim</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Utils Tab -->
+    <div id="utilsTab" class="tab-content">
+      <div class="card">
+        <h3 style="font-size:1.1rem;">🛠️ Community Utilities & Stream Activity</h3>
+        <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px; margin-bottom:12px;">Monitor live stream activity and quick utilities.</p>
+
+        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:10px; margin-bottom:12px;">
+          <h4 style="font-size:0.85rem; margin-bottom:6px;">📡 Live Stream Activity Feed</h4>
+          <div id="streamActivityList" style="font-size:0.75rem; color:var(--text-dim);">
+            <p>No recent stream activity recorded.</p>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label class="auth-label">WhatsApp Direct Message</label>
+          <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:6px;">
+          <button class="btn-main" onclick="openWhatsApp()">Open WhatsApp Chat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div id="profileTab" class="tab-content">
+      <div class="card" style="text-align: center; position: relative;">
+        <div style="position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.2rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
+
+        <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
+          <img id="profileAvatarImg" src="" class="profile-avatar" style="display:none;">
+          <div id="profileAvatarPlaceholder" class="profile-avatar">👤</div>
+          <div class="avatar-plus-btn">+</div>
+        </div>
+
+        <h3 id="userNameDisplay" style="font-size:1.1rem;">User <span id="userSexDisplay" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:5px;"></span></h3>
+        <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.7rem; margin-bottom:8px;"></p>
+
+        <div class="profile-menu">
+          <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileBioTab', this)">Bio</div>
+          <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
+        </div>
+
+        <div id="profilePosts" class="profile-sub-tab active">
+          <div id="userPostsList"><p style="color:var(--text-dim); font-size:0.8rem;">Loading your posts...</p></div>
+        </div>
+
+        <div id="profileBioTab" class="profile-sub-tab">
+          <div style="text-align:left; background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
+            <h4 style="font-size:0.85rem; margin-bottom:6px;">📝 About Me</h4>
+            <p id="bioTextDisplay" style="font-size:0.8rem; color:var(--text-dim); margin-bottom:12px; white-space:pre-line;">No bio added yet. Tap ⚙️ edit profile above to write about yourself!</p>
+
+            <h4 style="font-size:0.85rem; margin-bottom:6px;">🌐 Business & Links</h4>
+            <div id="businessLinkDisplay">
+              <p style="font-size:0.75rem; color:var(--text-dim);">No link attached.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="profileCoins" class="profile-sub-tab" style="text-align:left;">
+          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:12px;">
+            <h4 style="margin-bottom:8px; font-size:0.85rem;">📊 Coin Dashboard</h4>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.85rem;">
+              <span>Current Balance:</span> <b style="color:var(--accent);">🟡 <span id="coinsCount">0</span> Coins</b>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.8rem; color:var(--text-dim);">
+              <span>Total Spent:</span> <span id="totalSpentCoins">0 Coins</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-dim);">
+              <span>Total Earned:</span> <span id="totalEarnedCoins">0 Coins</span>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:12px;">
+            <h4 style="margin-bottom:6px; font-size:0.85rem;">📜 Transaction History</h4>
+            <div id="transactionLedger" style="max-height:130px; overflow-y:auto; font-size:0.75rem; color:var(--text-dim);">
+              <p>No transactions yet.</p>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
+            <h4 style="font-size:0.85rem;">🏦 Withdrawal</h4>
+            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number" style="margin-top: 6px; margin-bottom:8px;">
+            <button class="btn-main" onclick="submitWithdrawal()" style="padding:10px; font-size:0.85rem;">Confirm Withdrawal</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- External User Profile Tab -->
+    <div id="externalProfileTab" class="tab-content">
+      <div class="card" style="text-align: center;">
+        <button class="btn-main" style="width:auto; padding:6px 10px; margin-bottom:12px; font-size:0.8rem;" onclick="switchTab('homeTab', document.querySelectorAll('.nav-item')[0])">← Back to Feed</button>
+
+        <div class="avatar-wrapper">
+          <img id="extProfileAvatarImg" src="" class="profile-avatar" style="display:none;">
+          <div id="extProfileAvatarPlaceholder" class="profile-avatar">👤</div>
+        </div>
+
+        <h3 id="extUserNameDisplay" style="font-size:1.1rem;">Username</h3>
+        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.75rem; margin:6px 0; display:none;"></p>
+
+        <div id="extBioContainer" style="margin: 12px 0; text-align:left; background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; display:none;">
+          <h4 style="font-size:0.8rem; margin-bottom:4px;">Bio</h4>
+          <p id="extBioText" style="font-size:0.75rem; color:var(--text-dim);">No bio</p>
+        </div>
+
+        <div id="extActionButtons" style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+          <button class="btn-main" id="extFollowBtn" onclick="toggleFollowUser()" style="padding:10px; font-size:0.85rem;">Follow</button>
+          <button class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:10px; font-size:0.85rem;" onclick="openChatFromProfile()">Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Screen -->
+  <div id="chatWindow" class="chat-window">
+    <div class="chat-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="closeChat()">←</button>
+        <b id="chatUser" style="font-size:0.95rem;">Username</b>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; position:relative;">
+        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
+        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="startCall('video')">📹</button>
+        <button style="background:none; border:none; color:white; font-size:1.3rem; cursor:pointer;" onclick="toggleChatMenu()">⋮</button>
+
+        <div id="chatMenu" class="menu-dropdown" style="top:38px; right:0;">
+          <div class="menu-item" onclick="shareCoinsPrompt()">💰 Send Coins</div>
+        </div>
+      </div>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chatInputText" placeholder="Type a message...">
+      <button class="btn-main" style="width:auto; padding:8px 16px; font-size:0.85rem;" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <!-- Live Stream Gift Catalog Modal -->
+  <div id="giftCatalogModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:1.05rem;">🎁 Live Gifts Catalog</h3>
+        <span style="font-size:0.8rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
+      </div>
+      <p style="font-size:0.7rem; color:var(--text-dim); margin-top:3px;">Tap a gift to send live.</p>
+
+      <div class="gift-grid">
+        <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 1)">
+          <div class="gift-icon">🌹</div>
+          <div class="gift-title">Rose</div>
+          <div class="gift-price">1 Coin</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Heart 🫰', 5)">
+          <div class="gift-icon">🫰</div>
+          <div class="gift-title">Heart</div>
+          <div class="gift-price">5 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Fire 🔥', 10)">
+          <div class="gift-icon">🔥</div>
+          <div class="gift-title">Fire</div>
+          <div class="gift-price">10 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Bottle 🍾', 50)">
+          <div class="gift-icon">🍾</div>
+          <div class="gift-title">Bottle</div>
+          <div class="gift-price">50 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Crown 👑', 100)">
+          <div class="gift-icon">👑</div>
+          <div class="gift-title">Crown</div>
+          <div class="gift-price">100 Coins</div>
+        </div>
+        <div class="gift-card" onclick="sendGroupGift('Diamond 💎', 500)">
+          <div class="gift-icon">💎</div>
+          <div class="gift-title">Diamond</div>
+          <div class="gift-price">500 Coins</div>
+        </div>
+      </div>
+
+      <button class="btn-main" style="background:var(--accent); color:black; margin-bottom:8px; padding:10px; font-size:0.85rem;" onclick="closeModal('giftCatalogModal'); openModal('coinModal');">+ Buy More Coins</button>
+      <button class="btn-main" style="background:none; color:white; padding:10px; font-size:0.85rem;" onclick="closeModal('giftCatalogModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Coin Purchase Modal -->
+  <div id="coinModal" class="settings-modal" style="display:none;">
+    <div class="settings-card">
+      <h3 style="margin-bottom:8px; font-size:1.05rem;">🪙 Buy Coins</h3>
+      <div class="package-grid">
+        <div class="package-card" onclick="payWithPaystack(100, 1000)">100 Coins - ₦1,000</div>
+        <div class="package-card" onclick="payWithPaystack(500, 5000)">500 Coins - ₦5,000</div>
+      </div>
+      <button class="btn-main" style="background:none; color:white; padding:10px;" onclick="closeModal('coinModal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- 1-on-1 Call Daily.co Modal -->
+  <div id="callModal" class="call-modal">
+    <div class="video-box">
+      <div id="dailyCallContainer"></div>
+    </div>
+    <button class="btn-main" style="background:var(--danger); width: auto; padding: 10px 24px;" onclick="endCall()">End Call</button>
+  </div>
+
+  <!-- Navigation Bar -->
+  <div class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('homeTab', this)"><div>🏠</div>Home</div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item" onclick="switchTab('inboxTab', this)"><div>💬</div>Inbox</div>
+    <div class="nav-item" onclick="switchTab('earnTab', this)"><div>💰</div>Earn</div>
+    <div class="nav-item" onclick="switchTab('utilsTab', this)"><div>🛠️</div>Utils</div>
+    <div class="nav-item" onclick="switchTab('profileTab', this)"><div>👤</div>Profile</div>
+  </div>
+
+  <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarFileSelect(event)">
+
+  <script>
+    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3aWRkZXhnaXd0ZHV1enByc2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDU1MjMsImV4cCI6MjEwODc4MTUyM30.QyzSo2eUtt0jBzW8_WRkIPutMj1wb5ex_9GgyOguwHI';
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Daily.co Rooms Linked
+    const LIVE_STREAM_URL = 'https://naijalite.daily.co/livestream';
+    const CALL_URL = 'https://naijalite.daily.co/Call';
+
+    let currentUser = null;
+    let authMode = 'login';
+    let currentChatUser = null;
+    let viewedUser = null;
+    let messagesSub = null;
+    let dailyStreamFrame = null;
+    let dailyCallFrame = null;
+    let globalLiveStreams = [];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+          currentUser = session.user;
+          await initApp();
+        } else {
+          document.getElementById('loadingScreen').style.display = 'none';
+          document.getElementById('authScreen').style.display = 'flex';
+        }
+      } catch (err) {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'flex';
+      }
+    });
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      const isSignup = (mode === 'signup');
+      document.getElementById('signupFields').style.display = isSignup ? 'block' : 'none';
+      document.getElementById('tabLogin').classList.toggle('active', !isSignup);
+      document.getElementById('tabSignup').classList.toggle('active', isSignup);
+      document.getElementById('btnAuthAction').innerText = isSignup ? 'Sign Up' : 'Login';
+    }
+
+    async function handleAuth() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value;
+      const errBox = document.getElementById('authError');
+      errBox.style.display = 'none';
+
+      if (!email || !pass) {
+        errBox.innerText = 'Please enter email and password.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('loadingScreen').style.display = 'flex';
+
+      if (authMode === 'signup') {
+        const username = document.getElementById('authUsername').value.trim() || email.split('@')[0];
+        const dob = document.getElementById('authDob').value;
+        const sex = document.getElementById('authSex').value;
+
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password: pass,
+          options: { data: { username, dob, sex } }
+        });
+
+        if (error) {
+          errBox.innerText = error.message;
+          errBox.style.display = 'block';
+          document.getElementById('loadingScreen').style.display = 'none';
+          return;
+        }
+
+        if (data.session) {
+          currentUser = data.user;
+          await initApp();
+        } else {
+          alert('Sign up successful! Please check your email inbox to confirm your account, then log in.');
+          setAuthMode('login');
+          document.getElementById('loadingScreen').style.display = 'none';
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+        if (error) {
+          errBox.innerText = error.message;
+          errBox.style.display = 'block';
+          document.getElementById('loadingScreen').style.display = 'none';
+          return;
+        }
+        currentUser = data.user;
+        await initApp();
+      }
+    }
+
+    async function initApp() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('loadingScreen').style.display = 'none';
+
+      await loadUserProfile();
+      loadHomeFeed();
+      loadConversations();
+    }
+
+    async function loadUserProfile() {
+      if (!currentUser) return;
+      const { data } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (data) {
+        currentUser.profile = data;
+        document.getElementById('walletBalance').innerText = '₦' + Number(data.wallet || 0).toLocaleString();
+        document.getElementById('userCoins').innerText = data.coins || 0;
+        document.getElementById('coinsCount').innerText = data.coins || 0;
+        document.getElementById('giftModalCoinCount').innerText = data.coins || 0;
+        document.getElementById('userNameDisplay').innerText = data.username || 'User';
+        document.getElementById('profileUsername').innerText = data.username || 'User';
+        document.getElementById('profileEmail').innerText = currentUser.email;
+      }
+    }
+
+    // Daily.co Integrated Stream & Call Functions
+    function initDailyStream() {
+      if (!dailyStreamFrame) {
+        dailyStreamFrame = window.DailyIframe.createFrame(
+          document.getElementById('dailyStreamContainer'),
+          { showLeaveButton: true, iframeStyle: { width: '100%', height: '100%', border: '0', borderRadius: '12px' } }
+        );
+      }
+      dailyStreamFrame.join({ url: LIVE_STREAM_URL });
+    }
+
+    function startCall(type) {
+      document.getElementById('callModal').style.display = 'flex';
+      if (!dailyCallFrame) {
+        dailyCallFrame = window.DailyIframe.createFrame(
+          document.getElementById('dailyCallContainer'),
+          { showLeaveButton: false, iframeStyle: { width: '100%', height: '100%', border: '0', borderRadius: '12px' } }
+        );
+      }
+      dailyCallFrame.join({ url: CALL_URL, videoSource: type === 'video' });
+    }
+
+    function endCall() {
+      if (dailyCallFrame) dailyCallFrame.leave();
+      document.getElementById('callModal').style.display = 'none';
+    }
+
+    function payWithPaystack(coins, amountInNaira) {
+      let handler = PaystackPop.setup({
+        key: 'pk_test_YOUR_PAYSTACK_KEY',
+        email: currentUser ? currentUser.email : 'user@naijalite.app',
+        amount: amountInNaira * 100,
+        currency: 'NGN',
+        callback: function(response) {
+          alert('Payment successful! Reference: ' + response.reference);
+          closeModal('coinModal');
+        },
+        onClose: function() {
+          alert('Transaction canceled.');
+        }
+      });
+      handler.openIframe();
+    }
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (el) el.classList.add('active');
+      if (tabId === 'liveTab') initDailyStream();
+    }
+
+    function switchProfileTab(subId, el) {
+      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.profile-menu-item').forEach(m => m.classList.remove('active'));
+      document.getElementById(subId).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+    function toggleHeaderMenu() {
+      const menu = document.getElementById('headerMenu');
+      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+    }
+    function triggerGiftModal() { openModal('giftCatalogModal'); }
+    function sendGroupGift(name, cost) { alert('Sent ' + name + ' for ' + cost + ' coins!'); closeModal('giftCatalogModal'); }
+    function copyRefLink() { alert('Referral link copied!'); }
+    function claimWeeklyReward() { alert('Weekly reward claimed!'); }
+    function openWhatsApp() { window.open('https://wa.me/', '_blank'); }
+    function submitWithdrawal() { alert('Withdrawal request submitted.'); }
+
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
+      window.location.reload();
+    }
+
+    async function loadHomeFeed() {
+      const { data: usersData } = await supabaseClient.from('profiles').select('*').limit(20);
+      const feedContainer = document.getElementById('homeFeed');
+      if (!usersData || usersData.length === 0) {
+        feedContainer.innerHTML = `<p style="text-align:center; color:var(--text-dim); font-size:0.85rem;">No users found.</p>`;
+        return;
+      }
+      let html = '';
+      usersData.forEach(u => {
+        if (currentUser && u.id === currentUser.id) return;
+        html += `
+          <div class="user-item">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:38px; height:38px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center;">👤</div>
+              <div><b style="font-size:0.85rem;">${u.username}</b></div>
+            </div>
+          </div>`;
+      });
+      feedContainer.innerHTML = html;
+    }
+
+    async function loadConversations() {
+      document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim); font-size:0.85rem;">No conversations yet.</p>';
+    }
+
+    function triggerAvatarUpload() { document.getElementById('avatarFileInput').click(); }
+    async function handleAvatarFileSelect(e) { alert('Avatar selected.'); }
+    function openEditProfileModal() { alert('Edit profile.'); }
+    function saveProfileChanges() { closeModal('editProfileModal'); }
+    function openSettings(section) { alert('Settings: ' + section); }
+    function closeChat() { document.getElementById('chatWindow').style.display = 'none'; }
+    function sendMessage() { document.getElementById('chatInputText').value = ''; }
+  </script>
+</body>
+</html>
