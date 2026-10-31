@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>NAIJALITE | Live & Earn</title>
   <meta name="theme-color" content="#008751">
+  <link rel="manifest" href="/manifest.json">
 
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
@@ -12,6 +13,8 @@
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <!-- Daily.co SDK -->
   <script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
   <style>
     :root {
@@ -23,12 +26,12 @@
     html { font-size: 14px; }
     body { background: var(--bg); color: var(--text); padding-bottom: 70px; max-width: 480px; margin: 0 auto; overflow-x: hidden; min-height: 100vh; position: relative; }
 
-    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.3s ease; }
+    #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     .spinner { width: 36px; height: 36px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
-    .auth-wrapper { width: 100%; max-width: 320px; text-align: center; }
+    .auth-wrapper { width: 100%; max-width: 320px; text-align: center; animation: fadeIn 0.5s; }
     .auth-logo { width: 70px; height: 70px; border-radius: 16px; object-fit: cover; box-shadow: 0 6px 16px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; margin-bottom: 12px; }
     .auth-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; color: white; }
     .auth-tabs { display: flex; background: var(--card); padding: 3px; border-radius: 10px; margin-bottom: 14px; border: 1px solid var(--border); }
@@ -44,28 +47,35 @@
     .header-top { display: flex; justify-content: space-between; align-items: center; }
     .header-top h1 { font-size: 1.15rem; font-weight: 800; }
     .header-actions { display: flex; align-items: center; gap: 10px; }
-    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 16px; font-size: 0.7rem; font-weight: bold; backdrop-filter: blur(5px); }
+    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 16px; font-size: 0.7rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
     .menu-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
     .menu-dropdown { position: absolute; top: 55px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; width: 200px; z-index: 1000; display: none; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
-    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
     .menu-item.danger { color: var(--danger); }
 
     .container { padding: 12px; }
-    .tab-content { display: none; }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
     .tab-content.active { display: block; }
     .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
-    .btn-main { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
+    .btn-main { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.3s; }
 
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; }
-    .nav-item { flex: 1; text-align: center; padding: 10px 0; font-size: 0.65rem; color: var(--text-dim); cursor: pointer; }
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-item { flex: 1; text-align: center; padding: 10px 0; font-size: 0.65rem; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
     .nav-item.active { color: var(--primary); font-weight: bold; }
     .nav-item div { font-size: 1.2rem; margin-bottom: 2px; }
 
-    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 16px; }
-    .settings-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; color: white; border: 1px solid var(--border); }
+    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(5px); }
+    .settings-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; color: white; border: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
 
-    .live-container { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 12px; height: calc(100vh - 210px); max-height: 460px; }
-    #dailyStreamContainer, #dailyCallContainer { width: 100%; height: 100%; border: 0; border-radius: 12px; overflow: hidden; }
+    .live-container { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 12px; height: calc(100vh - 210px); max-height: 460px; overscroll-behavior: contain; }
+    
+    #dailyStreamContainer, #dailyCallContainer {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
 
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
     .video-box { width: 100%; max-width: 360px; height: 350px; background: #000; border-radius: 16px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 16px; }
@@ -73,15 +83,12 @@
 </head>
 <body>
 
-  <!-- Loading Screen with Safety Fallback -->
-  <div id="loadingScreen">
-    <div class="spinner"></div>
-    <p style="font-size:0.9rem;">Loading NAIJALITE...</p>
-  </div>
+  <div id="loadingScreen"><div class="spinner"></div><p style="font-size:0.9rem;">Loading NAIJALITE...</p></div>
 
   <!-- Auth Screen -->
   <div id="authScreen">
     <div class="auth-wrapper">
+      <img src="https://i.ibb.co/4gmXV5P8/PNG-1.jpg" class="auth-logo" alt="Logo">
       <h2 class="auth-title">NAIJALITE</h2>
       <div class="auth-tabs">
         <div class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Login</div>
@@ -91,14 +98,25 @@
         <div id="signupFields" style="display:none;">
           <label class="auth-label">Username</label>
           <input type="text" id="authUsername" class="auth-input" placeholder="Username">
+
+          <label class="auth-label">Date of Birth (Private)</label>
+          <input type="date" id="authDob" class="auth-input">
+
+          <label class="auth-label">Sex</label>
+          <select id="authSex" class="auth-input">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
         </div>
+
         <label class="auth-label">Email</label>
-        <input type="email" id="authEmail" class="auth-input" placeholder="Email">
+        <input type="text" id="authEmail" class="auth-input" placeholder="Email">
+
         <label class="auth-label">Password</label>
         <input type="password" id="authPass" class="auth-input" placeholder="Password">
+
         <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
         <div id="authError" class="auth-error"></div>
-        <button style="background:none; border:none; color:var(--text-dim); font-size:0.75rem; width:100%; margin-top:12px; cursor:pointer;" onclick="bypassAuthForTesting()">Skip Login (Test App)</button>
       </div>
     </div>
   </div>
@@ -107,23 +125,23 @@
     <div class="header-top">
       <h1>🇳🇬 NAIJALITE</h1>
       <div class="header-actions">
-        <div class="wallet-mini">🟡 <span id="userCoins">10</span> Coins</div>
+        <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
         <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
       </div>
     </div>
   </header>
 
   <div id="headerMenu" class="menu-dropdown">
-    <div class="menu-item" onclick="openModal('coinModal')">Buy Coins</div>
+    <div class="menu-item" onclick="openSettings('account')">Manage account</div>
     <div class="menu-item danger" onclick="handleLogout()">Logout</div>
   </div>
 
   <div class="container">
-    <!-- Home Tab -->
+    <!-- Home Feed Tab -->
     <div id="homeTab" class="tab-content active">
       <div class="card">
-        <h3>Welcome, <span id="displayName">User</span>!</h3>
-        <p style="color:var(--text-dim); font-size:0.85rem; margin-top:6px;">Your Daily.co video rooms are linked and ready.</p>
+        <h3>Welcome to NAIJALITE</h3>
+        <p style="color:var(--text-dim); font-size:0.85rem; margin-top:6px;">Head to the Live tab to join the Daily.co livestream room.</p>
         <button class="btn-main" style="margin-top:12px;" onclick="startCall('video')">📹 Start 1-on-1 Call</button>
       </div>
     </div>
@@ -133,15 +151,15 @@
       <div class="live-container">
         <div id="dailyStreamContainer"></div>
       </div>
-      <button class="btn-main" onclick="initDailyStream()">Join Live Stream Room</button>
+      <button class="btn-main" onclick="initDailyStream()">Join Live Stream</button>
     </div>
 
     <!-- Earn Tab -->
     <div id="earnTab" class="tab-content">
       <div class="card">
-        <h3>💰 Coin Wallet</h3>
-        <p style="font-size:0.8rem; color:var(--text-dim); margin:4px 0 12px;">Top up coins using Paystack.</p>
-        <button class="btn-main" onclick="openModal('coinModal')">Buy More Coins</button>
+        <h3 style="font-size:1.1rem;">💰 Earn Rewards & Coins</h3>
+        <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px; margin-bottom:12px;">Invite friends or top up coins.</p>
+        <button class="btn-main" onclick="openModal('coinModal')">Buy Coins</button>
       </div>
     </div>
 
@@ -149,7 +167,8 @@
     <div id="profileTab" class="tab-content">
       <div class="card" style="text-align: center;">
         <h3 id="profileUsername">Username</h3>
-        <button class="btn-main" style="background:var(--danger); margin-top:12px;" onclick="handleLogout()">Logout</button>
+        <p id="profileEmail" style="color:var(--text-dim); font-size:0.75rem; margin-bottom:12px;"></p>
+        <button class="btn-main" style="background:var(--danger);" onclick="handleLogout()">Logout</button>
       </div>
     </div>
   </div>
@@ -162,7 +181,7 @@
     <div class="nav-item" onclick="switchTab('profileTab', this)"><div>👤</div>Profile</div>
   </div>
 
-  <!-- 1-on-1 Call Modal -->
+  <!-- 1-on-1 Call Daily.co Modal -->
   <div id="callModal" class="call-modal">
     <div class="video-box">
       <div id="dailyCallContainer"></div>
@@ -173,44 +192,34 @@
   <!-- Coin Purchase Modal -->
   <div id="coinModal" class="settings-modal">
     <div class="settings-card">
-      <h3 style="margin-bottom:8px; font-size:1.05rem;">🪙 Buy Coins with Paystack</h3>
-      <button class="btn-main" style="margin-bottom:8px;" onclick="payWithPaystack(100, 1000)">100 Coins (₦1,000)</button>
+      <h3 style="margin-bottom:8px; font-size:1.05rem;">🪙 Buy Coins</h3>
+      <button class="btn-main" style="margin-bottom:8px;" onclick="payWithPaystack(100, 1000)">100 Coins - ₦1,000</button>
       <button class="btn-main" style="background:var(--card); border:1px solid var(--border);" onclick="closeModal('coinModal')">Cancel</button>
     </div>
   </div>
 
+  <!-- Complete Script (Auth, Supabase, and Daily.co) -->
   <script>
-    // Safe initialization with fallback check
-    let supabaseClient = null;
-    const SUPABASE_URL = ''; // Leave blank if testing without database setup first
-    const SUPABASE_ANON_KEY = '';
-
-    if (window.supabase && SUPABASE_URL) {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
+    // Supabase Credentials Connected
+    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3aWRkZXhnaXd0ZHV1enByc2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDU1MjMsImV4cCI6MjEwODc4MTUyM30.QyzSo2eUtt0jBzW8_WRkIPutMj1wb5ex_9GgyOguwHI';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const LIVE_STREAM_URL = 'https://naijalite.daily.co/livestream';
     const CALL_URL = 'https://naijalite.daily.co/Call';
 
+    let currentUser = null;
     let dailyStreamFrame = null;
     let dailyCallFrame = null;
     let authMode = 'login';
 
-    function hideLoader() {
-      const loader = document.getElementById('loadingScreen');
-      if (loader) loader.style.display = 'none';
-    }
-
     async function checkAuth() {
       try {
-        if (!supabaseClient) {
-          // No DB configured yet, show auth screen normally
-          document.getElementById('authScreen').style.display = 'flex';
-          hideLoader();
-          return;
-        }
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
+          currentUser = session.user;
+          await loadUserProfile();
           document.getElementById('authScreen').style.display = 'none';
         } else {
           document.getElementById('authScreen').style.display = 'flex';
@@ -218,44 +227,89 @@
       } catch (err) {
         document.getElementById('authScreen').style.display = 'flex';
       }
-      hideLoader();
+      document.getElementById('loadingScreen').style.display = 'none';
     }
 
-    // Safety fallback: Force hide loader after 2 seconds no matter what
-    setTimeout(hideLoader, 2000);
+    async function loadUserProfile() {
+      if (!currentUser) return;
+      const { data } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .maybeSingle();
 
-    function bypassAuthForTesting() {
-      document.getElementById('authScreen').style.display = 'none';
+      if (data) {
+        document.getElementById('userCoins').innerText = data.coins || 0;
+        document.getElementById('profileUsername').innerText = data.username || 'User';
+        document.getElementById('profileEmail').innerText = currentUser.email;
+      }
     }
 
     function setAuthMode(mode) {
       authMode = mode;
+      showAuthError('');
       document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
       document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
       document.getElementById('signupFields').style.display = mode === 'signup' ? 'block' : 'none';
       document.getElementById('btnAuthAction').innerText = mode === 'signup' ? 'Sign Up' : 'Login';
     }
 
-    async function handleAuth() {
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPass').value;
-      if (!email || !password) {
-        document.getElementById('authError').innerText = 'Please enter email and password.';
-        document.getElementById('authError').style.display = 'block';
-        return;
-      }
-      if (!supabaseClient) {
-        alert('Supabase URL not configured yet. Click "Skip Login (Test App)" to test the UI and Daily video rooms!');
-        return;
+    function showAuthError(msg) {
+      const errBox = document.getElementById('authError');
+      if (msg) {
+        errBox.innerText = msg;
+        errBox.style.display = 'block';
+      } else {
+        errBox.style.display = 'none';
       }
     }
 
-    function handleLogout() {
-      if (supabaseClient) supabaseClient.auth.signOut();
+    async function handleAuth() {
+      showAuthError('');
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPass').value;
+
+      if (!email || !password) {
+        showAuthError('Please fill in email and password.');
+        return;
+      }
+
+      if (authMode === 'signup') {
+        const username = document.getElementById('authUsername').value.trim() || email.split('@')[0];
+        const sex = document.getElementById('authSex').value;
+        const dob = document.getElementById('authDob').value;
+
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: { data: { username, sex, dob } }
+        });
+
+        if (error) {
+          showAuthError(error.message);
+        } else if (data.session) {
+          currentUser = data.user;
+          window.location.reload();
+        } else {
+          alert('Sign up successful! Please check your email inbox to confirm your account, then log in.');
+          setAuthMode('login');
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          showAuthError(error.message);
+        } else {
+          window.location.reload();
+        }
+      }
+    }
+
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
       window.location.reload();
     }
 
-    // Daily.co Integration
+    // Daily.co Integrations
     function initDailyStream() {
       if (!dailyStreamFrame) {
         dailyStreamFrame = window.DailyIframe.createFrame(
@@ -282,17 +336,25 @@
       document.getElementById('callModal').style.display = 'none';
     }
 
+    // Paystack Coin Integration
     function payWithPaystack(coins, amountInNaira) {
       let handler = PaystackPop.setup({
-        key: 'pk_test_YOUR_KEY',
-        email: 'user@naijalite.app',
+        key: 'pk_test_YOUR_PAYSTACK_KEY',
+        email: currentUser ? currentUser.email : 'user@naijalite.app',
         amount: amountInNaira * 100,
         currency: 'NGN',
-        callback: function(response) { alert('Success!'); closeModal('coinModal'); }
+        callback: function(response) {
+          alert('Payment successful! Reference: ' + response.reference);
+          closeModal('coinModal');
+        },
+        onClose: function() {
+          alert('Transaction canceled.');
+        }
       });
       handler.openIframe();
     }
 
+    // Tab switcher
     function switchTab(tabId, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
