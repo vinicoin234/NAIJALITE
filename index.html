@@ -21,7 +21,6 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
     
-    /* Responsive layout constraints to prevent oversized scaling */
     html { font-size: 14px; }
     body { background: var(--bg); color: var(--text); padding-bottom: 70px; max-width: 480px; margin: 0 auto; overflow-x: hidden; min-height: 100vh; position: relative; }
 
@@ -587,13 +586,6 @@
     let globalLiveStreams = [];
     let currentFacingMode = 'user';
 
-    const ICE_SERVERS = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    };
-
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
@@ -1093,7 +1085,31 @@
       }
     }
 
-    // WebRTC Calling
+    // TURNIX.IO Integration & WebRTC Calling
+    const TURNIX_API_KEY = '3f7ca9043d6300ef12b0736952c7275a';
+    let cachedIceServers = null;
+
+    async function getIceServers() {
+      if (cachedIceServers) return cachedIceServers;
+      let servers = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ];
+      try {
+        const res = await fetch(`https://api.turnix.io/v1/turn/credentials?apiKey=${TURNIX_API_KEY}`);
+        const data = await res.json();
+        if (data && Array.isArray(data.iceServers)) {
+          servers = servers.concat(data.iceServers);
+        } else if (Array.isArray(data)) {
+          servers = servers.concat(data);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch Turnix credentials, falling back to STUN:', e);
+      }
+      cachedIceServers = servers;
+      return servers;
+    }
+
     async function startCall(type) {
       if (!currentChatUser) return;
       activeCall = { type, peerId: currentChatUser.id, isCaller: true };
@@ -1103,7 +1119,8 @@
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (type === 'video' ? { facingMode: currentFacingMode } : false) });
         document.getElementById('localVideo').srcObject = localStream;
 
-        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        const iceServers = await getIceServers();
+        peerConnection = new RTCPeerConnection({ iceServers });
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
         peerConnection.ontrack = event => {
@@ -1167,7 +1184,8 @@
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (incomingCallPayload.call_type === 'video' ? { facingMode: currentFacingMode } : false) });
         document.getElementById('localVideo').srcObject = localStream;
 
-        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        const iceServers = await getIceServers();
+        peerConnection = new RTCPeerConnection({ iceServers });
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
         peerConnection.ontrack = event => {
@@ -1357,6 +1375,40 @@
       }
     }
 
+    const livePeers = new Map();
+    let liveChannel = null;
+
+    async function openHostChannel() {
+      if (liveChannel) supabaseClient.removeChannel(liveChannel);
+      liveChannel = supabaseClient.channel('live-' + currentUser.id);
+      const iceServers = await getIceServers();
+      liveChannel
+        .on('broadcast', { event: 'viewer-join' }, async ({ payload }) => {
+          const viewerId = payload && payload.viewerId;
+          if (!myStream || !viewerId) return;
+          const old = livePeers.get(viewerId);
+          if (old) { old.close(); livePeers.delete(viewerId); }
+
+          const pc = new RTCPeerConnection({ iceServers });
+          livePeers.set(viewerId, pc);
+          myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          liveChannel.send({ type: 'broadcast', event: 'offer', payload: { to: viewerId, sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } } });
+        })
+        .on('broadcast', { event: 'answer' }, async ({ payload }) => {
+          const pc = livePeers.get(payload.from);
+          if (pc && !pc.currentRemoteDescription) {
+            try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch (e) {}
+          }
+        })
+        .on('broadcast', { event: 'viewer-leave' }, ({ payload }) => {
+          const pc = livePeers.get(payload.viewerId);
+          if (pc) { pc.close(); livePeers.delete(payload.viewerId); }
+        })
+        .subscribe();
+    }
+
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       const giftBtn = document.getElementById('streamGiftBtn');
@@ -1387,10 +1439,16 @@
             user_id: currentUser.id,
             is_active: true
           });
+          await openHostChannel();
         } catch (err) {
           alert('Could not access microphone and camera for live streaming.');
         }
       } else {
+        if (liveChannel) liveChannel.send({ type: 'broadcast', event: 'ended', payload: {} });
+        livePeers.forEach(pc => pc.close());
+        livePeers.clear();
+        if (liveChannel) { supabaseClient.removeChannel(liveChannel); liveChannel = null; }
+
         if (myStream) myStream.getTracks().forEach(t => t.stop());
         isStreaming = false;
         btn.innerText = 'Start Live';
@@ -1407,14 +1465,64 @@
       }
     }
 
+    let viewerPc = null;
+    let watchingHostId = null;
+
     function joinLiveStream(streamId) {
+      const item = (globalLiveStreams || []).find(s => String(s.id) === String(streamId));
+      const hostId = item && item.user_id;
+      const nav = document.querySelectorAll('.nav-item')[1];
+      if (!hostId) { alert('Stream not available.'); return; }
+      if (isStreaming || hostId === currentUser.id) { switchTab('liveTab', nav); return; }
+
       const giftBtn = document.getElementById('streamGiftBtn');
       const badge = document.getElementById('liveBadgeEl');
-
       if (giftBtn) giftBtn.style.display = 'flex';
       if (badge) badge.style.display = 'block';
+      switchTab('liveTab', nav);
 
-      switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
+      if (watchingHostId) leaveLive();
+      watchingHostId = hostId;
+      const video = document.getElementById('hostVideo');
+      video.muted = false;
+
+      liveChannel = supabaseClient.channel('live-' + hostId);
+      liveChannel
+        .on('broadcast', { event: 'offer' }, async ({ payload }) => {
+          if (!payload || payload.to !== currentUser.id || watchingHostId !== hostId) return;
+          if (viewerPc) viewerPc.close();
+          const iceServers = await getIceServers();
+          viewerPc = new RTCPeerConnection({ iceServers });
+          viewerPc.ontrack = ev => {
+            video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
+            video.play().catch(() => {});
+          };
+          await viewerPc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          const answer = await viewerPc.createAnswer();
+          await viewerPc.setLocalDescription(answer);
+          liveChannel.send({ type: 'broadcast', event: 'answer', payload: { from: currentUser.id, sdp: { type: viewerPc.localDescription.type, sdp: viewerPc.localDescription.sdp } } });
+        })
+        .on('broadcast', { event: 'ended' }, () => {
+          leaveLive();
+          alert('The live stream has ended.');
+        })
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            liveChannel.send({ type: 'broadcast', event: 'viewer-join', payload: { viewerId: currentUser.id } });
+          }
+        });
+    }
+
+    function leaveLive() {
+      if (watchingHostId && liveChannel) {
+        liveChannel.send({ type: 'broadcast', event: 'viewer-leave', payload: { viewerId: currentUser.id } });
+        supabaseClient.removeChannel(liveChannel);
+        liveChannel = null;
+      }
+      if (viewerPc) { viewerPc.close(); viewerPc = null; }
+      watchingHostId = null;
+      const v = document.getElementById('hostVideo');
+      if (v && !isStreaming) v.srcObject = null;
     }
 
     function handleLiveChatKey(e) {
@@ -1629,505 +1737,6 @@
       if (!acc) { alert('Please enter your account number.'); return; }
       alert('Withdrawal request submitted successfully! Processing within 24 hours.');
     }
-  </script>
-
-  <!-- ===== CALL / LIVE / RING FIXES ===== -->
-  <script>
-(function () {
-  'use strict';
-
-  const TURN_CREDENTIALS_URL = '';
-  const STATIC_TURN_SERVERS = [];
-  const VAPID_PUBLIC_KEY = '';
-  const RING_TIMEOUT_MS = 45000;
-
-  const $ = id => document.getElementById(id);
-  const sdpJson = d => ({ type: d.type, sdp: d.sdp });
-  const asObj = v => (typeof v === 'string' ? JSON.parse(v) : v);
-
-  let iceCache = null, iceCacheAt = 0;
-  async function getIceServers() {
-    if (iceCache && Date.now() - iceCacheAt < 10 * 60 * 1000) return iceCache;
-    let servers = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ];
-    try {
-      if (TURN_CREDENTIALS_URL) {
-        const r = await fetch(TURN_CREDENTIALS_URL);
-        const turn = await r.json();
-        if (Array.isArray(turn)) servers = servers.concat(turn);
-      }
-    } catch (e) {}
-    servers = servers.concat(STATIC_TURN_SERVERS);
-    iceCache = servers;
-    iceCacheAt = Date.now();
-    return servers;
-  }
-
-  function waitForIce(pc, ms) {
-    ms = ms || 4000;
-    return new Promise(resolve => {
-      if (pc.iceGatheringState === 'complete') return resolve();
-      let timer = null;
-      const check = () => { if (pc.iceGatheringState === 'complete') finish(); };
-      const finish = () => {
-        pc.removeEventListener('icegatheringstatechange', check);
-        clearTimeout(timer);
-        resolve();
-      };
-      timer = setTimeout(finish, ms);
-      pc.addEventListener('icegatheringstatechange', check);
-    });
-  }
-
-  function getMedia(type, facing) {
-    return navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: type === 'video' ? { facingMode: facing } : false
-    });
-  }
-
-  function mediaErrorText(err) {
-    if (!navigator.mediaDevices) return 'Camera/microphone need HTTPS.';
-    if (err && err.name === 'NotAllowedError') return 'Microphone/camera permission was denied.';
-    if (err && err.name === 'NotFoundError') return 'No microphone/camera found.';
-    return 'Could not start: ' + (err && err.message ? err.message : err);
-  }
-
-  let ringCtx = null, ringTimer = null;
-  function startRingtone() {
-    stopRingtone();
-    try {
-      ringCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (ringCtx.resume) ringCtx.resume();
-      const beep = () => {
-        if (!ringCtx) return;
-        const o = ringCtx.createOscillator();
-        const g = ringCtx.createGain();
-        o.frequency.value = 480;
-        g.gain.value = 0.2;
-        o.connect(g); g.connect(ringCtx.destination);
-        o.start(); o.stop(ringCtx.currentTime + 0.5);
-        if (navigator.vibrate) navigator.vibrate([300, 200, 300]);
-      };
-      beep();
-      ringTimer = setInterval(beep, 1800);
-    } catch (e) {}
-  }
-  function stopRingtone() {
-    clearInterval(ringTimer); ringTimer = null;
-    if (ringCtx) { try { ringCtx.close(); } catch (e) {} ringCtx = null; }
-  }
-
-  function setupRealtimeListeners() {
-    if (callSub) supabaseClient.removeChannel(callSub);
-
-    callSub = supabaseClient
-      .channel('calls-for-' + currentUser.id)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'calls', filter: 'receiver_id=eq.' + currentUser.id },
-        payload => { if (payload.new.status === 'ringing') showIncomingCallModal(payload.new); })
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'calls', filter: 'receiver_id=eq.' + currentUser.id },
-        payload => {
-          if (incomingCallPayload && payload.new.id === incomingCallPayload.id && payload.new.status !== 'ringing') {
-            hideIncomingCall();
-          }
-        })
-      .subscribe();
-
-    supabaseClient
-      .channel('public:livestreams')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'livestreams' }, () => { loadHomeFeed(); })
-      .subscribe();
-  }
-
-  async function checkPendingCalls() {
-    if (!currentUser || activeCall || incomingCallPayload) return;
-    try {
-      const since = new Date(Date.now() - 40000).toISOString();
-      const { data } = await supabaseClient.from('calls').select('*')
-        .eq('receiver_id', currentUser.id)
-        .eq('status', 'ringing')
-        .gt('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (data && data.length) showIncomingCallModal(data[0]);
-    } catch (e) {}
-  }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkPendingCalls(); });
-  window.addEventListener('focus', checkPendingCalls);
-
-  function setStatus(t) { const el = $('callStatusText'); if (el) el.textContent = t || ''; }
-
-  async function newCallPeer() {
-    const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
-    pc.ontrack = ev => {
-      remoteStream = ev.streams[0] || new MediaStream([ev.track]);
-      const rv = $('remoteVideo');
-      if (rv) { 
-        rv.srcObject = remoteStream; 
-        rv.muted = false; 
-        rv.play().catch(() => {});
-        ev.track.onunmute = () => {
-          const remotePlaceholder = $('remoteAvatarPlaceholder');
-          if (remotePlaceholder && ev.track.kind === 'video') remotePlaceholder.style.display = 'none';
-        };
-        ev.track.onmute = () => {
-          const remotePlaceholder = $('remoteAvatarPlaceholder');
-          if (remotePlaceholder && ev.track.kind === 'video') remotePlaceholder.style.display = 'flex';
-        };
-      }
-    };
-    pc.onconnectionstatechange = () => {
-      if (pc !== peerConnection) return;
-      if (pc.connectionState === 'connected') setStatus('Connected');
-      if (pc.connectionState === 'failed') {
-        endCall(true, 'Call connection failed.');
-      }
-    };
-    return pc;
-  }
-
-  async function handleCallRow(c) {
-    if (!c || !activeCall || activeCall.callId !== c.id) return;
-    if (activeCall.isCaller && c.answer && c.status === 'answered' && peerConnection && !peerConnection.remoteDescription) {
-      clearTimeout(activeCall.ringTimeout);
-      setStatus('Connecting...');
-      try { await peerConnection.setRemoteDescription(new RTCSessionDescription(asObj(c.answer))); }
-      catch (e) {}
-    }
-    if (c.status === 'declined') endCall(false, 'Call declined');
-    else if (c.status === 'ended') endCall(false);
-  }
-
-  function watchCall(callId) {
-    if (callChannel) supabaseClient.removeChannel(callChannel);
-    callChannel = supabaseClient
-      .channel('call-' + callId)
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'calls', filter: 'id=eq.' + callId },
-        payload => handleCallRow(payload.new))
-      .subscribe(async status => {
-        if (status === 'SUBSCRIBED') {
-          const { data } = await supabaseClient.from('calls').select('*').eq('id', callId).single();
-          handleCallRow(data);
-        }
-      });
-  }
-  let callChannel = null;
-
-  async function startCall(type) {
-    if (!currentChatUser || activeCall) return;
-    if (!navigator.mediaDevices) { alert('Camera/microphone need HTTPS.'); return; }
-    const peerId = currentChatUser.id;
-    activeCall = { type: type, peerId: peerId, isCaller: true, callId: null };
-    showCallModal(type);
-    setStatus('Calling...');
-
-    try {
-      localStream = await getMedia(type, currentFacingMode);
-      $('localVideo').srcObject = localStream;
-
-      peerConnection = await newCallPeer();
-      localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      await waitForIce(peerConnection);
-
-      const { data: call, error } = await supabaseClient.from('calls').insert({
-        caller_id: currentUser.id,
-        receiver_id: peerId,
-        call_type: type,
-        offer: sdpJson(peerConnection.localDescription),
-        status: 'ringing'
-      }).select().single();
-      if (error) throw error;
-      if (!activeCall) return;
-
-      activeCall.callId = call.id;
-      watchCall(call.id);
-
-      supabaseClient.from('messages').insert({
-        sender_id: currentUser.id,
-        receiver_id: peerId,
-        message: type.toUpperCase() + ' call initiated',
-        is_call_log: true
-      }).then(() => {});
-
-      activeCall.ringTimeout = setTimeout(() => {
-        if (activeCall && !peerConnection.remoteDescription) endCall(true, 'No answer');
-      }, RING_TIMEOUT_MS);
-    } catch (err) {
-      endCall(true, mediaErrorText(err));
-    }
-  }
-
-  async function showIncomingCallModal(call) {
-    if (incomingCallPayload && incomingCallPayload.id === call.id) return;
-    if (activeCall) {
-      supabaseClient.from('calls').update({ status: 'declined' }).eq('id', call.id).then(() => {});
-      return;
-    }
-    incomingCallPayload = call;
-    $('incomingCallerName').textContent = 'Incoming ' + call.call_type + ' call';
-    $('incomingCallType').textContent = 'Tap Accept to answer';
-    $('incomingCallBox').style.display = 'block';
-    startRingtone();
-    setTimeout(() => {
-      if (incomingCallPayload && incomingCallPayload.id === call.id) hideIncomingCall();
-    }, RING_TIMEOUT_MS);
-
-    try {
-      const { data } = await supabaseClient.from('profiles').select('username, avatar_url').eq('id', call.caller_id).single();
-      if (data && incomingCallPayload && incomingCallPayload.id === call.id) {
-        $('incomingCallerName').textContent = data.username || 'Someone';
-        if (data.avatar_url) $('incomingCallerAvatar').src = data.avatar_url;
-      }
-    } catch (e) {}
-  }
-
-  function hideIncomingCall() {
-    stopRingtone();
-    const box = $('incomingCallBox');
-    if (box) box.style.display = 'none';
-    incomingCallPayload = null;
-  }
-
-  async function acceptCall() {
-    const call = incomingCallPayload;
-    hideIncomingCall();
-    if (!call || activeCall) return;
-    if (!navigator.mediaDevices) { alert('Camera/microphone need HTTPS.'); return; }
-
-    activeCall = { type: call.call_type, peerId: call.caller_id, isCaller: false, callId: call.id };
-    showCallModal(call.call_type);
-    setStatus('Connecting...');
-
-    try {
-      const { data: fresh } = await supabaseClient.from('calls').select('status, offer').eq('id', call.id).single();
-      if (!fresh || fresh.status !== 'ringing') { endCall(false, 'Call has ended.'); return; }
-
-      localStream = await getMedia(call.call_type, currentFacingMode);
-      $('localVideo').srcObject = localStream;
-
-      peerConnection = await newCallPeer();
-      localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(asObj(fresh.offer)));
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      await waitForIce(peerConnection);
-
-      const { error } = await supabaseClient.from('calls')
-        .update({ answer: sdpJson(peerConnection.localDescription), status: 'answered' })
-        .eq('id', call.id);
-      if (error) throw error;
-
-      watchCall(call.id);
-    } catch (err) {
-      endCall(true, mediaErrorText(err));
-    }
-  }
-
-  function declineCall() {
-    const call = incomingCallPayload;
-    hideIncomingCall();
-    if (call) supabaseClient.from('calls').update({ status: 'declined' }).eq('id', call.id).then(() => {});
-  }
-
-  function endCall(notifyPeer, message) {
-    if (notifyPeer === undefined) notifyPeer = true;
-    const call = activeCall;
-    if (call && call.ringTimeout) clearTimeout(call.ringTimeout);
-    if (notifyPeer && call && call.callId) {
-      supabaseClient.from('calls').update({ status: 'ended' }).eq('id', call.callId).then(() => {});
-    }
-    if (callChannel) { supabaseClient.removeChannel(callChannel); callChannel = null; }
-    if (localStream) localStream.getTracks().forEach(t => t.stop());
-    if (peerConnection) {
-      peerConnection.ontrack = null;
-      peerConnection.onconnectionstatechange = null;
-      peerConnection.close();
-    }
-    peerConnection = null; localStream = null; remoteStream = null; activeCall = null;
-    const rv = $('remoteVideo'); if (rv) rv.srcObject = null;
-    const modal = $('activeCallModal'); if (modal) modal.style.display = 'none';
-    if (typeof message === 'string' && message) alert(message);
-  }
-
-  const livePeers = new Map();
-  let liveChannel = null;
-  let viewerPc = null;
-  let watchingHostId = null;
-  let liveRetryTimer = null;
-
-  function sendLive(event, payload) {
-    if (liveChannel) liveChannel.send({ type: 'broadcast', event: event, payload: payload });
-  }
-  function closeLiveChannel() {
-    if (liveChannel) { supabaseClient.removeChannel(liveChannel); liveChannel = null; }
-  }
-
-  function removeUnmuteButton() { const b = $('liveUnmuteBtn'); if (b) b.remove(); }
-  function showUnmuteButton() {
-    if ($('liveUnmuteBtn')) return;
-    const box = document.querySelector('.live-container');
-    if (!box) return;
-    const b = document.createElement('button');
-    b.id = 'liveUnmuteBtn';
-    b.className = 'btn-main';
-    b.textContent = '🔊 Tap to hear the host';
-    b.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:auto; padding:10px 16px; z-index:20; background:var(--accent); color:black; font-size:0.85rem;';
-    b.onclick = () => {
-      const v = $('hostVideo');
-      v.muted = false;
-      v.play().catch(() => {});
-      removeUnmuteButton();
-    };
-    box.appendChild(b);
-  }
-  function playLiveVideo() {
-    const v = $('hostVideo');
-    v.muted = false;
-    v.play().then(removeUnmuteButton).catch(() => {
-      v.muted = true;
-      v.play().catch(() => {});
-      showUnmuteButton();
-    });
-  }
-
-  function openHostChannel() {
-    closeLiveChannel();
-    liveChannel = supabaseClient.channel('live-' + currentUser.id);
-    liveChannel
-      .on('broadcast', { event: 'viewer-join' }, async ({ payload }) => {
-        const viewerId = payload && payload.viewerId;
-        if (!myStream || !viewerId) return;
-        const old = livePeers.get(viewerId);
-        if (old) { old.close(); livePeers.delete(viewerId); }
-
-        const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
-        livePeers.set(viewerId, pc);
-        myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        await waitForIce(pc);
-        sendLive('offer', { to: viewerId, sdp: sdpJson(pc.localDescription) });
-      })
-      .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-        const pc = livePeers.get(payload.from);
-        if (pc && !pc.currentRemoteDescription) {
-          try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch (e) {}
-        }
-      })
-      .on('broadcast', { event: 'viewer-leave' }, ({ payload }) => {
-        const pc = livePeers.get(payload.viewerId);
-        if (pc) { pc.close(); livePeers.delete(payload.viewerId); }
-      })
-      .subscribe();
-  }
-
-  function leaveLive() {
-    clearTimeout(liveRetryTimer);
-    if (watchingHostId) {
-      sendLive('viewer-leave', { viewerId: currentUser.id });
-      const ch = liveChannel; liveChannel = null;
-      setTimeout(() => { if (ch) supabaseClient.removeChannel(ch); }, 300);
-    }
-    if (viewerPc) { viewerPc.close(); viewerPc = null; }
-    watchingHostId = null;
-    removeUnmuteButton();
-    const v = $('hostVideo');
-    if (v && !isStreaming) v.srcObject = null;
-  }
-
-  function joinLiveStream(streamId) {
-    const item = (globalLiveStreams || []).find(s => String(s.id) === String(streamId));
-    const hostId = item && item.user_id;
-    const nav = document.querySelectorAll('.nav-item')[1];
-    if (!hostId) { alert('Stream not available.'); return; }
-    if (isStreaming || hostId === currentUser.id) { switchTab('liveTab', nav); return; }
-
-    const giftBtn = $('streamGiftBtn');
-    const badge = $('liveBadgeEl');
-    if (giftBtn) giftBtn.style.display = 'flex';
-    if (badge) badge.style.display = 'block';
-    switchTab('liveTab', nav);
-
-    leaveLive();
-    watchingHostId = hostId;
-    const video = $('hostVideo');
-    video.muted = false;
-
-    liveChannel = supabaseClient.channel('live-' + hostId);
-    liveChannel
-      .on('broadcast', { event: 'offer' }, async ({ payload }) => {
-        if (!payload || payload.to !== currentUser.id || watchingHostId !== hostId) return;
-        if (viewerPc) viewerPc.close();
-        const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
-        viewerPc = pc;
-        pc.ontrack = ev => {
-          video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
-          playLiveVideo();
-        };
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await waitForIce(pc);
-        sendLive('answer', { from: currentUser.id, sdp: sdpJson(pc.localDescription) });
-      })
-      .on('broadcast', { event: 'ended' }, () => {
-        leaveLive();
-        alert('The live stream has ended.');
-      })
-      .subscribe(status => {
-        if (status !== 'SUBSCRIBED') return;
-        const attempt = n => {
-          if (watchingHostId !== hostId || viewerPc) return;
-          if (n > 3) { leaveLive(); alert('Host is not available.'); return; }
-          sendLive('viewer-join', { viewerId: currentUser.id });
-          liveRetryTimer = setTimeout(() => attempt(n + 1), 6000);
-        };
-        attempt(1);
-      });
-  }
-
-  function swapTracks(pcs, stream) {
-    pcs.forEach(pc => pc.getSenders().forEach(s => {
-      if (!s.track) return;
-      const nt = stream.getTracks().find(t => t.kind === s.track.kind);
-      if (nt) s.replaceTrack(nt).catch(console.error);
-    }));
-  }
-
-  const _initApp = window.initApp;
-  const _switchTab = window.switchTab;
-  const _openSettings = window.openSettings;
-
-  window.setupRealtimeListeners = setupRealtimeListeners;
-  window.checkPendingCalls = checkPendingCalls;
-  window.startCall = startCall;
-  window.showIncomingCallModal = showIncomingCallModal;
-  window.acceptCall = acceptCall;
-  window.declineCall = declineCall;
-  window.endCall = endCall;
-  window.toggleGroupStream = toggleGroupStream;
-  window.joinLiveStream = joinLiveStream;
-  window.switchCamera = switchCamera;
-
-  window.initApp = async function () {
-    await _initApp.apply(this, arguments);
-    checkPendingCalls();
-  };
-
-  window.switchTab = function (tabId) {
-    if (tabId !== 'liveTab' && watchingHostId) leaveLive();
-    return _switchTab.apply(this, arguments);
-  };
-})();
   </script>
 </body>
 </html>
