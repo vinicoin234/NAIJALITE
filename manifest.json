@@ -1,0 +1,12 @@
+{
+  "name": "NAIJALITE",
+  "short_name": "NAIJALITE",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#008751",
+  "icons": [
+    { "src": "https://i.ibb.co/4gmXV5P8/PNG-1.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" }
+  ]
+}
