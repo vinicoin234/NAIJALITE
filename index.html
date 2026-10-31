@@ -20,134 +20,139 @@
       --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding-bottom: 80px; max-width: 500px; margin: 0 auto; overflow-x: hidden; min-height: 100vh; position: relative; }
+    
+    html { font-size: 14px; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 70px; max-width: 480px; margin: 0 auto; overflow-x: hidden; min-height: 100vh; position: relative; }
 
     #loadingScreen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    .spinner { width: 36px; height: 36px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .auth-wrapper { width: 100%; max-width: 340px; text-align: center; animation: fadeIn 0.5s; }
-    .auth-logo { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; margin-bottom: 15px; }
-    .auth-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; color: white; }
-    .auth-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .auth-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); transition: 0.3s; }
+    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    .auth-wrapper { width: 100%; max-width: 320px; text-align: center; animation: fadeIn 0.5s; }
+    .auth-logo { width: 70px; height: 70px; border-radius: 16px; object-fit: cover; box-shadow: 0 6px 16px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; margin-bottom: 12px; }
+    .auth-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; color: white; }
+    .auth-tabs { display: flex; background: var(--card); padding: 3px; border-radius: 10px; margin-bottom: 14px; border: 1px solid var(--border); }
+    .auth-tab { flex: 1; padding: 7px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 0.8rem; color: var(--text-dim); transition: 0.3s; }
     .auth-tab.active { background: var(--primary); color: white; }
-    .auth-card { background: var(--card); padding: 24px; border-radius: 24px; width: 100%; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: left; }
-    .auth-input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; font-size: 1rem; }
-    .auth-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px; display: block; }
-    .btn-auth { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; margin-top: 5px; }
+    .auth-card { background: var(--card); padding: 20px; border-radius: 20px; width: 100%; border: 1px solid var(--border); box-shadow: 0 16px 30px rgba(0,0,0,0.3); text-align: left; }
+    .auth-input { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 10px; color: white; margin-bottom: 12px; font-size: 0.95rem; }
+    .auth-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px; display: block; }
+    .btn-auth { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.3s; margin-top: 4px; }
 
-    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 20px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 12px 16px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 3px 12px rgba(0,0,0,0.2); }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .header-top h1 { font-size: 1.3rem; font-weight: 800; }
-    .header-actions { display: flex; align-items: center; gap: 12px; }
-    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
-    .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-    .menu-dropdown { position: absolute; top: 65px; right: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 220px; z-index: 1000; display: none; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .menu-item { padding: 14px 18px; font-size: 0.9rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+    .header-top h1 { font-size: 1.15rem; font-weight: 800; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 16px; font-size: 0.7rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+    .menu-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
+    .menu-dropdown { position: absolute; top: 55px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; width: 200px; z-index: 1000; display: none; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+    .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
     .menu-item.danger { color: var(--danger); }
 
-    .container { padding: 16px; }
+    .container { padding: 12px; }
     .tab-content { display: none; animation: fadeIn 0.3s ease; }
     .tab-content.active { display: block; }
-    .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+    .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .btn-main { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.3s; }
 
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-    .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 0.7rem; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
+    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-item { flex: 1; text-align: center; padding: 10px 0; font-size: 0.65rem; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
     .nav-item.active { color: var(--primary); font-weight: bold; }
-    .nav-item div { font-size: 1.4rem; margin-bottom: 4px; }
+    .nav-item div { font-size: 1.2rem; margin-bottom: 2px; }
 
-    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 15px; border: 1px solid var(--border); }
-    .profile-menu-item { font-size: 0.8rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; color: var(--text-dim); }
+    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 16px; background: var(--card); padding: 8px; border-radius: 12px; border: 1px solid var(--border); }
+    .profile-menu-item { font-size: 0.75rem; cursor: pointer; padding: 6px 10px; border-radius: 8px; color: var(--text-dim); }
     .profile-menu-item.active { background: var(--primary); color: white; }
     .profile-sub-tab { display: none; }
     .profile-sub-tab.active { display: block; }
 
-    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
-    .settings-card { background: var(--card); width: 100%; max-width: 450px; border-radius: 24px; padding: 24px; color: white; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
+    .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(5px); }
+    .settings-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; color: white; border: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
 
-    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-    .setting-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .setting-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
 
-    .live-top-banner { background: linear-gradient(135deg, #ff4757, #ff6b81); border-radius: 16px; padding: 12px 16px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(255,71,87,0.4); animation: pulse 2s infinite; cursor: pointer; }
-    .live-banner-info { display: flex; align-items: center; gap: 10px; color: white; }
-    .live-dot { width: 10px; height: 10px; background: white; border-radius: 50%; animation: ping 1s infinite; }
+    .live-top-banner { background: linear-gradient(135deg, #ff4757, #ff6b81); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 3px 12px rgba(255,71,87,0.4); animation: pulse 2s infinite; cursor: pointer; }
+    .live-banner-info { display: flex; align-items: center; gap: 8px; color: white; }
+    .live-dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: ping 1s infinite; }
 
-    .avatar-wrapper { position: relative; width: 110px; height: 110px; margin: 0 auto 15px; cursor: pointer; }
-    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; border: 3px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-    .avatar-plus-btn { position: absolute; bottom: 2px; right: 2px; width: 32px; height: 32px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+    .avatar-wrapper { position: relative; width: 90px; height: 90px; margin: 0 auto 12px; cursor: pointer; }
+    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border: 2px solid var(--accent); box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
+    .avatar-plus-btn { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border: 2px solid var(--bg); box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
-    .user-item { background: var(--card); padding: 12px 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .user-item { background: var(--card); padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
-    .chat-header { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .chat-header { background: var(--primary); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: white; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
 
     .msg-wrapper { max-width: 80%; display: flex; flex-direction: column; margin-bottom: 2px; }
     .msg-wrapper.sent { align-self: flex-end; align-items: flex-end; }
     .msg-wrapper.received { align-self: flex-start; align-items: flex-start; }
 
-    .msg { padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; word-break: break-word; }
-    .msg.sent { background: var(--primary); color: white; border-bottom-right-radius: 3px; }
-    .msg.received { background: var(--card); color: white; border-bottom-left-radius: 3px; }
-    .msg.call-log { align-self: center; background: rgba(255, 193, 7, 0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 0.8rem; text-align: center; border-radius: 10px; padding: 6px 14px; width: 100%; max-width: 300px; }
+    .msg { padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; word-break: break-word; }
+    .msg.sent { background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+    .msg.received { background: var(--card); color: white; border-bottom-left-radius: 2px; }
+    .msg.call-log { align-self: center; background: rgba(255, 193, 7, 0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 0.75rem; text-align: center; border-radius: 8px; padding: 5px 12px; width: 100%; max-width: 280px; }
 
-    .msg-timestamp { font-size: 0.65rem; color: rgba(255,255,255,0.45); margin-top: 3px; padding: 0 4px; font-weight: 300; }
+    .msg-timestamp { font-size: 0.6rem; color: rgba(255,255,255,0.45); margin-top: 2px; padding: 0 4px; font-weight: 300; }
 
-    .chat-input-area { padding: 15px; background: var(--card); display: flex; gap: 10px; border-top: 1px solid var(--border); }
-    .chat-input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #0f172a; color: white; }
+    .chat-input-area { padding: 12px 16px; background: var(--card); display: flex; gap: 8px; border-top: 1px solid var(--border); }
+    .chat-input-area input { flex: 1; padding: 10px 14px; border-radius: 18px; border: 1px solid var(--border); background: #0f172a; color: white; font-size: 0.9rem; }
 
-    .live-container { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 15px; height: calc(100vh - 220px); max-height: 500px; overscroll-behavior: contain; }
+    .live-container { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 12px; height: calc(100vh - 210px); max-height: 460px; overscroll-behavior: contain; }
     .main-video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; }
-    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; transition: opacity 0.5s ease; }
+    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; pointer-events: none; transition: opacity 0.5s ease; }
     .live-overlay * { pointer-events: auto; }
     .overlay-top { display: flex; justify-content: space-between; align-items: center; }
-    .live-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.75rem; display: none; }
-    .overlay-bottom { display: flex; gap: 8px; align-items: center; margin-bottom: 15px; }
-    .overlay-bottom input { flex: 1; padding: 12px 14px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.9rem; }
-    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.2rem; padding: 10px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+    .live-badge { background: var(--danger); color: white; padding: 3px 8px; border-radius: 10px; font-weight: bold; font-size: 0.7rem; display: none; }
+    .overlay-bottom { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+    .overlay-bottom input { flex: 1; padding: 10px 12px; border-radius: 18px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.85rem; }
+    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.1rem; padding: 8px 12px; border-radius: 18px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px; }
 
-    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-    .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 15px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+    .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; text-align: center; cursor: pointer; transition: 0.2s; }
     .gift-card:active { border-color: var(--accent); transform: scale(0.95); }
-    .gift-icon { font-size: 1.8rem; margin-bottom: 4px; }
-    .gift-title { font-size: 0.75rem; font-weight: bold; }
-    .gift-price { font-size: 0.7rem; color: var(--accent); font-weight: bold; margin-top: 2px; }
+    .gift-icon { font-size: 1.5rem; margin-bottom: 3px; }
+    .gift-title { font-size: 0.7rem; font-weight: bold; }
+    .gift-price { font-size: 0.65rem; color: var(--accent); font-weight: bold; margin-top: 2px; }
 
-    .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-    .package-card { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; }
+    .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .package-card { background: #0f172a; border: 1px solid var(--border); padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 0.85rem; }
 
-    .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .video-box { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 20px; }
+    .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    .video-box { width: 100%; max-width: 360px; height: 260px; background: #000; border-radius: 16px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 16px; }
     .video-box video { width: 100%; height: 100%; object-fit: cover; }
 
-    #incomingCallBox { position: fixed; top: 20px; left: 20px; right: 20px; max-width: 460px; margin: 0 auto; background: var(--card); border: 2px solid var(--accent); padding: 15px; border-radius: 20px; z-index: 5000; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-    .caller-avatar-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); background: var(--primary); flex-shrink: 0; }
+    .avatar-placeholder { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 5; }
+    .avatar-placeholder img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); margin-bottom: 6px; }
 
-    .biz-link-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,135,81,0.2); border: 1px solid var(--primary); color: var(--accent); text-decoration: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-top: 10px; word-break: break-all; }
+    #incomingCallBox { position: fixed; top: 16px; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; background: var(--card); border: 2px solid var(--accent); padding: 12px 16px; border-radius: 16px; z-index: 5000; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.8); }
+    .caller-avatar-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); background: var(--primary); flex-shrink: 0; }
+
+    .biz-link-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,135,81,0.2); border: 1px solid var(--primary); color: var(--accent); text-decoration: none; padding: 8px 14px; border-radius: 16px; font-weight: bold; font-size: 0.8rem; margin-top: 8px; word-break: break-all; }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
 
-  <div id="loadingScreen"><div class="spinner"></div><p>Loading NAIJALITE...</p></div>
+  <div id="loadingScreen"><div class="spinner"></div><p style="font-size:0.9rem;">Loading NAIJALITE...</p></div>
 
   <!-- Audio Element for Remote Call Speaker Output -->
   <audio id="remoteAudioPlayer" autoplay playsinline></audio>
 
   <!-- Incoming Call Popup -->
   <div id="incomingCallBox">
-    <div style="display:flex; align-items:center; gap:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
       <img id="incomingCallerAvatar" class="caller-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>">
       <div style="flex:1;">
-        <b id="incomingCallerName">Caller Name</b>
-        <p style="font-size:0.8rem; color:var(--text-dim);" id="incomingCallType">Incoming Call...</p>
+        <b id="incomingCallerName" style="font-size:0.9rem;">Caller Name</b>
+        <p style="font-size:0.75rem; color:var(--text-dim);" id="incomingCallType">Incoming Call...</p>
       </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn-main" style="background:var(--primary); padding:8px 12px; font-size:0.8rem;" onclick="acceptCall()">Accept</button>
-        <button class="btn-main" style="background:var(--danger); padding:8px 12px; font-size:0.8rem;" onclick="declineCall()">Decline</button>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-main" style="background:var(--primary); padding:6px 10px; font-size:0.75rem;" onclick="acceptCall()">Accept</button>
+        <button class="btn-main" style="background:var(--danger); padding:6px 10px; font-size:0.75rem;" onclick="declineCall()">Decline</button>
       </div>
     </div>
   </div>
@@ -211,17 +216,21 @@
     <!-- Home Feed Tab -->
     <div id="homeTab" class="tab-content active">
       <div id="activeLiveBannerContainer"></div>
-      <div id="homeFeed"><p style="text-align:center; color:var(--text-dim);">Loading Feed...</p></div>
+      <div id="homeFeed"><p style="text-align:center; color:var(--text-dim); font-size:0.85rem;">Loading Feed...</p></div>
     </div>
 
     <!-- Live Stream Tab -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
         <video id="hostVideo" class="main-video" autoplay playsinline></video>
+        <div id="hostAvatarPlaceholder" class="avatar-placeholder" style="display:none;">
+          <div style="font-size:2.5rem;">👤</div>
+          <p style="margin-top:6px; font-size:0.8rem;">Camera is off (Audio Only)</p>
+        </div>
         <div class="live-overlay" id="liveOverlayBox">
           <div class="overlay-top">
             <div class="live-badge" id="liveBadgeEl">🔴 LIVE</div>
-            <button style="background:var(--accent); border:none; padding:8px 12px; border-radius:12px; font-weight:bold; font-size:0.7rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
+            <button style="background:var(--accent); border:none; padding:6px 10px; border-radius:10px; font-weight:bold; font-size:0.65rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
           </div>
           <div class="overlay-bottom" id="liveOverlayBottom">
             <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
@@ -230,38 +239,41 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+      <!-- Restored Flip Camera Button + Stream Control Buttons -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
         <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
-        <button class="btn-main" style="background:var(--card); border:1px solid var(--border); width:auto; padding:12px 16px;" onclick="switchCamera('stream')">📸 Flip Camera</button>
+        <button class="btn-main" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem;" onclick="switchCamera('stream')">📸 Flip</button>
+        <button class="btn-main" id="streamMuteBtn" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem; display:none;" onclick="toggleStreamAudio()">🎤 Mute</button>
+        <button class="btn-main" id="streamCamBtn" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem; display:none;" onclick="toggleStreamCamera()">📹 Camera Off</button>
       </div>
     </div>
 
     <!-- Inbox Tab -->
     <div id="inboxTab" class="tab-content">
       <div class="card">
-        <div id="conversationsList"><p style="color:var(--text-dim);">Loading chats...</p></div>
+        <div id="conversationsList"><p style="color:var(--text-dim); font-size:0.85rem;">Loading chats...</p></div>
       </div>
     </div>
 
     <!-- Earn Tab -->
     <div id="earnTab" class="tab-content">
       <div class="card">
-        <h3>💰 Earn Rewards & Coins</h3>
-        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Invite friends or complete tasks to earn coins.</p>
+        <h3 style="font-size:1.1rem;">💰 Earn Rewards & Coins</h3>
+        <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px; margin-bottom:12px;">Invite friends or complete tasks to earn coins.</p>
 
-        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; text-align:center; border:1px dashed var(--accent); margin-bottom:15px;">
-          <div style="font-size:0.8rem; color:var(--text-dim);">Your Referral Link:</div>
-          <div id="userRefLink" style="font-weight:bold; margin:8px 0; word-break:break-all; font-size:0.85rem;">https://naijalite.app/?ref=user</div>
-          <button class="btn-main" onclick="copyRefLink()" style="padding:10px;">Copy Referral Link</button>
+        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:10px; text-align:center; border:1px dashed var(--accent); margin-bottom:12px;">
+          <div style="font-size:0.75rem; color:var(--text-dim);">Your Referral Link:</div>
+          <div id="userRefLink" style="font-weight:bold; margin:6px 0; word-break:break-all; font-size:0.8rem;">https://naijalite.app/?ref=user</div>
+          <button class="btn-main" onclick="copyRefLink()" style="padding:8px; font-size:0.85rem;">Copy Referral Link</button>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <div style="background:var(--bg); padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="background:var(--bg); padding:10px 12px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <b style="font-size:0.9rem;">7-Day Reward Check-in</b>
-              <p style="font-size:0.75rem; color:var(--text-dim);" id="rewardTimerText">Claim +5 coins every 7 days after signup</p>
+              <b style="font-size:0.85rem;">7-Day Reward Check-in</b>
+              <p style="font-size:0.7rem; color:var(--text-dim);" id="rewardTimerText">Claim +5 coins every 7 days after signup</p>
             </div>
-            <button class="btn-main" id="weeklyClaimBtn" style="width:auto; padding:8px 14px; font-size:0.8rem;" onclick="claimWeeklyReward()">Claim</button>
+            <button class="btn-main" id="weeklyClaimBtn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="claimWeeklyReward()">Claim</button>
           </div>
         </div>
       </div>
@@ -270,19 +282,19 @@
     <!-- Utils Tab -->
     <div id="utilsTab" class="tab-content">
       <div class="card">
-        <h3>🛠️ Community Utilities & Stream Activity</h3>
-        <p style="font-size:0.85rem; color:var(--text-dim); margin-top:5px; margin-bottom:15px;">Monitor live stream activity and quick utilities.</p>
+        <h3 style="font-size:1.1rem;">🛠️ Community Utilities & Stream Activity</h3>
+        <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px; margin-bottom:12px;">Monitor live stream activity and quick utilities.</p>
 
-        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; margin-bottom:15px;">
-          <h4 style="font-size:0.9rem; margin-bottom:8px;">📡 Live Stream Activity Feed</h4>
-          <div id="streamActivityList" style="font-size:0.8rem; color:var(--text-dim);">
+        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:10px; margin-bottom:12px;">
+          <h4 style="font-size:0.85rem; margin-bottom:6px;">📡 Live Stream Activity Feed</h4>
+          <div id="streamActivityList" style="font-size:0.75rem; color:var(--text-dim);">
             <p>No recent stream activity recorded.</p>
           </div>
         </div>
 
-        <div style="margin-bottom:15px;">
+        <div style="margin-bottom:12px;">
           <label class="auth-label">WhatsApp Direct Message</label>
-          <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:8px;">
+          <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:6px;">
           <button class="btn-main" onclick="openWhatsApp()">Open WhatsApp Chat</button>
         </div>
       </div>
@@ -291,7 +303,7 @@
     <!-- Profile Tab -->
     <div id="profileTab" class="tab-content">
       <div class="card" style="text-align: center; position: relative;">
-        <div style="position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.3rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
+        <div style="position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.2rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
 
         <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
           <img id="profileAvatarImg" src="" class="profile-avatar" style="display:none;">
@@ -299,8 +311,8 @@
           <div class="avatar-plus-btn">+</div>
         </div>
 
-        <h3 id="userNameDisplay">User <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;"></span></h3>
-        <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.75rem; margin-bottom:10px;"></p>
+        <h3 id="userNameDisplay" style="font-size:1.1rem;">User <span id="userSexDisplay" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:5px;"></span></h3>
+        <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.7rem; margin-bottom:8px;"></p>
 
         <div class="profile-menu">
           <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
@@ -309,46 +321,46 @@
         </div>
 
         <div id="profilePosts" class="profile-sub-tab active">
-          <div id="userPostsList"><p style="color:var(--text-dim);">Loading your posts...</p></div>
+          <div id="userPostsList"><p style="color:var(--text-dim); font-size:0.8rem;">Loading your posts...</p></div>
         </div>
 
         <div id="profileBioTab" class="profile-sub-tab">
-          <div style="text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
-            <h4 style="font-size:0.9rem; margin-bottom:8px;">📝 About Me</h4>
-            <p id="bioTextDisplay" style="font-size:0.85rem; color:var(--text-dim); margin-bottom:15px; white-space:pre-line;">No bio added yet. Tap ⚙️ edit profile above to write about yourself!</p>
+          <div style="text-align:left; background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
+            <h4 style="font-size:0.85rem; margin-bottom:6px;">📝 About Me</h4>
+            <p id="bioTextDisplay" style="font-size:0.8rem; color:var(--text-dim); margin-bottom:12px; white-space:pre-line;">No bio added yet. Tap ⚙️ edit profile above to write about yourself!</p>
 
-            <h4 style="font-size:0.9rem; margin-bottom:8px;">🌐 Business & Links</h4>
+            <h4 style="font-size:0.85rem; margin-bottom:6px;">🌐 Business & Links</h4>
             <div id="businessLinkDisplay">
-              <p style="font-size:0.8rem; color:var(--text-dim);">No link attached.</p>
+              <p style="font-size:0.75rem; color:var(--text-dim);">No link attached.</p>
             </div>
           </div>
         </div>
 
         <div id="profileCoins" class="profile-sub-tab" style="text-align:left;">
-          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border); margin-bottom:15px;">
-            <h4 style="margin-bottom:10px;">📊 Coin Dashboard</h4>
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.9rem;">
+          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:12px;">
+            <h4 style="margin-bottom:8px; font-size:0.85rem;">📊 Coin Dashboard</h4>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.85rem;">
               <span>Current Balance:</span> <b style="color:var(--accent);">🟡 <span id="coinsCount">0</span> Coins</b>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem; color:var(--text-dim);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.8rem; color:var(--text-dim);">
               <span>Total Spent:</span> <span id="totalSpentCoins">0 Coins</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-dim);">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-dim);">
               <span>Total Earned:</span> <span id="totalEarnedCoins">0 Coins</span>
             </div>
           </div>
 
-          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border); margin-bottom:15px;">
-            <h4 style="margin-bottom:8px; font-size:0.9rem;">📜 Transaction History</h4>
-            <div id="transactionLedger" style="max-height:150px; overflow-y:auto; font-size:0.8rem; color:var(--text-dim);">
+          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:12px;">
+            <h4 style="margin-bottom:6px; font-size:0.85rem;">📜 Transaction History</h4>
+            <div id="transactionLedger" style="max-height:130px; overflow-y:auto; font-size:0.75rem; color:var(--text-dim);">
               <p>No transactions yet.</p>
             </div>
           </div>
 
-          <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; border:1px solid var(--border);">
-            <h4>🏦 Withdrawal</h4>
-            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number" style="margin-top: 8px; margin-bottom:10px;">
-            <button class="btn-main" onclick="submitWithdrawal()">Confirm Withdrawal</button>
+          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
+            <h4 style="font-size:0.85rem;">🏦 Withdrawal</h4>
+            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number" style="margin-top: 6px; margin-bottom:8px;">
+            <button class="btn-main" onclick="submitWithdrawal()" style="padding:10px; font-size:0.85rem;">Confirm Withdrawal</button>
           </div>
         </div>
 
@@ -358,24 +370,24 @@
     <!-- External User Profile Tab -->
     <div id="externalProfileTab" class="tab-content">
       <div class="card" style="text-align: center;">
-        <button class="btn-main" style="width:auto; padding:6px 12px; margin-bottom:15px;" onclick="switchTab('homeTab', document.querySelectorAll('.nav-item')[0])">← Back to Feed</button>
+        <button class="btn-main" style="width:auto; padding:6px 10px; margin-bottom:12px; font-size:0.8rem;" onclick="switchTab('homeTab', document.querySelectorAll('.nav-item')[0])">← Back to Feed</button>
 
         <div class="avatar-wrapper">
           <img id="extProfileAvatarImg" src="" class="profile-avatar" style="display:none;">
           <div id="extProfileAvatarPlaceholder" class="profile-avatar">👤</div>
         </div>
 
-        <h3 id="extUserNameDisplay">Username</h3>
-        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.8rem; margin:8px 0; display:none;"></p>
+        <h3 id="extUserNameDisplay" style="font-size:1.1rem;">Username</h3>
+        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.75rem; margin:6px 0; display:none;"></p>
 
-        <div id="extBioContainer" style="margin: 15px 0; text-align:left; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px; display:none;">
-          <h4 style="font-size:0.85rem; margin-bottom:5px;">Bio</h4>
-          <p id="extBioText" style="font-size:0.8rem; color:var(--text-dim);">No bio</p>
+        <div id="extBioContainer" style="margin: 12px 0; text-align:left; background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; display:none;">
+          <h4 style="font-size:0.8rem; margin-bottom:4px;">Bio</h4>
+          <p id="extBioText" style="font-size:0.75rem; color:var(--text-dim);">No bio</p>
         </div>
 
-        <div id="extActionButtons" style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
-          <button class="btn-main" id="extFollowBtn" onclick="toggleFollowUser()">Follow</button>
-          <button class="btn-main" style="background:var(--card); border:1px solid var(--border);" onclick="openChatFromProfile()">Message</button>
+        <div id="extActionButtons" style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+          <button class="btn-main" id="extFollowBtn" onclick="toggleFollowUser()" style="padding:10px; font-size:0.85rem;">Follow</button>
+          <button class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:10px; font-size:0.85rem;" onclick="openChatFromProfile()">Message</button>
         </div>
       </div>
     </div>
@@ -384,16 +396,16 @@
   <!-- Chat Screen -->
   <div id="chatWindow" class="chat-window">
     <div class="chat-header">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="closeChat()">←</button>
-        <b id="chatUser">Username</b>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="closeChat()">←</button>
+        <b id="chatUser" style="font-size:0.95rem;">Username</b>
       </div>
-      <div style="display:flex; gap:15px; align-items:center; position:relative;">
-        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
-        <button style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;" onclick="startCall('video')">📹</button>
-        <button style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;" onclick="toggleChatMenu()">⋮</button>
+      <div style="display:flex; gap:12px; align-items:center; position:relative;">
+        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
+        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="startCall('video')">📹</button>
+        <button style="background:none; border:none; color:white; font-size:1.3rem; cursor:pointer;" onclick="toggleChatMenu()">⋮</button>
 
-        <div id="chatMenu" class="menu-dropdown" style="top:40px; right:0;">
+        <div id="chatMenu" class="menu-dropdown" style="top:38px; right:0;">
           <div class="menu-item" onclick="shareCoinsPrompt()">💰 Send Coins</div>
         </div>
       </div>
@@ -401,7 +413,7 @@
     <div class="chat-messages" id="chatMessages"></div>
     <div class="chat-input-area">
       <input type="text" id="chatInputText" placeholder="Type a message...">
-      <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="sendMessage()">Send</button>
+      <button class="btn-main" style="width:auto; padding:8px 16px; font-size:0.85rem;" onclick="sendMessage()">Send</button>
     </div>
   </div>
 
@@ -409,10 +421,10 @@
   <div id="giftCatalogModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>🎁 Live Gifts Catalog</h3>
-        <span style="font-size:0.85rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
+        <h3 style="font-size:1.05rem;">🎁 Live Gifts Catalog</h3>
+        <span style="font-size:0.8rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
       </div>
-      <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">Tap a gift to send live.</p>
+      <p style="font-size:0.7rem; color:var(--text-dim); margin-top:3px;">Tap a gift to send live.</p>
 
       <div class="gift-grid">
         <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 1)">
@@ -447,33 +459,33 @@
         </div>
       </div>
 
-      <button class="btn-main" style="background:var(--accent); color:black; margin-bottom:10px;" onclick="closeModal('giftCatalogModal'); openModal('coinModal');">+ Buy More Coins</button>
-      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('giftCatalogModal')">Close</button>
+      <button class="btn-main" style="background:var(--accent); color:black; margin-bottom:8px; padding:10px; font-size:0.85rem;" onclick="closeModal('giftCatalogModal'); openModal('coinModal');">+ Buy More Coins</button>
+      <button class="btn-main" style="background:none; color:white; padding:10px; font-size:0.85rem;" onclick="closeModal('giftCatalogModal')">Close</button>
     </div>
   </div>
 
   <!-- Coin Purchase Modal -->
   <div id="coinModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
-      <h3 style="margin-bottom:10px">🪙 Buy Coins</h3>
-      <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px;">Rate: ₦10 = 1 Coin.</p>
+      <h3 style="margin-bottom:8px; font-size:1.05rem;">🪙 Buy Coins</h3>
+      <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:12px;">Rate: ₦10 = 1 Coin.</p>
 
       <div class="package-grid">
         <div class="package-card" onclick="selectPackage(10, 1)">
           <b>₦10</b>
-          <div style="font-size:0.75rem; color:var(--accent);">1 Coin</div>
+          <div style="font-size:0.7rem; color:var(--accent);">1 Coin</div>
         </div>
         <div class="package-card" onclick="selectPackage(100, 10)">
           <b>₦100</b>
-          <div style="font-size:0.75rem; color:var(--accent);">10 Coins</div>
+          <div style="font-size:0.7rem; color:var(--accent);">10 Coins</div>
         </div>
         <div class="package-card" onclick="selectPackage(1000, 100)">
           <b>₦1,000</b>
-          <div style="font-size:0.75rem; color:var(--accent);">100 Coins</div>
+          <div style="font-size:0.7rem; color:var(--accent);">100 Coins</div>
         </div>
         <div class="package-card" onclick="selectPackage(10000, 1000)">
           <b>₦10,000</b>
-          <div style="font-size:0.75rem; color:var(--accent);">1,000 Coins</div>
+          <div style="font-size:0.7rem; color:var(--accent);">1,000 Coins</div>
         </div>
       </div>
 
@@ -483,21 +495,21 @@
       <label class="auth-label">Email for Receipt</label>
       <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
 
-      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:10px;">Pay with Paystack</button>
-      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('coinModal')">Cancel</button>
+      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:8px; padding:10px; font-size:0.85rem;">Pay with Paystack</button>
+      <button class="btn-main" style="background:none; color:white; padding:10px; font-size:0.85rem;" onclick="closeModal('coinModal')">Cancel</button>
     </div>
   </div>
 
   <!-- Edit Profile Modal -->
   <div id="editProfileModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
-      <h3>Edit Profile</h3>
-      <div style="margin: 15px 0; text-align: left;">
+      <h3 style="font-size:1.05rem;">Edit Profile</h3>
+      <div style="margin: 12px 0; text-align: left;">
         <label class="auth-label">Username</label>
         <input type="text" id="editUsername" class="auth-input">
 
         <label class="auth-label">Bio</label>
-        <textarea id="editBio" class="auth-input" style="height:80px; resize:none;" placeholder="Write a short bio..."></textarea>
+        <textarea id="editBio" class="auth-input" style="height:70px; resize:none;" placeholder="Write a short bio..."></textarea>
 
         <label class="auth-label">Business / Link Title</label>
         <input type="text" id="editLinkTitle" class="auth-input" placeholder="e.g. YouTube Channel">
@@ -514,17 +526,17 @@
           <option value="Female">Female</option>
         </select>
       </div>
-      <button class="btn-main" onclick="saveProfileChanges()" style="margin-bottom:10px;">Save Changes</button>
-      <button class="btn-main" style="background:none; color:white;" onclick="closeModal('editProfileModal')">Cancel</button>
+      <button class="btn-main" onclick="saveProfileChanges()" style="margin-bottom:8px; padding:10px; font-size:0.85rem;">Save Changes</button>
+      <button class="btn-main" style="background:none; color:white; padding:10px; font-size:0.85rem;" onclick="closeModal('editProfileModal')">Cancel</button>
     </div>
   </div>
 
   <!-- Settings Modal -->
   <div id="settingsModal" class="settings-modal" style="display:none;">
     <div class="settings-card">
-      <h3 id="settingsTitle">Settings</h3>
-      <div id="settingsBody" style="margin: 15px 0;"></div>
-      <button class="btn-main" onclick="closeModal('settingsModal')">Close</button>
+      <h3 id="settingsTitle" style="font-size:1.05rem;">Settings</h3>
+      <div id="settingsBody" style="margin: 12px 0;"></div>
+      <button class="btn-main" onclick="closeModal('settingsModal')" style="padding:10px; font-size:0.85rem;">Close</button>
     </div>
   </div>
 
@@ -573,13 +585,6 @@
     let callSub = null;
     let globalLiveStreams = [];
     let currentFacingMode = 'user';
-
-    const ICE_SERVERS = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    };
 
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
@@ -684,7 +689,7 @@
         document.getElementById('userCoins').innerText = data.coins || 0;
         document.getElementById('coinsCount').innerText = data.coins || 0;
         document.getElementById('giftModalCoinCount').innerText = data.coins || 0;
-        document.getElementById('userNameDisplay').innerHTML = `${data.username} <span id="userSexDisplay" style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:6px;">${data.sex || ''}</span>`;
+        document.getElementById('userNameDisplay').innerHTML = `${data.username} <span id="userSexDisplay" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:5px;">${data.sex || ''}</span>`;
         document.getElementById('userIdDisplay').innerText = 'ID: ' + currentUser.id;
 
         if (data.avatar_url) {
@@ -790,9 +795,9 @@
           <div class="live-top-banner" onclick="joinLiveStream('${liveItem.id}')">
             <div class="live-banner-info">
               <div class="live-dot"></div>
-              <div><b>${liveItem.profiles?.username || 'Host'} is LIVE now!</b><div style="font-size:0.75rem; opacity:0.8;">Tap to watch live stream</div></div>
+              <div><b>${liveItem.profiles?.username || 'Host'} is LIVE now!</b><div style="font-size:0.7rem; opacity:0.8;">Tap to watch live stream</div></div>
             </div>
-            <button class="btn-main" style="width:auto; padding:6px 12px; font-size:0.75rem; background:white; color:#ff4757;">Watch</button>
+            <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem; background:white; color:#ff4757;">Watch</button>
           </div>`;
       } else {
         bannerContainer.innerHTML = '';
@@ -800,7 +805,7 @@
 
       const { data: usersData } = await supabaseClient.from('profiles').select('*').limit(20);
       if (!usersData || usersData.length === 0) {
-        feedContainer.innerHTML = `<p style="text-align:center; color:var(--text-dim);">No users found.</p>`;
+        feedContainer.innerHTML = `<p style="text-align:center; color:var(--text-dim); font-size:0.85rem;">No users found.</p>`;
         return;
       }
 
@@ -809,15 +814,15 @@
         if (u.id === currentUser.id) return;
         html += `
           <div class="user-item" onclick="openUserProfile('${u.id}')">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div style="width:45px; height:45px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:38px; height:38px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
                 ${u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
               </div>
               <div>
-                <b>${u.username}</b>
+                <b style="font-size:0.85rem;">${u.username}</b>
               </div>
             </div>
-            <span>→</span>
+            <span style="font-size:0.8rem;">→</span>
           </div>`;
       });
       feedContainer.innerHTML = html;
@@ -897,7 +902,6 @@
     }
 
     async function loadConversations() {
-      // 1. Fetch message history
       const { data: messages } = await supabaseClient
         .from('messages')
         .select('sender_id, receiver_id, message, created_at, is_call_log')
@@ -914,10 +918,9 @@
         });
       }
 
-      // 2. Load available users so inbox is always active and interactive
       const { data: profilesData } = await supabaseClient.from('profiles').select('*').limit(20);
       if (!profilesData || profilesData.length === 0) {
-        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim);">No users found.</p>';
+        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim); font-size:0.85rem;">No users found.</p>';
         return;
       }
 
@@ -930,16 +933,16 @@
 
         html += `
           <div class="user-item" onclick="openChat('${p.id}', '${p.username}')">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div style="width:45px; height:45px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:38px; height:38px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
                 ${p.avatar_url ? `<img src="${p.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
               </div>
               <div>
-                <b>${p.username}</b>
-                <p style="font-size:0.75rem; color:var(--text-dim);">${subtitle}</p>
+                <b style="font-size:0.85rem;">${p.username}</b>
+                <p style="font-size:0.7rem; color:var(--text-dim);">${subtitle}</p>
               </div>
             </div>
-            <span style="font-size:0.7rem; color:var(--text-dim);">${timeStr || '→'}</span>
+            <span style="font-size:0.65rem; color:var(--text-dim);">${timeStr || '→'}</span>
           </div>`;
       });
       document.getElementById('conversationsList').innerHTML = html;
@@ -1082,7 +1085,31 @@
       }
     }
 
-    // WebRTC Calling
+    // TURNIX.IO Integration & WebRTC Calling
+    const TURNIX_API_KEY = '3f7ca9043d6300ef12b0736952c7275a';
+    let cachedIceServers = null;
+
+    async function getIceServers() {
+      if (cachedIceServers) return cachedIceServers;
+      let servers = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ];
+      try {
+        const res = await fetch(`https://api.turnix.io/v1/turn/credentials?apiKey=${TURNIX_API_KEY}`);
+        const data = await res.json();
+        if (data && Array.isArray(data.iceServers)) {
+          servers = servers.concat(data.iceServers);
+        } else if (Array.isArray(data)) {
+          servers = servers.concat(data);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch Turnix credentials, falling back to STUN:', e);
+      }
+      cachedIceServers = servers;
+      return servers;
+    }
+
     async function startCall(type) {
       if (!currentChatUser) return;
       activeCall = { type, peerId: currentChatUser.id, isCaller: true };
@@ -1092,7 +1119,8 @@
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (type === 'video' ? { facingMode: currentFacingMode } : false) });
         document.getElementById('localVideo').srcObject = localStream;
 
-        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        const iceServers = await getIceServers();
+        peerConnection = new RTCPeerConnection({ iceServers });
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
         peerConnection.ontrack = event => {
@@ -1156,7 +1184,8 @@
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (incomingCallPayload.call_type === 'video' ? { facingMode: currentFacingMode } : false) });
         document.getElementById('localVideo').srcObject = localStream;
 
-        peerConnection = new RTCPeerConnection(ICE_SERVERS);
+        const iceServers = await getIceServers();
+        peerConnection = new RTCPeerConnection({ iceServers });
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
         peerConnection.ontrack = event => {
@@ -1238,28 +1267,70 @@
         modal.id = 'activeCallModal';
         modal.className = 'call-modal';
         modal.innerHTML = `
-          <div class="video-box">
+          <div class="video-box" style="position:relative;">
             <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
-            <video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:10px; right:10px; width:90px; height:120px; object-fit:cover; border-radius:10px; border:2px solid white;"></video>
+            <div id="remoteAvatarPlaceholder" class="avatar-placeholder" style="display:none;">
+              <div style="font-size:2rem;">👤</div>
+              <p style="font-size:0.7rem;">Peer Camera Off</p>
+            </div>
+            <video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:8px; right:8px; width:75px; height:100px; object-fit:cover; border-radius:8px; border:2px solid white; z-index:10;"></video>
+            <div id="localAvatarPlaceholder" class="avatar-placeholder" style="position:absolute; bottom:8px; right:8px; width:75px; height:100px; border-radius:8px; border:2px solid white; display:none; z-index:10;">
+              <div style="font-size:1.2rem;">👤</div>
+            </div>
           </div>
-          <div style="display:flex; gap:10px;">
-            <button id="callFlipCameraBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:10px 14px;" onclick="switchCamera('call')">📸 Flip</button>
-            <button class="btn-main" style="background:var(--danger); max-width:200px;" onclick="endCall()">End Call</button>
+          <p id="callStatusText" style="color:white; margin-bottom:10px; font-size:0.85rem; min-height:1.2em;"></p>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
+            <button id="callFlipCameraBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:6px 10px; width:auto; font-size:0.75rem;" onclick="switchCamera('call')">📸 Flip</button>
+            <button id="callMuteBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:6px 10px; width:auto; font-size:0.75rem;" onclick="toggleCallAudio()">🎤 Mute</button>
+            <button id="callCamBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:6px 10px; width:auto; font-size:0.75rem;" onclick="toggleCallCamera()">📹 Camera Off</button>
+            <button class="btn-main" style="background:var(--danger); width:auto; padding:6px 12px; font-size:0.75rem;" onclick="endCall()">End Call</button>
           </div>
         `;
         document.body.appendChild(modal);
       }
       modal.style.display = 'flex';
 
-      // Hide Flip button and video preview for audio calls
       const flipBtn = document.getElementById('callFlipCameraBtn');
+      const camBtn = document.getElementById('callCamBtn');
       const localVid = document.getElementById('localVideo');
       if (type === 'audio') {
         if (localVid) localVid.style.display = 'none';
         if (flipBtn) flipBtn.style.display = 'none';
+        if (camBtn) camBtn.style.display = 'none';
       } else {
         if (localVid) localVid.style.display = 'block';
         if (flipBtn) flipBtn.style.display = 'inline-block';
+        if (camBtn) camBtn.style.display = 'inline-block';
+      }
+    }
+
+    function toggleCallAudio() {
+      if (!localStream) return;
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        const btn = document.getElementById('callMuteBtn');
+        if (btn) btn.textContent = audioTrack.enabled ? "🎤 Mute" : "🎤 Unmute";
+      }
+    }
+
+    function toggleCallCamera() {
+      if (!localStream) return;
+      const videoTrack = localStream.getVideoTracks()[0];
+      const videoEl = document.getElementById('localVideo');
+      const placeholderEl = document.getElementById('localAvatarPlaceholder');
+      const btn = document.getElementById('callCamBtn');
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        if (videoTrack.enabled) {
+          if (videoEl) videoEl.style.display = 'block';
+          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (btn) btn.textContent = "📹 Camera Off";
+        } else {
+          if (videoEl) videoEl.style.display = 'none';
+          if (placeholderEl) placeholderEl.style.display = 'flex';
+          if (btn) btn.textContent = "📹 Camera On";
+        }
       }
     }
 
@@ -1274,15 +1345,83 @@
       activeCall = null;
     }
 
-    // Live Streaming
+    function toggleStreamAudio() {
+      if (!myStream) return;
+      const audioTrack = myStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        const btn = document.getElementById('streamMuteBtn');
+        if (btn) btn.textContent = audioTrack.enabled ? "🎤 Mute" : "🎤 Unmute";
+      }
+    }
+
+    function toggleStreamCamera() {
+      if (!myStream) return;
+      const videoTrack = myStream.getVideoTracks()[0];
+      const videoEl = document.getElementById('hostVideo');
+      const placeholderEl = document.getElementById('hostAvatarPlaceholder');
+      const btn = document.getElementById('streamCamBtn');
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        if (videoTrack.enabled) {
+          if (videoEl) videoEl.style.display = 'block';
+          if (placeholderEl) placeholderEl.style.display = 'none';
+          if (btn) btn.textContent = "📹 Camera Off";
+        } else {
+          if (videoEl) videoEl.style.display = 'none';
+          if (placeholderEl) placeholderEl.style.display = 'flex';
+          if (btn) btn.textContent = "📹 Camera On";
+        }
+      }
+    }
+
+    const livePeers = new Map();
+    let liveChannel = null;
+
+    async function openHostChannel() {
+      if (liveChannel) supabaseClient.removeChannel(liveChannel);
+      liveChannel = supabaseClient.channel('live-' + currentUser.id);
+      const iceServers = await getIceServers();
+      liveChannel
+        .on('broadcast', { event: 'viewer-join' }, async ({ payload }) => {
+          const viewerId = payload && payload.viewerId;
+          if (!myStream || !viewerId) return;
+          const old = livePeers.get(viewerId);
+          if (old) { old.close(); livePeers.delete(viewerId); }
+
+          const pc = new RTCPeerConnection({ iceServers });
+          livePeers.set(viewerId, pc);
+          myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          liveChannel.send({ type: 'broadcast', event: 'offer', payload: { to: viewerId, sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } } });
+        })
+        .on('broadcast', { event: 'answer' }, async ({ payload }) => {
+          const pc = livePeers.get(payload.from);
+          if (pc && !pc.currentRemoteDescription) {
+            try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch (e) {}
+          }
+        })
+        .on('broadcast', { event: 'viewer-leave' }, ({ payload }) => {
+          const pc = livePeers.get(payload.viewerId);
+          if (pc) { pc.close(); livePeers.delete(payload.viewerId); }
+        })
+        .subscribe();
+    }
+
     async function toggleGroupStream() {
       const btn = document.getElementById('btnStreamToggle');
       const giftBtn = document.getElementById('streamGiftBtn');
       const badge = document.getElementById('liveBadgeEl');
+      const muteBtn = document.getElementById('streamMuteBtn');
+      const camBtn = document.getElementById('streamCamBtn');
 
       if (!isStreaming) {
         try {
-          myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
+          myStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, 
+            video: { facingMode: currentFacingMode } 
+          });
           const hostVideo = document.getElementById('hostVideo');
           hostVideo.srcObject = myStream;
           hostVideo.muted = true;
@@ -1290,6 +1429,8 @@
           isStreaming = true;
           btn.innerText = 'Stop Live';
           btn.style.background = 'var(--danger)';
+          if (muteBtn) muteBtn.style.display = 'inline-block';
+          if (camBtn) camBtn.style.display = 'inline-block';
 
           if (giftBtn) giftBtn.style.display = 'none';
           if (badge) badge.style.display = 'none';
@@ -1298,14 +1439,24 @@
             user_id: currentUser.id,
             is_active: true
           });
+          await openHostChannel();
         } catch (err) {
           alert('Could not access microphone and camera for live streaming.');
         }
       } else {
+        if (liveChannel) liveChannel.send({ type: 'broadcast', event: 'ended', payload: {} });
+        livePeers.forEach(pc => pc.close());
+        livePeers.clear();
+        if (liveChannel) { supabaseClient.removeChannel(liveChannel); liveChannel = null; }
+
         if (myStream) myStream.getTracks().forEach(t => t.stop());
         isStreaming = false;
         btn.innerText = 'Start Live';
         btn.style.background = 'var(--primary)';
+        if (muteBtn) muteBtn.style.display = 'none';
+        if (camBtn) camBtn.style.display = 'none';
+        const placeholder = document.getElementById('hostAvatarPlaceholder');
+        if (placeholder) placeholder.style.display = 'none';
 
         if (giftBtn) giftBtn.style.display = 'flex';
         if (badge) badge.style.display = 'none';
@@ -1314,14 +1465,64 @@
       }
     }
 
+    let viewerPc = null;
+    let watchingHostId = null;
+
     function joinLiveStream(streamId) {
+      const item = (globalLiveStreams || []).find(s => String(s.id) === String(streamId));
+      const hostId = item && item.user_id;
+      const nav = document.querySelectorAll('.nav-item')[1];
+      if (!hostId) { alert('Stream not available.'); return; }
+      if (isStreaming || hostId === currentUser.id) { switchTab('liveTab', nav); return; }
+
       const giftBtn = document.getElementById('streamGiftBtn');
       const badge = document.getElementById('liveBadgeEl');
-
       if (giftBtn) giftBtn.style.display = 'flex';
       if (badge) badge.style.display = 'block';
+      switchTab('liveTab', nav);
 
-      switchTab('liveTab', document.querySelectorAll('.nav-item')[1]);
+      if (watchingHostId) leaveLive();
+      watchingHostId = hostId;
+      const video = document.getElementById('hostVideo');
+      video.muted = false;
+
+      liveChannel = supabaseClient.channel('live-' + hostId);
+      liveChannel
+        .on('broadcast', { event: 'offer' }, async ({ payload }) => {
+          if (!payload || payload.to !== currentUser.id || watchingHostId !== hostId) return;
+          if (viewerPc) viewerPc.close();
+          const iceServers = await getIceServers();
+          viewerPc = new RTCPeerConnection({ iceServers });
+          viewerPc.ontrack = ev => {
+            video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
+            video.play().catch(() => {});
+          };
+          await viewerPc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          const answer = await viewerPc.createAnswer();
+          await viewerPc.setLocalDescription(answer);
+          liveChannel.send({ type: 'broadcast', event: 'answer', payload: { from: currentUser.id, sdp: { type: viewerPc.localDescription.type, sdp: viewerPc.localDescription.sdp } } });
+        })
+        .on('broadcast', { event: 'ended' }, () => {
+          leaveLive();
+          alert('The live stream has ended.');
+        })
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            liveChannel.send({ type: 'broadcast', event: 'viewer-join', payload: { viewerId: currentUser.id } });
+          }
+        });
+    }
+
+    function leaveLive() {
+      if (watchingHostId && liveChannel) {
+        liveChannel.send({ type: 'broadcast', event: 'viewer-leave', payload: { viewerId: currentUser.id } });
+        supabaseClient.removeChannel(liveChannel);
+        liveChannel = null;
+      }
+      if (viewerPc) { viewerPc.close(); viewerPc = null; }
+      watchingHostId = null;
+      const v = document.getElementById('hostVideo');
+      if (v && !isStreaming) v.srcObject = null;
     }
 
     function handleLiveChatKey(e) {
@@ -1355,7 +1556,6 @@
       document.getElementById('customNairaAmount').value = naira;
     }
 
-    // Paystack Integration
     function payWithPaystack() {
       const naira = parseInt(document.getElementById('customNairaAmount').value);
       const email = document.getElementById('userEmail').value || currentUser.email;
@@ -1437,7 +1637,7 @@
 
       if (type === 'account') {
         title.innerText = 'Manage Account';
-        body.innerHTML = `<p style="font-size:0.9rem; color:var(--text-dim);">Email: ${currentUser.email}</p><button class="btn-main" style="margin-top:15px; background:var(--danger);" onclick="handleLogout()">Logout</button>`;
+        body.innerHTML = `<p style="font-size:0.85rem; color:var(--text-dim);">Email: ${currentUser.email}</p><button class="btn-main" style="margin-top:12px; background:var(--danger); padding:10px; font-size:0.85rem;" onclick="handleLogout()">Logout</button>`;
       } else if (type === 'privacy') {
         title.innerText = 'Privacy Settings';
         body.innerHTML = `
@@ -1454,7 +1654,7 @@
           <div class="setting-row"><span>Live Stream Alerts</span><input type="checkbox" checked></div>`;
       } else if (type === 'verification') {
         title.innerText = 'Verification';
-        body.innerHTML = `<p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:15px;">Verify your account to earn the blue checkmark badge.</p><button class="btn-main">Request Verification</button>`;
+        body.innerHTML = `<p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:12px;">Verify your account to earn the blue checkmark badge.</p><button class="btn-main" style="padding:10px; font-size:0.85rem;">Request Verification</button>`;
       } else if (type === 'prefs') {
         title.innerText = 'Preferences';
         body.innerHTML = `<div class="setting-row"><span>Dark Mode</span><input type="checkbox" checked></div>`;
@@ -1519,11 +1719,11 @@
     }
 
     async function loadUserPosts() {
-      document.getElementById('userPostsList').innerHTML = '<p style="color:var(--text-dim);">No posts created yet.</p>';
+      document.getElementById('userPostsList').innerHTML = '<p style="color:var(--text-dim); font-size:0.8rem;">No posts created yet.</p>';
     }
 
     async function loadStreamActivity() {
-      document.getElementById('streamActivityList').innerHTML = '<p>No recent stream activity recorded.</p>';
+      document.getElementById('streamActivityList').innerHTML = '<p style="font-size:0.75rem;">No recent stream activity recorded.</p>';
     }
 
     function openWhatsApp() {
@@ -1537,758 +1737,6 @@
       if (!acc) { alert('Please enter your account number.'); return; }
       alert('Withdrawal request submitted successfully! Processing within 24 hours.');
     }
-  </script>
-
-  <!-- ===== CALL / LIVE / RING FIXES (runs after the main script) ===== -->
-  <script>
-/* NAIJALITE - call, live-stream and call-alert fixes (inlined) */
-(function () {
-  'use strict';
-
-  // =====================================================================
-  // CONFIG - fill these in
-  // =====================================================================
-
-  // TURN is REQUIRED for calls/streams between different mobile networks.
-  // Easiest: create a free account at https://www.metered.ca , open TURN Server ->
-  // "Credentials API" and paste the URL here, e.g.
-  //   'https://YOURAPP.metered.live/api/v1/turn/credentials?apiKey=YOUR_KEY'
-  const TURN_CREDENTIALS_URL = '';
-
-  // ...or paste fixed servers instead:
-  // { urls: 'turn:HOST:443?transport=tcp', username: 'USER', credential: 'PASS' }
-  // >>> PASTE YOUR TURN DETAILS BELOW (from your ExpressTURN dashboard). Do NOT use the Secret Key. <<<
-  const STATIC_TURN_SERVERS = [
-    // { urls: 'turn:YOUR_HOST:3478', username: 'YOUR_USERNAME', credential: 'YOUR_PASSWORD' }
-  ];
-
-  // Web Push public key. Generate a pair with:  npx web-push generate-vapid-keys
-  const VAPID_PUBLIC_KEY = '';
-
-  const RING_TIMEOUT_MS = 45000;
-
-  // =====================================================================
-  // Helpers
-  // =====================================================================
-  const $ = id => document.getElementById(id);
-  const sdpJson = d => ({ type: d.type, sdp: d.sdp });
-  const asObj = v => (typeof v === 'string' ? JSON.parse(v) : v);
-
-  let iceCache = null, iceCacheAt = 0;
-  async function getIceServers() {
-    if (iceCache && Date.now() - iceCacheAt < 10 * 60 * 1000) return iceCache;
-    let servers = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ];
-    try {
-      if (TURN_CREDENTIALS_URL) {
-        const r = await fetch(TURN_CREDENTIALS_URL);
-        const turn = await r.json();
-        if (Array.isArray(turn)) servers = servers.concat(turn);
-      }
-    } catch (e) { console.warn('[ice] TURN credentials fetch failed', e); }
-    servers = servers.concat(STATIC_TURN_SERVERS);
-    if (servers.length <= 2) {
-      console.warn('[ice] No TURN server configured - calls and streams will fail on many mobile networks.');
-    }
-    iceCache = servers;
-    iceCacheAt = Date.now();
-    return servers;
-  }
-
-  // Wait until ALL ICE candidates are inside the SDP, so we never lose candidates
-  // (the old code sent candidates separately and the other side often missed them).
-  function waitForIce(pc, ms) {
-    ms = ms || 4000;
-    return new Promise(resolve => {
-      if (pc.iceGatheringState === 'complete') return resolve();
-      let timer = null;
-      const check = () => { if (pc.iceGatheringState === 'complete') finish(); };
-      const finish = () => {
-        pc.removeEventListener('icegatheringstatechange', check);
-        clearTimeout(timer);
-        resolve();
-      };
-      timer = setTimeout(finish, ms);
-      pc.addEventListener('icegatheringstatechange', check);
-    });
-  }
-
-  function getMedia(type, facing) {
-    return navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: type === 'video' ? { facingMode: facing } : false
-    });
-  }
-
-  function mediaErrorText(err) {
-    if (!navigator.mediaDevices) return 'Camera/microphone need HTTPS.';
-    if (err && err.name === 'NotAllowedError') return 'Microphone/camera permission was denied. Allow it in your browser settings and try again.';
-    if (err && err.name === 'NotFoundError') return 'No microphone/camera found on this device.';
-    return 'Could not start the call: ' + (err && err.message ? err.message : err);
-  }
-
-  // Console helper: run  await nlCheckIce()  to see if TURN works ("relay" must appear)
-  window.nlCheckIce = async function () {
-    const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
-    const types = new Set();
-    pc.onicecandidate = e => { if (e.candidate) types.add(e.candidate.type); };
-    pc.createDataChannel('x');
-    await pc.setLocalDescription(await pc.createOffer());
-    await waitForIce(pc, 6000);
-    pc.close();
-    const out = Array.from(types);
-    console.log('ICE candidate types:', out, out.includes('relay') ? 'TURN works' : 'NO relay candidate - TURN is not working');
-    return out;
-  };
-
-  // =====================================================================
-  // Ringtone (plays only if the user has interacted with the page before)
-  // =====================================================================
-  let ringCtx = null, ringTimer = null;
-  function startRingtone() {
-    stopRingtone();
-    try {
-      ringCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (ringCtx.resume) ringCtx.resume();
-      const beep = () => {
-        if (!ringCtx) return;
-        const o = ringCtx.createOscillator();
-        const g = ringCtx.createGain();
-        o.frequency.value = 480;
-        g.gain.value = 0.2;
-        o.connect(g); g.connect(ringCtx.destination);
-        o.start(); o.stop(ringCtx.currentTime + 0.5);
-        if (navigator.vibrate) navigator.vibrate([300, 200, 300]);
-      };
-      beep();
-      ringTimer = setInterval(beep, 1800);
-    } catch (e) { /* no audio, ignore */ }
-  }
-  function stopRingtone() {
-    clearInterval(ringTimer); ringTimer = null;
-    if (ringCtx) { try { ringCtx.close(); } catch (e) {} ringCtx = null; }
-  }
-
-  // =====================================================================
-  // Realtime listeners (incoming calls + live list)
-  // =====================================================================
-  function setupRealtimeListeners() {
-    if (callSub) supabaseClient.removeChannel(callSub);
-
-    callSub = supabaseClient
-      .channel('calls-for-' + currentUser.id)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'calls', filter: 'receiver_id=eq.' + currentUser.id },
-        payload => { if (payload.new.status === 'ringing') showIncomingCallModal(payload.new); })
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'calls', filter: 'receiver_id=eq.' + currentUser.id },
-        payload => {
-          // caller hung up before we answered
-          if (incomingCallPayload && payload.new.id === incomingCallPayload.id && payload.new.status !== 'ringing') {
-            hideIncomingCall();
-          }
-        })
-      .subscribe();
-
-    supabaseClient
-      .channel('public:livestreams')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'livestreams' }, () => { loadHomeFeed(); })
-      .subscribe();
-  }
-
-  // The realtime INSERT is missed if the tab was asleep, so also look for a call
-  // that is ringing right now whenever the app is opened / brought to the front.
-  async function checkPendingCalls() {
-    if (!currentUser || activeCall || incomingCallPayload) return;
-    try {
-      const since = new Date(Date.now() - 40000).toISOString();
-      const { data } = await supabaseClient.from('calls').select('*')
-        .eq('receiver_id', currentUser.id)
-        .eq('status', 'ringing')
-        .gt('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (data && data.length) showIncomingCallModal(data[0]);
-    } catch (e) { console.warn('[calls] pending check failed', e); }
-  }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkPendingCalls(); });
-  window.addEventListener('focus', checkPendingCalls);
-
-  // =====================================================================
-  // 1-to-1 CALLS
-  // =====================================================================
-  function setStatus(t) { const el = $('callStatusText'); if (el) el.textContent = t || ''; }
-
-  function showCallModal(type) {
-    let modal = $('activeCallModal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'activeCallModal';
-      modal.className = 'call-modal';
-      modal.innerHTML =
-        '<div class="video-box">' +
-          '<video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>' +
-          '<video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:10px; right:10px; width:90px; height:120px; object-fit:cover; border-radius:10px; border:2px solid white;"></video>' +
-        '</div>' +
-        '<p id="callStatusText" style="color:white; margin-bottom:16px; min-height:1.2em;"></p>' +
-        '<div style="display:flex; gap:10px;">' +
-          '<button id="callFlipCameraBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:10px 14px;" onclick="switchCamera(\'call\')">📸 Flip</button>' +
-          '<button class="btn-main" style="background:var(--danger); max-width:200px;" onclick="endCall()">End Call</button>' +
-        '</div>';
-      document.body.appendChild(modal);
-    }
-    modal.style.display = 'flex';
-    const flipBtn = $('callFlipCameraBtn');
-    const localVid = $('localVideo');
-    if (type === 'audio') {
-      if (localVid) localVid.style.display = 'none';
-      if (flipBtn) flipBtn.style.display = 'none';
-    } else {
-      if (localVid) localVid.style.display = 'block';
-      if (flipBtn) flipBtn.style.display = 'inline-block';
-    }
-  }
-
-  async function newCallPeer() {
-    const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
-    pc.ontrack = ev => {
-      remoteStream = ev.streams[0] || new MediaStream([ev.track]);
-      const rv = $('remoteVideo');
-      if (rv) { rv.srcObject = remoteStream; rv.muted = false; rv.play().catch(() => {}); }
-    };
-    pc.oniceconnectionstatechange = () => console.log('[call] ice state:', pc.iceConnectionState);
-    pc.onconnectionstatechange = () => {
-      console.log('[call] connection state:', pc.connectionState);
-      if (pc !== peerConnection) return;
-      if (pc.connectionState === 'connected') setStatus('Connected');
-      if (pc.connectionState === 'failed') {
-        endCall(true, 'Call connection failed. This almost always means no TURN server is configured (see call-fixes.js).');
-      }
-    };
-    return pc;
-  }
-
-  async function handleCallRow(c) {
-    if (!c || !activeCall || activeCall.callId !== c.id) return;
-    if (activeCall.isCaller && c.answer && c.status === 'answered' && peerConnection && !peerConnection.remoteDescription) {
-      clearTimeout(activeCall.ringTimeout);
-      setStatus('Connecting...');
-      try { await peerConnection.setRemoteDescription(new RTCSessionDescription(asObj(c.answer))); }
-      catch (e) { console.error('[call] setRemoteDescription(answer) failed', e); }
-    }
-    if (c.status === 'declined') endCall(false, 'Call declined');
-    else if (c.status === 'ended') endCall(false);
-  }
-
-  function watchCall(callId) {
-    if (callChannel) supabaseClient.removeChannel(callChannel);
-    callChannel = supabaseClient
-      .channel('call-' + callId)
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'calls', filter: 'id=eq.' + callId },
-        payload => handleCallRow(payload.new))
-      .subscribe(async status => {
-        if (status === 'SUBSCRIBED') {
-          // catch anything that happened before we were subscribed
-          const { data } = await supabaseClient.from('calls').select('*').eq('id', callId).single();
-          handleCallRow(data);
-        }
-      });
-  }
-  let callChannel = null;
-
-  async function startCall(type) {
-    if (!currentChatUser || activeCall) return;
-    if (!navigator.mediaDevices) { alert('Camera/microphone need HTTPS.'); return; }
-    const peerId = currentChatUser.id;
-    activeCall = { type: type, peerId: peerId, isCaller: true, callId: null };
-    showCallModal(type);
-    setStatus('Calling...');
-
-    try {
-      localStream = await getMedia(type, currentFacingMode);
-      $('localVideo').srcObject = localStream;
-
-      peerConnection = await newCallPeer();
-      localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      await waitForIce(peerConnection);
-
-      const { data: call, error } = await supabaseClient.from('calls').insert({
-        caller_id: currentUser.id,
-        receiver_id: peerId,
-        call_type: type,
-        offer: sdpJson(peerConnection.localDescription),
-        status: 'ringing'
-      }).select().single();
-      if (error) throw error;
-      if (!activeCall) return; // user hung up while we were setting up
-
-      activeCall.callId = call.id;
-      watchCall(call.id);
-
-      supabaseClient.from('messages').insert({
-        sender_id: currentUser.id,
-        receiver_id: peerId,
-        message: type.toUpperCase() + ' call initiated',
-        is_call_log: true
-      }).then(() => {});
-
-      activeCall.ringTimeout = setTimeout(() => {
-        if (activeCall && !peerConnection.remoteDescription) endCall(true, 'No answer');
-      }, RING_TIMEOUT_MS);
-    } catch (err) {
-      console.error('[call] start failed', err);
-      endCall(true, mediaErrorText(err));
-    }
-  }
-
-  async function showIncomingCallModal(call) {
-    if (incomingCallPayload && incomingCallPayload.id === call.id) return;
-    if (activeCall) { // busy
-      supabaseClient.from('calls').update({ status: 'declined' }).eq('id', call.id).then(() => {});
-      return;
-    }
-    incomingCallPayload = call;
-    $('incomingCallerName').textContent = 'Incoming ' + call.call_type + ' call';
-    $('incomingCallType').textContent = 'Tap Accept to answer';
-    $('incomingCallBox').style.display = 'block';
-    startRingtone();
-    setTimeout(() => {
-      if (incomingCallPayload && incomingCallPayload.id === call.id) hideIncomingCall();
-    }, RING_TIMEOUT_MS);
-
-    try {
-      const { data } = await supabaseClient.from('profiles').select('username, avatar_url').eq('id', call.caller_id).single();
-      if (data && incomingCallPayload && incomingCallPayload.id === call.id) {
-        $('incomingCallerName').textContent = data.username || 'Someone';
-        $('incomingCallType').textContent = 'Incoming ' + call.call_type + ' call';
-        if (data.avatar_url) $('incomingCallerAvatar').src = data.avatar_url;
-      }
-    } catch (e) { /* name is optional */ }
-  }
-
-  function hideIncomingCall() {
-    stopRingtone();
-    const box = $('incomingCallBox');
-    if (box) box.style.display = 'none';
-    incomingCallPayload = null;
-  }
-
-  async function acceptCall() {
-    const call = incomingCallPayload;
-    hideIncomingCall();
-    if (!call || activeCall) return;
-    if (!navigator.mediaDevices) { alert('Camera/microphone need HTTPS.'); return; }
-
-    activeCall = { type: call.call_type, peerId: call.caller_id, isCaller: false, callId: call.id };
-    showCallModal(call.call_type);
-    setStatus('Connecting...');
-
-    try {
-      // make sure the call is still ringing and use the freshest offer
-      const { data: fresh } = await supabaseClient.from('calls').select('status, offer').eq('id', call.id).single();
-      if (!fresh || fresh.status !== 'ringing') { endCall(false, 'This call has already ended.'); return; }
-
-      // getUserMedia is the first await-heavy step triggered by the Accept tap
-      localStream = await getMedia(call.call_type, currentFacingMode);
-      $('localVideo').srcObject = localStream;
-
-      peerConnection = await newCallPeer();
-      localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(asObj(fresh.offer)));
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      await waitForIce(peerConnection);
-
-      const { error } = await supabaseClient.from('calls')
-        .update({ answer: sdpJson(peerConnection.localDescription), status: 'answered' })
-        .eq('id', call.id);
-      if (error) throw error;
-
-      watchCall(call.id);
-    } catch (err) {
-      console.error('[call] accept failed', err);
-      endCall(true, mediaErrorText(err));
-    }
-  }
-
-  function declineCall() {
-    const call = incomingCallPayload;
-    hideIncomingCall();
-    if (call) supabaseClient.from('calls').update({ status: 'declined' }).eq('id', call.id).then(() => {});
-  }
-
-  // notifyPeer = true  -> tell the other side the call is over
-  function endCall(notifyPeer, message) {
-    if (notifyPeer === undefined) notifyPeer = true;
-    const call = activeCall;
-    if (call && call.ringTimeout) clearTimeout(call.ringTimeout);
-    if (notifyPeer && call && call.callId) {
-      supabaseClient.from('calls').update({ status: 'ended' }).eq('id', call.callId).then(() => {});
-    }
-    if (callChannel) { supabaseClient.removeChannel(callChannel); callChannel = null; }
-    if (localStream) localStream.getTracks().forEach(t => t.stop());
-    if (peerConnection) {
-      peerConnection.ontrack = null;
-      peerConnection.onconnectionstatechange = null;
-      peerConnection.close();
-    }
-    peerConnection = null; localStream = null; remoteStream = null; activeCall = null;
-    const rv = $('remoteVideo'); if (rv) rv.srcObject = null;
-    const modal = $('activeCallModal'); if (modal) modal.style.display = 'none';
-    if (typeof message === 'string' && message) alert(message);
-  }
-
-  // =====================================================================
-  // LIVE STREAMING  (host -> viewers, WebRTC, signalling over Supabase Realtime Broadcast)
-  // Peer-to-peer, so good for roughly 5-8 viewers per host. For more, use LiveKit / Agora.
-  // =====================================================================
-  const livePeers = new Map(); // host side: viewerId -> RTCPeerConnection
-  let liveChannel = null;
-  let viewerPc = null;
-  let watchingHostId = null;
-  let liveRetryTimer = null;
-
-  function sendLive(event, payload) {
-    if (liveChannel) liveChannel.send({ type: 'broadcast', event: event, payload: payload });
-  }
-  function closeLiveChannel() {
-    if (liveChannel) { supabaseClient.removeChannel(liveChannel); liveChannel = null; }
-  }
-
-  function removeUnmuteButton() { const b = $('liveUnmuteBtn'); if (b) b.remove(); }
-  function showUnmuteButton() {
-    if ($('liveUnmuteBtn')) return;
-    const box = document.querySelector('.live-container');
-    if (!box) return;
-    const b = document.createElement('button');
-    b.id = 'liveUnmuteBtn';
-    b.className = 'btn-main';
-    b.textContent = '🔊 Tap to hear the host';
-    b.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:auto; padding:12px 20px; z-index:20; background:var(--accent); color:black;';
-    b.onclick = () => {
-      const v = $('hostVideo');
-      v.muted = false;
-      v.play().catch(() => {});
-      removeUnmuteButton();
-    };
-    box.appendChild(b);
-  }
-  function playLiveVideo() {
-    const v = $('hostVideo');
-    v.muted = false;
-    v.play().then(removeUnmuteButton).catch(() => {
-      v.muted = true;            // browsers only allow muted autoplay without a tap
-      v.play().catch(() => {});
-      showUnmuteButton();
-    });
-  }
-
-  // ---------- host ----------
-  function openHostChannel() {
-    closeLiveChannel();
-    liveChannel = supabaseClient.channel('live-' + currentUser.id);
-    liveChannel
-      .on('broadcast', { event: 'viewer-join' }, async ({ payload }) => {
-        const viewerId = payload && payload.viewerId;
-        if (!myStream || !viewerId) return;
-        const old = livePeers.get(viewerId);
-        if (old) { old.close(); livePeers.delete(viewerId); }
-
-        const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
-        livePeers.set(viewerId, pc);
-        myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
-        pc.onconnectionstatechange = () => {
-          console.log('[live host] viewer', viewerId, pc.connectionState);
-          if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-            pc.close();
-            if (livePeers.get(viewerId) === pc) livePeers.delete(viewerId);
-          }
-        };
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        await waitForIce(pc);
-        sendLive('offer', { to: viewerId, sdp: sdpJson(pc.localDescription) });
-      })
-      .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-        const pc = livePeers.get(payload.from);
-        if (pc && !pc.currentRemoteDescription) {
-          try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); }
-          catch (e) { console.error('[live host] bad answer', e); }
-        }
-      })
-      .on('broadcast', { event: 'viewer-leave' }, ({ payload }) => {
-        const pc = livePeers.get(payload.viewerId);
-        if (pc) { pc.close(); livePeers.delete(payload.viewerId); }
-      })
-      .subscribe();
-  }
-
-  async function toggleGroupStream() {
-    const btn = $('btnStreamToggle');
-    const giftBtn = $('streamGiftBtn');
-    const badge = $('liveBadgeEl');
-    const hostVideo = $('hostVideo');
-
-    if (!isStreaming) {
-      try {
-        if (!navigator.mediaDevices) { alert('Camera/microphone need HTTPS.'); return; }
-        if (watchingHostId) leaveLive();
-        myStream = await getMedia('video', currentFacingMode);
-        if (!myStream.getAudioTracks().length) {
-          alert('Warning: no microphone was captured, viewers will not hear you.');
-        }
-        hostVideo.srcObject = myStream;
-        hostVideo.muted = true;          // only mutes YOUR preview (prevents echo); viewers get the audio
-        hostVideo.play().catch(() => {});
-        removeUnmuteButton();
-
-        isStreaming = true;
-        btn.innerText = 'Stop Live';
-        btn.style.background = 'var(--danger)';
-        if (giftBtn) giftBtn.style.display = 'none';
-        if (badge) badge.style.display = 'none';
-
-        const upd = await supabaseClient.from('livestreams')
-          .update({ is_active: true }).eq('user_id', currentUser.id).select();
-        if (!upd.data || !upd.data.length) {
-          await supabaseClient.from('livestreams').insert({ user_id: currentUser.id, is_active: true });
-        }
-        openHostChannel();
-      } catch (err) {
-        console.error('[live] start failed', err);
-        if (myStream) myStream.getTracks().forEach(t => t.stop());
-        isStreaming = false;
-        alert(mediaErrorText(err));
-      }
-    } else {
-      sendLive('ended', {});
-      livePeers.forEach(pc => pc.close());
-      livePeers.clear();
-      setTimeout(closeLiveChannel, 500);
-
-      if (myStream) myStream.getTracks().forEach(t => t.stop());
-      myStream = null;
-      hostVideo.srcObject = null;
-      isStreaming = false;
-      btn.innerText = 'Start Live';
-      btn.style.background = 'var(--primary)';
-      if (giftBtn) giftBtn.style.display = 'flex';
-      if (badge) badge.style.display = 'none';
-
-      await supabaseClient.from('livestreams').update({ is_active: false }).eq('user_id', currentUser.id);
-    }
-  }
-
-  // ---------- viewer ----------
-  function leaveLive() {
-    clearTimeout(liveRetryTimer);
-    if (watchingHostId) {
-      sendLive('viewer-leave', { viewerId: currentUser.id });
-      const ch = liveChannel; liveChannel = null;
-      setTimeout(() => { if (ch) supabaseClient.removeChannel(ch); }, 300);
-    }
-    if (viewerPc) { viewerPc.close(); viewerPc = null; }
-    watchingHostId = null;
-    removeUnmuteButton();
-    const v = $('hostVideo');
-    if (v && !isStreaming) v.srcObject = null;
-  }
-
-  function joinLiveStream(streamId) {
-    const item = (globalLiveStreams || []).find(s => String(s.id) === String(streamId));
-    const hostId = item && item.user_id;
-    const nav = document.querySelectorAll('.nav-item')[1];
-    if (!hostId) { alert('This live stream is not available.'); return; }
-    if (isStreaming || hostId === currentUser.id) { switchTab('liveTab', nav); return; }
-
-    const giftBtn = $('streamGiftBtn');
-    const badge = $('liveBadgeEl');
-    if (giftBtn) giftBtn.style.display = 'flex';
-    if (badge) badge.style.display = 'block';
-    switchTab('liveTab', nav);
-
-    leaveLive();
-    watchingHostId = hostId;
-    const video = $('hostVideo');
-    video.muted = false;
-
-    liveChannel = supabaseClient.channel('live-' + hostId);
-    liveChannel
-      .on('broadcast', { event: 'offer' }, async ({ payload }) => {
-        if (!payload || payload.to !== currentUser.id || watchingHostId !== hostId) return;
-        if (viewerPc) viewerPc.close();
-        const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
-        viewerPc = pc;
-        pc.ontrack = ev => {
-          video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
-          playLiveVideo();
-        };
-        pc.onconnectionstatechange = () => {
-          console.log('[live viewer] connection state:', pc.connectionState);
-          if (pc.connectionState === 'failed' && pc === viewerPc) {
-            leaveLive();
-            alert('Could not connect to the live stream. This usually means no TURN server is configured.');
-          }
-        };
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await waitForIce(pc);
-        sendLive('answer', { from: currentUser.id, sdp: sdpJson(pc.localDescription) });
-      })
-      .on('broadcast', { event: 'ended' }, () => {
-        leaveLive();
-        alert('The live stream has ended.');
-      })
-      .subscribe(status => {
-        if (status !== 'SUBSCRIBED') return;
-        const attempt = n => {
-          if (watchingHostId !== hostId || viewerPc) return;
-          if (n > 3) { leaveLive(); alert('The host is not available right now.'); return; }
-          sendLive('viewer-join', { viewerId: currentUser.id });
-          liveRetryTimer = setTimeout(() => attempt(n + 1), 6000);
-        };
-        attempt(1);
-      });
-  }
-
-  // =====================================================================
-  // Camera flip (works for calls and for the live stream)
-  // =====================================================================
-  function swapTracks(pcs, stream) {
-    pcs.forEach(pc => pc.getSenders().forEach(s => {
-      if (!s.track) return;
-      const nt = stream.getTracks().find(t => t.kind === s.track.kind);
-      if (nt) s.replaceTrack(nt).catch(console.error);
-    }));
-  }
-
-  async function switchCamera(mode) {
-    const next = currentFacingMode === 'user' ? 'environment' : 'user';
-    try {
-      if (mode === 'stream' && isStreaming) {
-        const s = await getMedia('video', next);
-        currentFacingMode = next;
-        swapTracks(Array.from(livePeers.values()), s);
-        if (myStream) myStream.getTracks().forEach(t => t.stop());
-        myStream = s;
-        const hv = $('hostVideo'); hv.srcObject = s; hv.muted = true;
-      } else if (mode === 'call' && localStream && activeCall && activeCall.type === 'video') {
-        const s = await getMedia('video', next);
-        currentFacingMode = next;
-        if (peerConnection) swapTracks([peerConnection], s);
-        localStream.getTracks().forEach(t => t.stop());
-        localStream = s;
-        $('localVideo').srcObject = s;
-      }
-    } catch (e) {
-      console.error(e);
-      alert('Could not switch camera.');
-    }
-  }
-
-  // =====================================================================
-  // Call alerts when the app is closed (Web Push)
-  // =====================================================================
-  let swListenerAdded = false;
-  async function registerSW() {
-    if (!('serviceWorker' in navigator)) return;
-    try {
-      await navigator.serviceWorker.register('/sw.js');
-      if (!swListenerAdded) {
-        swListenerAdded = true;
-        navigator.serviceWorker.addEventListener('message', e => { if (e.data === 'check-calls') checkPendingCalls(); });
-      }
-    } catch (e) { console.warn('[push] service worker registration failed', e); }
-  }
-
-  function urlB64ToUint8Array(b64) {
-    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
-    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
-    return Uint8Array.from(raw, c => c.charCodeAt(0));
-  }
-
-  async function enableCallAlerts() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-      alert('Notifications are not supported in this browser.\n\niPhone: open the site in Safari, tap Share > Add to Home Screen, open it from the Home Screen, then try again (iOS 16.4+).');
-      return;
-    }
-    if (!VAPID_PUBLIC_KEY) { alert('VAPID_PUBLIC_KEY is not set in call-fixes.js yet.'); return; }
-    try {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') { alert('Notifications are blocked. Allow them in your browser/site settings, then try again.'); return; }
-      await registerSW();
-      const reg = await navigator.serviceWorker.ready;
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY)
-        });
-      }
-      const { error } = await supabaseClient.from('push_subscriptions').upsert(
-        { user_id: currentUser.id, endpoint: sub.endpoint, subscription: sub.toJSON() },
-        { onConflict: 'endpoint' }
-      );
-      if (error) throw error;
-      alert('Call alerts are now enabled on this device.');
-    } catch (e) {
-      console.error('[push] enable failed', e);
-      alert('Could not enable call alerts: ' + (e.message || e));
-    }
-  }
-
-  // =====================================================================
-  // Install overrides
-  // =====================================================================
-  const _initApp = window.initApp;
-  const _switchTab = window.switchTab;
-  const _openSettings = window.openSettings;
-
-  window.setupRealtimeListeners = setupRealtimeListeners;
-  window.checkPendingCalls = checkPendingCalls;
-  window.showCallModal = showCallModal;
-  window.startCall = startCall;
-  window.showIncomingCallModal = showIncomingCallModal;
-  window.acceptCall = acceptCall;
-  window.declineCall = declineCall;
-  window.endCall = endCall;
-  window.toggleGroupStream = toggleGroupStream;
-  window.joinLiveStream = joinLiveStream;
-  window.switchCamera = switchCamera;
-  window.enableCallAlerts = enableCallAlerts;
-
-  window.initApp = async function () {
-    await _initApp.apply(this, arguments);
-    registerSW();
-    checkPendingCalls();
-  };
-
-  window.switchTab = function (tabId) {
-    if (tabId !== 'liveTab' && watchingHostId) leaveLive();
-    return _switchTab.apply(this, arguments);
-  };
-
-  window.openSettings = function (type) {
-    _openSettings.apply(this, arguments);
-    if (type === 'notifications') {
-      $('settingsBody').innerHTML =
-        '<p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:12px;">Get a notification when someone calls you, even when the app is closed.</p>' +
-        '<button class="btn-main" onclick="enableCallAlerts()">🔔 Enable call alerts on this device</button>' +
-        '<div class="setting-row" style="margin-top:12px;"><span>Live Stream Alerts</span><input type="checkbox" checked></div>';
-    }
-  };
-
-  console.log('[call-fixes] loaded');
-})();
-
   </script>
 </body>
 </html>
