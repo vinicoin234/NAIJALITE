@@ -11,6 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
   <!-- Paystack SDK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- Daily.co SDK -->
+  <script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
   <!-- Animate.css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
@@ -28,7 +30,7 @@
     .spinner { width: 36px; height: 36px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    #authScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
     .auth-wrapper { width: 100%; max-width: 320px; text-align: center; animation: fadeIn 0.5s; }
     .auth-logo { width: 70px; height: 70px; border-radius: 16px; object-fit: cover; box-shadow: 0 6px 16px rgba(0,0,0,0.4); border: 2px solid var(--primary); background: white; margin-bottom: 12px; }
     .auth-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; color: white; }
@@ -39,6 +41,8 @@
     .auth-input { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 10px; color: white; margin-bottom: 12px; font-size: 0.95rem; }
     .auth-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px; display: block; }
     .btn-auth { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.3s; margin-top: 4px; }
+    
+    .auth-error { color: var(--danger); font-size: 0.75rem; margin-top: 8px; text-align: center; display: none; }
 
     header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 12px 16px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 3px 12px rgba(0,0,0,0.2); }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
@@ -61,101 +65,28 @@
     .nav-item.active { color: var(--primary); font-weight: bold; }
     .nav-item div { font-size: 1.2rem; margin-bottom: 2px; }
 
-    .profile-menu { display: flex; justify-content: space-around; margin-bottom: 16px; background: var(--card); padding: 8px; border-radius: 12px; border: 1px solid var(--border); }
-    .profile-menu-item { font-size: 0.75rem; cursor: pointer; padding: 6px 10px; border-radius: 8px; color: var(--text-dim); }
-    .profile-menu-item.active { background: var(--primary); color: white; }
-    .profile-sub-tab { display: none; }
-    .profile-sub-tab.active { display: block; }
-
     .settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(5px); }
     .settings-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; color: white; border: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
 
-    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-    .setting-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
-
-    .live-top-banner { background: linear-gradient(135deg, #ff4757, #ff6b81); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 3px 12px rgba(255,71,87,0.4); animation: pulse 2s infinite; cursor: pointer; }
-    .live-banner-info { display: flex; align-items: center; gap: 8px; color: white; }
-    .live-dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: ping 1s infinite; }
-
-    .avatar-wrapper { position: relative; width: 90px; height: 90px; margin: 0 auto 12px; cursor: pointer; }
-    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--primary); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border: 2px solid var(--accent); box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
-    .avatar-plus-btn { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--accent); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border: 2px solid var(--bg); box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-
-    .user-item { background: var(--card); padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-    .chat-window { position: fixed; inset: 0; background: var(--bg); z-index: 2500; display: none; flex-direction: column; }
-    .chat-header { background: var(--primary); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: white; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-
-    .msg-wrapper { max-width: 80%; display: flex; flex-direction: column; margin-bottom: 2px; }
-    .msg-wrapper.sent { align-self: flex-end; align-items: flex-end; }
-    .msg-wrapper.received { align-self: flex-start; align-items: flex-start; }
-
-    .msg { padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; word-break: break-word; }
-    .msg.sent { background: var(--primary); color: white; border-bottom-right-radius: 2px; }
-    .msg.received { background: var(--card); color: white; border-bottom-left-radius: 2px; }
-    .msg.call-log { align-self: center; background: rgba(255, 193, 7, 0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 0.75rem; text-align: center; border-radius: 8px; padding: 5px 12px; width: 100%; max-width: 280px; }
-
-    .msg-timestamp { font-size: 0.6rem; color: rgba(255,255,255,0.45); margin-top: 2px; padding: 0 4px; font-weight: 300; }
-
-    .chat-input-area { padding: 12px 16px; background: var(--card); display: flex; gap: 8px; border-top: 1px solid var(--border); }
-    .chat-input-area input { flex: 1; padding: 10px 14px; border-radius: 18px; border: 1px solid var(--border); background: #0f172a; color: white; font-size: 0.9rem; }
-
-    .live-container { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 12px; height: calc(100vh - 210px); max-height: 460px; overscroll-behavior: contain; }
-    .main-video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; }
-    .live-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; pointer-events: none; transition: opacity 0.5s ease; }
-    .live-overlay * { pointer-events: auto; }
-    .overlay-top { display: flex; justify-content: space-between; align-items: center; }
-    .live-badge { background: var(--danger); color: white; padding: 3px 8px; border-radius: 10px; font-weight: bold; font-size: 0.7rem; display: none; }
-    .overlay-bottom { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
-    .overlay-bottom input { flex: 1; padding: 10px 12px; border-radius: 18px; border: 1px solid var(--border); background: rgba(0,0,0,0.75); color: white; font-size: 0.85rem; }
-    .gift-box-btn { background: var(--accent); color: black; border: none; font-size: 1.1rem; padding: 8px 12px; border-radius: 18px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px; }
-
-    .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
-    .gift-card { background: #0f172a; border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; text-align: center; cursor: pointer; transition: 0.2s; }
-    .gift-card:active { border-color: var(--accent); transform: scale(0.95); }
-    .gift-icon { font-size: 1.5rem; margin-bottom: 3px; }
-    .gift-title { font-size: 0.7rem; font-weight: bold; }
-    .gift-price { font-size: 0.65rem; color: var(--accent); font-weight: bold; margin-top: 2px; }
-
-    .package-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
-    .package-card { background: #0f172a; border: 1px solid var(--border); padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 0.85rem; }
+    .live-container { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #000; margin-bottom: 12px; height: calc(100vh - 210px); max-height: 460px; }
+    
+    #dailyStreamContainer, #dailyCallContainer {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
 
     .call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
-    .video-box { width: 100%; max-width: 360px; height: 260px; background: #000; border-radius: 16px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 16px; }
-    .video-box video { width: 100%; height: 100%; object-fit: cover; }
-
-    .avatar-placeholder { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 5; }
-    .avatar-placeholder img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); margin-bottom: 6px; }
-
-    #incomingCallBox { position: fixed; top: 16px; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; background: var(--card); border: 2px solid var(--accent); padding: 12px 16px; border-radius: 16px; z-index: 5000; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.8); }
-    .caller-avatar-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); background: var(--primary); flex-shrink: 0; }
-
-    .biz-link-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,135,81,0.2); border: 1px solid var(--primary); color: var(--accent); text-decoration: none; padding: 8px 14px; border-radius: 16px; font-weight: bold; font-size: 0.8rem; margin-top: 8px; word-break: break-all; }
+    .video-box { width: 100%; max-width: 360px; height: 350px; background: #000; border-radius: 16px; overflow: hidden; position: relative; border: 2px solid var(--primary); margin-bottom: 16px; }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
 
-  <div id="loadingScreen"><div class="spinner"></div><p style="font-size:0.9rem;">Loading NAIJALITE...</p></div>
-
-  <!-- Audio Element for Remote Call Speaker Output -->
-  <audio id="remoteAudioPlayer" autoplay playsinline></audio>
-
-  <!-- Incoming Call Popup -->
-  <div id="incomingCallBox">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <img id="incomingCallerAvatar" class="caller-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>">
-      <div style="flex:1;">
-        <b id="incomingCallerName" style="font-size:0.9rem;">Caller Name</b>
-        <p style="font-size:0.75rem; color:var(--text-dim);" id="incomingCallType">Incoming Call...</p>
-      </div>
-      <div style="display:flex; gap:6px;">
-        <button class="btn-main" style="background:var(--primary); padding:6px 10px; font-size:0.75rem;" onclick="acceptCall()">Accept</button>
-        <button class="btn-main" style="background:var(--danger); padding:6px 10px; font-size:0.75rem;" onclick="declineCall()">Decline</button>
-      </div>
-    </div>
-  </div>
+  <div id="loadingScreen"><div class="spinner"></div><p style="font-size:0.9rem;">Connecting NAIJALITE...</p></div>
 
   <!-- Auth Screen -->
   <div id="authScreen">
@@ -169,25 +100,20 @@
       <div class="auth-card">
         <div id="signupFields" style="display:none;">
           <label class="auth-label">Username</label>
-          <input type="text" id="authUsername" class="auth-input" placeholder="Username">
-
-          <label class="auth-label">Date of Birth (Private)</label>
-          <input type="date" id="authDob" class="auth-input">
-
+          <input type="text" id="authUsername" class="auth-input" placeholder="Enter username">
           <label class="auth-label">Sex</label>
           <select id="authSex" class="auth-input">
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
         </div>
-
         <label class="auth-label">Email</label>
-        <input type="text" id="authEmail" class="auth-input" placeholder="Email">
-
+        <input type="email" id="authEmail" class="auth-input" placeholder="name@example.com">
         <label class="auth-label">Password</label>
-        <input type="password" id="authPass" class="auth-input" placeholder="Password">
-
+        <input type="password" id="authPass" class="auth-input" placeholder="Password (min 6 characters)">
+        
         <button class="btn-auth" id="btnAuthAction" onclick="handleAuth()">Login</button>
+        <div id="authError" class="auth-error"></div>
       </div>
     </div>
   </div>
@@ -196,1484 +122,182 @@
     <div class="header-top">
       <h1>🇳🇬 NAIJALITE</h1>
       <div class="header-actions">
-        <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
+        <div class="wallet-mini">🟡 <span id="userCoins">0</span> Coins</div>
         <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
       </div>
     </div>
   </header>
 
   <div id="headerMenu" class="menu-dropdown">
-    <div class="menu-item" onclick="openSettings('account')">Manage account</div>
-    <div class="menu-item" onclick="openSettings('privacy')">Privacy</div>
-    <div class="menu-item" onclick="openSettings('notifications')">Notifications</div>
-    <div class="menu-item" onclick="openSettings('verification')">Verification</div>
-    <div class="menu-item" onclick="openSettings('prefs')">Preferences</div>
-    <div class="menu-item" onclick="openSettings('accessibility')">Accessibility</div>
+    <div class="menu-item" onclick="openModal('coinModal')">Buy Coins</div>
     <div class="menu-item danger" onclick="handleLogout()">Logout</div>
   </div>
 
   <div class="container">
-    <!-- Home Feed Tab -->
+    <!-- Home Tab -->
     <div id="homeTab" class="tab-content active">
-      <div id="activeLiveBannerContainer"></div>
-      <div id="homeFeed"><p style="text-align:center; color:var(--text-dim); font-size:0.85rem;">Loading Feed...</p></div>
+      <div class="card">
+        <h3>Welcome, <span id="displayName">User</span>!</h3>
+        <p style="color:var(--text-dim); font-size:0.85rem; margin-top:6px;">Connect with friends via live streams or direct call rooms.</p>
+        <button class="btn-main" style="margin-top:12px;" onclick="startCall('video')">📹 Start 1-on-1 Call</button>
+      </div>
     </div>
 
     <!-- Live Stream Tab -->
     <div id="liveTab" class="tab-content">
       <div class="live-container">
-        <video id="hostVideo" class="main-video" autoplay playsinline></video>
-        <div id="hostAvatarPlaceholder" class="avatar-placeholder" style="display:none;">
-          <div style="font-size:2.5rem;">👤</div>
-          <p style="margin-top:6px; font-size:0.8rem;">Camera is off (Audio Only)</p>
-        </div>
-        <div class="live-overlay" id="liveOverlayBox">
-          <div class="overlay-top">
-            <div class="live-badge" id="liveBadgeEl">🔴 LIVE</div>
-            <button style="background:var(--accent); border:none; padding:6px 10px; border-radius:10px; font-weight:bold; font-size:0.65rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
-          </div>
-          <div class="overlay-bottom" id="liveOverlayBottom">
-            <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
-            <button class="gift-box-btn" id="streamGiftBtn" onclick="triggerGiftModal()">🎁 Gifts</button>
-          </div>
-        </div>
+        <div id="dailyStreamContainer"></div>
       </div>
-
-      <!-- Restored Flip Camera Button + Stream Control Buttons -->
-      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-        <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
-        <button class="btn-main" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem;" onclick="switchCamera('stream')">📸 Flip</button>
-        <button class="btn-main" id="streamMuteBtn" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem; display:none;" onclick="toggleStreamAudio()">🎤 Mute</button>
-        <button class="btn-main" id="streamCamBtn" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem; display:none;" onclick="toggleStreamCamera()">📹 Camera Off</button>
-      </div>
-    </div>
-
-    <!-- Inbox Tab -->
-    <div id="inboxTab" class="tab-content">
-      <div class="card">
-        <div id="conversationsList"><p style="color:var(--text-dim); font-size:0.85rem;">Loading chats...</p></div>
-      </div>
+      <button class="btn-main" onclick="initDailyStream()">Join Live Stream Room</button>
     </div>
 
     <!-- Earn Tab -->
     <div id="earnTab" class="tab-content">
       <div class="card">
-        <h3 style="font-size:1.1rem;">💰 Earn Rewards & Coins</h3>
-        <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px; margin-bottom:12px;">Invite friends or complete tasks to earn coins.</p>
-
-        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:10px; text-align:center; border:1px dashed var(--accent); margin-bottom:12px;">
-          <div style="font-size:0.75rem; color:var(--text-dim);">Your Referral Link:</div>
-          <div id="userRefLink" style="font-weight:bold; margin:6px 0; word-break:break-all; font-size:0.8rem;">https://naijalite.app/?ref=user</div>
-          <button class="btn-main" onclick="copyRefLink()" style="padding:8px; font-size:0.85rem;">Copy Referral Link</button>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <div style="background:var(--bg); padding:10px 12px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <b style="font-size:0.85rem;">7-Day Reward Check-in</b>
-              <p style="font-size:0.7rem; color:var(--text-dim);" id="rewardTimerText">Claim +5 coins every 7 days after signup</p>
-            </div>
-            <button class="btn-main" id="weeklyClaimBtn" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="claimWeeklyReward()">Claim</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Utils Tab -->
-    <div id="utilsTab" class="tab-content">
-      <div class="card">
-        <h3 style="font-size:1.1rem;">🛠️ Community Utilities & Stream Activity</h3>
-        <p style="font-size:0.8rem; color:var(--text-dim); margin-top:4px; margin-bottom:12px;">Monitor live stream activity and quick utilities.</p>
-
-        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:10px; margin-bottom:12px;">
-          <h4 style="font-size:0.85rem; margin-bottom:6px;">📡 Live Stream Activity Feed</h4>
-          <div id="streamActivityList" style="font-size:0.75rem; color:var(--text-dim);">
-            <p>No recent stream activity recorded.</p>
-          </div>
-        </div>
-
-        <div style="margin-bottom:12px;">
-          <label class="auth-label">WhatsApp Direct Message</label>
-          <input type="tel" id="waPhone" class="auth-input" placeholder="e.g. 08012345678" style="margin-bottom:6px;">
-          <button class="btn-main" onclick="openWhatsApp()">Open WhatsApp Chat</button>
-        </div>
+        <h3>💰 Coin Wallet</h3>
+        <p style="font-size:0.8rem; color:var(--text-dim); margin:4px 0 12px;">Top up coins using Paystack.</p>
+        <button class="btn-main" onclick="openModal('coinModal')">Buy More Coins</button>
       </div>
     </div>
 
     <!-- Profile Tab -->
     <div id="profileTab" class="tab-content">
-      <div class="card" style="text-align: center; position: relative;">
-        <div style="position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.2rem;" onclick="openEditProfileModal()" title="Edit Profile">⚙️</div>
-
-        <div class="avatar-wrapper" onclick="triggerAvatarUpload()">
-          <img id="profileAvatarImg" src="" class="profile-avatar" style="display:none;">
-          <div id="profileAvatarPlaceholder" class="profile-avatar">👤</div>
-          <div class="avatar-plus-btn">+</div>
-        </div>
-
-        <h3 id="userNameDisplay" style="font-size:1.1rem;">User <span id="userSexDisplay" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:5px;"></span></h3>
-        <p id="userIdDisplay" style="color:var(--text-dim); font-size:0.7rem; margin-bottom:8px;"></p>
-
-        <div class="profile-menu">
-          <div class="profile-menu-item active" onclick="switchProfileTab('profilePosts', this)">Posts</div>
-          <div class="profile-menu-item" onclick="switchProfileTab('profileBioTab', this)">Bio</div>
-          <div class="profile-menu-item" onclick="switchProfileTab('profileCoins', this)">Coin</div>
-        </div>
-
-        <div id="profilePosts" class="profile-sub-tab active">
-          <div id="userPostsList"><p style="color:var(--text-dim); font-size:0.8rem;">Loading your posts...</p></div>
-        </div>
-
-        <div id="profileBioTab" class="profile-sub-tab">
-          <div style="text-align:left; background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
-            <h4 style="font-size:0.85rem; margin-bottom:6px;">📝 About Me</h4>
-            <p id="bioTextDisplay" style="font-size:0.8rem; color:var(--text-dim); margin-bottom:12px; white-space:pre-line;">No bio added yet. Tap ⚙️ edit profile above to write about yourself!</p>
-
-            <h4 style="font-size:0.85rem; margin-bottom:6px;">🌐 Business & Links</h4>
-            <div id="businessLinkDisplay">
-              <p style="font-size:0.75rem; color:var(--text-dim);">No link attached.</p>
-            </div>
-          </div>
-        </div>
-
-        <div id="profileCoins" class="profile-sub-tab" style="text-align:left;">
-          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:12px;">
-            <h4 style="margin-bottom:8px; font-size:0.85rem;">📊 Coin Dashboard</h4>
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.85rem;">
-              <span>Current Balance:</span> <b style="color:var(--accent);">🟡 <span id="coinsCount">0</span> Coins</b>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.8rem; color:var(--text-dim);">
-              <span>Total Spent:</span> <span id="totalSpentCoins">0 Coins</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-dim);">
-              <span>Total Earned:</span> <span id="totalEarnedCoins">0 Coins</span>
-            </div>
-          </div>
-
-          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:12px;">
-            <h4 style="margin-bottom:6px; font-size:0.85rem;">📜 Transaction History</h4>
-            <div id="transactionLedger" style="max-height:130px; overflow-y:auto; font-size:0.75rem; color:var(--text-dim);">
-              <p>No transactions yet.</p>
-            </div>
-          </div>
-
-          <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; border:1px solid var(--border);">
-            <h4 style="font-size:0.85rem;">🏦 Withdrawal</h4>
-            <input type="text" id="bankAcc" class="auth-input" placeholder="Account Number" style="margin-top: 6px; margin-bottom:8px;">
-            <button class="btn-main" onclick="submitWithdrawal()" style="padding:10px; font-size:0.85rem;">Confirm Withdrawal</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- External User Profile Tab -->
-    <div id="externalProfileTab" class="tab-content">
       <div class="card" style="text-align: center;">
-        <button class="btn-main" style="width:auto; padding:6px 10px; margin-bottom:12px; font-size:0.8rem;" onclick="switchTab('homeTab', document.querySelectorAll('.nav-item')[0])">← Back to Feed</button>
-
-        <div class="avatar-wrapper">
-          <img id="extProfileAvatarImg" src="" class="profile-avatar" style="display:none;">
-          <div id="extProfileAvatarPlaceholder" class="profile-avatar">👤</div>
-        </div>
-
-        <h3 id="extUserNameDisplay" style="font-size:1.1rem;">Username</h3>
-        <p id="extUserFollowStats" style="color:var(--text-dim); font-size:0.75rem; margin:6px 0; display:none;"></p>
-
-        <div id="extBioContainer" style="margin: 12px 0; text-align:left; background:rgba(0,0,0,0.2); padding:12px; border-radius:12px; display:none;">
-          <h4 style="font-size:0.8rem; margin-bottom:4px;">Bio</h4>
-          <p id="extBioText" style="font-size:0.75rem; color:var(--text-dim);">No bio</p>
-        </div>
-
-        <div id="extActionButtons" style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
-          <button class="btn-main" id="extFollowBtn" onclick="toggleFollowUser()" style="padding:10px; font-size:0.85rem;">Follow</button>
-          <button class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:10px; font-size:0.85rem;" onclick="openChatFromProfile()">Message</button>
-        </div>
+        <h3 id="profileUsername">Username</h3>
+        <p id="profileEmail" style="color:var(--text-dim); font-size:0.75rem; margin-bottom:12px;"></p>
+        <button class="btn-main" style="background:var(--danger);" onclick="handleLogout()">Logout</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Chat Screen -->
-  <div id="chatWindow" class="chat-window">
-    <div class="chat-header">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="closeChat()">←</button>
-        <b id="chatUser" style="font-size:0.95rem;">Username</b>
-      </div>
-      <div style="display:flex; gap:12px; align-items:center; position:relative;">
-        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="startCall('audio')">📞</button>
-        <button style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer;" onclick="startCall('video')">📹</button>
-        <button style="background:none; border:none; color:white; font-size:1.3rem; cursor:pointer;" onclick="toggleChatMenu()">⋮</button>
-
-        <div id="chatMenu" class="menu-dropdown" style="top:38px; right:0;">
-          <div class="menu-item" onclick="shareCoinsPrompt()">💰 Send Coins</div>
-        </div>
-      </div>
-    </div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input-area">
-      <input type="text" id="chatInputText" placeholder="Type a message...">
-      <button class="btn-main" style="width:auto; padding:8px 16px; font-size:0.85rem;" onclick="sendMessage()">Send</button>
-    </div>
-  </div>
-
-  <!-- Live Stream Gift Catalog Modal -->
-  <div id="giftCatalogModal" class="settings-modal" style="display:none;">
-    <div class="settings-card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size:1.05rem;">🎁 Live Gifts Catalog</h3>
-        <span style="font-size:0.8rem; color:var(--accent);">Coins: <b id="giftModalCoinCount">0</b></span>
-      </div>
-      <p style="font-size:0.7rem; color:var(--text-dim); margin-top:3px;">Tap a gift to send live.</p>
-
-      <div class="gift-grid">
-        <div class="gift-card" onclick="sendGroupGift('Rose 🌹', 1)">
-          <div class="gift-icon">🌹</div>
-          <div class="gift-title">Rose</div>
-          <div class="gift-price">1 Coin</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Heart 🫰', 5)">
-          <div class="gift-icon">🫰</div>
-          <div class="gift-title">Heart</div>
-          <div class="gift-price">5 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Fire 🔥', 10)">
-          <div class="gift-icon">🔥</div>
-          <div class="gift-title">Fire</div>
-          <div class="gift-price">10 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Bottle 🍾', 50)">
-          <div class="gift-icon">🍾</div>
-          <div class="gift-title">Bottle</div>
-          <div class="gift-price">50 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Crown 👑', 100)">
-          <div class="gift-icon">👑</div>
-          <div class="gift-title">Crown</div>
-          <div class="gift-price">100 Coins</div>
-        </div>
-        <div class="gift-card" onclick="sendGroupGift('Diamond 💎', 500)">
-          <div class="gift-icon">💎</div>
-          <div class="gift-title">Diamond</div>
-          <div class="gift-price">500 Coins</div>
-        </div>
-      </div>
-
-      <button class="btn-main" style="background:var(--accent); color:black; margin-bottom:8px; padding:10px; font-size:0.85rem;" onclick="closeModal('giftCatalogModal'); openModal('coinModal');">+ Buy More Coins</button>
-      <button class="btn-main" style="background:none; color:white; padding:10px; font-size:0.85rem;" onclick="closeModal('giftCatalogModal')">Close</button>
-    </div>
-  </div>
-
-  <!-- Coin Purchase Modal -->
-  <div id="coinModal" class="settings-modal" style="display:none;">
-    <div class="settings-card">
-      <h3 style="margin-bottom:8px; font-size:1.05rem;">🪙 Buy Coins</h3>
-      <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:12px;">Rate: ₦10 = 1 Coin.</p>
-
-      <div class="package-grid">
-        <div class="package-card" onclick="selectPackage(10, 1)">
-          <b>₦10</b>
-          <div style="font-size:0.7rem; color:var(--accent);">1 Coin</div>
-        </div>
-        <div class="package-card" onclick="selectPackage(100, 10)">
-          <b>₦100</b>
-          <div style="font-size:0.7rem; color:var(--accent);">10 Coins</div>
-        </div>
-        <div class="package-card" onclick="selectPackage(1000, 100)">
-          <b>₦1,000</b>
-          <div style="font-size:0.7rem; color:var(--accent);">100 Coins</div>
-        </div>
-        <div class="package-card" onclick="selectPackage(10000, 1000)">
-          <b>₦10,000</b>
-          <div style="font-size:0.7rem; color:var(--accent);">1,000 Coins</div>
-        </div>
-      </div>
-
-      <label class="auth-label">Amount in Naira (₦10 to ₦100,000)</label>
-      <input type="number" id="customNairaAmount" class="auth-input" value="1000">
-
-      <label class="auth-label">Email for Receipt</label>
-      <input type="email" id="userEmail" class="auth-input" placeholder="Enter Email">
-
-      <button class="btn-main" onclick="payWithPaystack()" style="margin-bottom:8px; padding:10px; font-size:0.85rem;">Pay with Paystack</button>
-      <button class="btn-main" style="background:none; color:white; padding:10px; font-size:0.85rem;" onclick="closeModal('coinModal')">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Edit Profile Modal -->
-  <div id="editProfileModal" class="settings-modal" style="display:none;">
-    <div class="settings-card">
-      <h3 style="font-size:1.05rem;">Edit Profile</h3>
-      <div style="margin: 12px 0; text-align: left;">
-        <label class="auth-label">Username</label>
-        <input type="text" id="editUsername" class="auth-input">
-
-        <label class="auth-label">Bio</label>
-        <textarea id="editBio" class="auth-input" style="height:70px; resize:none;" placeholder="Write a short bio..."></textarea>
-
-        <label class="auth-label">Business / Link Title</label>
-        <input type="text" id="editLinkTitle" class="auth-input" placeholder="e.g. YouTube Channel">
-
-        <label class="auth-label">Business / Website URL</label>
-        <input type="url" id="editBusinessLink" class="auth-input" placeholder="https://...">
-
-        <label class="auth-label">Date of Birth (Private)</label>
-        <input type="date" id="editDob" class="auth-input">
-
-        <label class="auth-label">Sex</label>
-        <select id="editSex" class="auth-input">
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
-      </div>
-      <button class="btn-main" onclick="saveProfileChanges()" style="margin-bottom:8px; padding:10px; font-size:0.85rem;">Save Changes</button>
-      <button class="btn-main" style="background:none; color:white; padding:10px; font-size:0.85rem;" onclick="closeModal('editProfileModal')">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Settings Modal -->
-  <div id="settingsModal" class="settings-modal" style="display:none;">
-    <div class="settings-card">
-      <h3 id="settingsTitle" style="font-size:1.05rem;">Settings</h3>
-      <div id="settingsBody" style="margin: 12px 0;"></div>
-      <button class="btn-main" onclick="closeModal('settingsModal')" style="padding:10px; font-size:0.85rem;">Close</button>
     </div>
   </div>
 
   <!-- Navigation Bar -->
-  <nav class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('homeTab', this)">
-      <div>🏠</div>Home
-    </div>
-    <div class="nav-item" onclick="switchTab('liveTab', this)">
-      <div>📺</div>Live
-    </div>
-    <div class="nav-item" onclick="switchTab('inboxTab', this)">
-      <div>💬</div>Inbox
-    </div>
-    <div class="nav-item" onclick="switchTab('earnTab', this)">
-      <div>🎁</div>Earn
-    </div>
-    <div class="nav-item" onclick="switchTab('utilsTab', this)">
-      <div>🛠️</div>Utils
-    </div>
-    <div class="nav-item" onclick="switchTab('profileTab', this)">
-      <div>👤</div>Profile
-    </div>
-  </nav>
+  <div class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('homeTab', this)"><div>🏠</div>Home</div>
+    <div class="nav-item" onclick="switchTab('liveTab', this)"><div>🔴</div>Live</div>
+    <div class="nav-item" onclick="switchTab('earnTab', this)"><div>💰</div>Earn</div>
+    <div class="nav-item" onclick="switchTab('profileTab', this)"><div>👤</div>Profile</div>
+  </div>
 
-  <!-- Hidden Avatar File Input -->
-  <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarFileSelect(event)">
+  <!-- 1-on-1 Call Daily.co Modal -->
+  <div id="callModal" class="call-modal">
+    <div class="video-box">
+      <div id="dailyCallContainer"></div>
+    </div>
+    <button class="btn-main" style="background:var(--danger); width: auto; padding: 10px 24px;" onclick="endCall()">End Call</button>
+  </div>
+
+  <!-- Coin Purchase Modal -->
+  <div id="coinModal" class="settings-modal">
+    <div class="settings-card">
+      <h3 style="margin-bottom:8px; font-size:1.05rem;">🪙 Buy Coins with Paystack</h3>
+      <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:12px;">Choose a package to top up instantly:</p>
+      <button class="btn-main" style="margin-bottom:8px;" onclick="payWithPaystack(100, 1000)">100 Coins (₦1,000)</button>
+      <button class="btn-main" style="background:var(--card); border:1px solid var(--border);" onclick="closeModal('coinModal')">Cancel</button>
+    </div>
+  </div>
 
   <script>
-    const SUPABASE_URL = 'https://hwiddexgiwtduuzprsjd.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3aWRkZXhnaXd0ZHV1enByc2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDU1MjMsImV4cCI6MjEwODc4MTUyM30.QyzSo2eUtt0jBzW8_WRkIPutMj1wb5ex_9GgyOguwHI';
-
+    // ⚠️ REPLACE WITH YOUR ACTUAL SUPABASE CREDENTIALS
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let currentUser = null;
-    let authMode = 'login';
-    let myStream = null;
-    let isStreaming = false;
-    let currentChatUser = null;
-    let viewedUser = null;
-    let messagesSub = null;
-    let activeCall = null;
-    let localStream = null;
-    let remoteStream = null;
-    let peerConnection = null;
-    let callSub = null;
-    let globalLiveStreams = [];
-    let currentFacingMode = 'user';
+    const LIVE_STREAM_URL = 'https://naijalite.daily.co/livestream';
+    const CALL_URL = 'https://naijalite.daily.co/Call';
 
-    window.addEventListener('DOMContentLoaded', async () => {
+    let currentUser = null;
+    let dailyStreamFrame = null;
+    let dailyCallFrame = null;
+    let authMode = 'login';
+
+    async function checkAuth() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
         currentUser = session.user;
-        await initApp();
+        await loadUserProfile();
+        document.getElementById('authScreen').style.display = 'none';
       } else {
-        document.getElementById('loadingScreen').style.display = 'none';
         document.getElementById('authScreen').style.display = 'flex';
       }
-    });
-
-    function setAuthMode(mode) {
-      authMode = mode;
-      const isSignup = (mode === 'signup');
-      document.getElementById('signupFields').style.display = isSignup ? 'block' : 'none';
-      document.getElementById('tabLogin').classList.toggle('active', !isSignup);
-      document.getElementById('tabSignup').classList.toggle('active', isSignup);
-      document.getElementById('btnAuthAction').innerText = isSignup ? 'Create Account' : 'Login';
-    }
-
-    async function handleAuth() {
-      const email = document.getElementById('authEmail').value.trim();
-      const pass = document.getElementById('authPass').value;
-      if (!email || !pass) { alert('Please enter email and password.'); return; }
-
-      document.getElementById('loadingScreen').style.display = 'flex';
-
-      if (authMode === 'signup') {
-        const username = document.getElementById('authUsername').value.trim() || 'User_' + Math.floor(Math.random()*1000);
-        const dob = document.getElementById('authDob').value;
-        const sex = document.getElementById('authSex').value;
-
-        const { data, error } = await supabaseClient.auth.signUp({
-          email,
-          password: pass,
-          options: {
-            data: { username, dob, sex, coins: 10, wallet: 0.00, last_claimed_at: new Date().toISOString() }
-          }
-        });
-
-        if (error) {
-          alert(error.message);
-          document.getElementById('loadingScreen').style.display = 'none';
-          return;
-        }
-
-        if (data.user) {
-          await supabaseClient.from('profiles').upsert({
-            id: data.user.id,
-            username,
-            dob,
-            sex,
-            coins: 10,
-            wallet: 0.00,
-            last_claimed_at: new Date().toISOString()
-          });
-          currentUser = data.user;
-          await initApp();
-        }
-      } else {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-        if (error) {
-          alert(error.message);
-          document.getElementById('loadingScreen').style.display = 'none';
-          return;
-        }
-        currentUser = data.user;
-        await initApp();
-      }
-    }
-
-    async function initApp() {
-      document.getElementById('authScreen').style.display = 'none';
       document.getElementById('loadingScreen').style.display = 'none';
-
-      await loadUserProfile();
-      setupRealtimeListeners();
-      loadHomeFeed();
-      loadConversations();
-      loadUserPosts();
-      loadStreamActivity();
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const refId = urlParams.get('ref');
-      if (refId && currentUser && refId !== currentUser.id) {
-        processReferral(refId);
-      }
     }
 
     async function loadUserProfile() {
       if (!currentUser) return;
-      const { data } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
-        currentUser.profile = data;
-        document.getElementById('walletBalance').innerText = '₦' + Number(data.wallet || 0).toLocaleString();
         document.getElementById('userCoins').innerText = data.coins || 0;
-        document.getElementById('coinsCount').innerText = data.coins || 0;
-        document.getElementById('giftModalCoinCount').innerText = data.coins || 0;
-        document.getElementById('userNameDisplay').innerHTML = `${data.username} <span id="userSexDisplay" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:2px 5px; border-radius:5px;">${data.sex || ''}</span>`;
-        document.getElementById('userIdDisplay').innerText = 'ID: ' + currentUser.id;
-
-        if (data.avatar_url) {
-          document.getElementById('profileAvatarImg').src = data.avatar_url;
-          document.getElementById('profileAvatarImg').style.display = 'block';
-          document.getElementById('profileAvatarPlaceholder').style.display = 'none';
-        }
-
-        document.getElementById('bioTextDisplay').innerText = data.bio || 'No bio added yet. Tap ⚙️ edit profile above to write about yourself!';
-        if (data.business_link) {
-          document.getElementById('businessLinkDisplay').innerHTML = `<a href="${data.business_link}" target="_blank" class="biz-link-btn">🔗 ${data.link_title || 'Visit Link'}</a>`;
-        }
-
-        document.getElementById('userRefLink').innerText = `${window.location.origin}${window.location.pathname}?ref=${currentUser.id}`;
-
-        checkRewardEligibility(data);
+        document.getElementById('displayName').innerText = data.username || 'User';
+        document.getElementById('profileUsername').innerText = data.username || 'User';
+        document.getElementById('profileEmail').innerText = currentUser.email;
       }
     }
 
-    function checkRewardEligibility(profileData) {
-      const lastClaimed = profileData.last_claimed_at ? new Date(profileData.last_claimed_at).getTime() : 0;
-      const now = Date.now();
-      const sevenDays = 7 * 24 * 60 * 60 * 1000;
-      const nextClaim = lastClaimed + sevenDays;
-      const btn = document.getElementById('weeklyClaimBtn');
-      const text = document.getElementById('rewardTimerText');
+    function setAuthMode(mode) {
+      authMode = mode;
+      showAuthError('');
+      document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+      document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
+      document.getElementById('signupFields').style.display = mode === 'signup' ? 'block' : 'none';
+      document.getElementById('btnAuthAction').innerText = mode === 'signup' ? 'Sign Up' : 'Login';
+    }
 
-      if (now >= nextClaim) {
-        btn.disabled = false;
-        btn.innerText = 'Claim';
-        btn.style.opacity = '1';
-        text.innerText = 'Claim +5 coins reward now!';
+    function showAuthError(msg) {
+      const errBox = document.getElementById('authError');
+      if (msg) {
+        errBox.innerText = msg;
+        errBox.style.display = 'block';
       } else {
-        btn.disabled = true;
-        btn.style.opacity = '0.6';
-        const diffHours = Math.ceil((nextClaim - now) / (1000 * 60 * 60));
-        const days = Math.floor(diffHours / 24);
-        const hours = diffHours % 24;
-        btn.innerText = 'Locked';
-        text.innerText = `Available in ${days}d ${hours}h`;
+        errBox.style.display = 'none';
       }
     }
 
-    function setupRealtimeListeners() {
-      if (callSub) supabaseClient.removeChannel(callSub);
+    async function handleAuth() {
+      showAuthError('');
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPass').value;
 
-      callSub = supabaseClient
-        .channel(`public:calls:${currentUser.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
-          incomingCallPayload = payload.new;
-          showIncomingCallModal(incomingCallPayload);
-        })
-        .subscribe();
-
-      supabaseClient
-        .channel('public:livestreams')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'livestreams' }, () => {
-          loadHomeFeed();
-        })
-        .subscribe();
-    }
-
-    function switchTab(tabId, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      if (el) el.classList.add('active');
-      if (tabId === 'inboxTab') {
-        loadConversations();
-      }
-    }
-
-    function switchProfileTab(subId, el) {
-      document.querySelectorAll('.profile-sub-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.profile-menu-item').forEach(m => m.classList.remove('active'));
-      document.getElementById(subId).classList.add('active');
-      el.classList.add('active');
-    }
-
-    function toggleHeaderMenu() {
-      const menu = document.getElementById('headerMenu');
-      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-    }
-
-    function toggleChatMenu() {
-      const menu = document.getElementById('chatMenu');
-      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-    }
-
-    async function loadHomeFeed() {
-      const { data } = await supabaseClient
-        .from('livestreams')
-        .select('*, profiles(username, avatar_url)')
-        .eq('is_active', true);
-
-      globalLiveStreams = data || [];
-      const bannerContainer = document.getElementById('activeLiveBannerContainer');
-      const feedContainer = document.getElementById('homeFeed');
-
-      if (globalLiveStreams.length > 0) {
-        const liveItem = globalLiveStreams[0];
-        bannerContainer.innerHTML = `
-          <div class="live-top-banner" onclick="joinLiveStream('${liveItem.id}')">
-            <div class="live-banner-info">
-              <div class="live-dot"></div>
-              <div><b>${liveItem.profiles?.username || 'Host'} is LIVE now!</b><div style="font-size:0.7rem; opacity:0.8;">Tap to watch live stream</div></div>
-            </div>
-            <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem; background:white; color:#ff4757;">Watch</button>
-          </div>`;
-      } else {
-        bannerContainer.innerHTML = '';
-      }
-
-      const { data: usersData } = await supabaseClient.from('profiles').select('*').limit(20);
-      if (!usersData || usersData.length === 0) {
-        feedContainer.innerHTML = `<p style="text-align:center; color:var(--text-dim); font-size:0.85rem;">No users found.</p>`;
+      if (!email || !password) {
+        showAuthError('Please fill in email and password.');
         return;
       }
 
-      let html = '';
-      usersData.forEach(u => {
-        if (u.id === currentUser.id) return;
-        html += `
-          <div class="user-item" onclick="openUserProfile('${u.id}')">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="width:38px; height:38px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                ${u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
-              </div>
-              <div>
-                <b style="font-size:0.85rem;">${u.username}</b>
-              </div>
-            </div>
-            <span style="font-size:0.8rem;">→</span>
-          </div>`;
-      });
-      feedContainer.innerHTML = html;
-    }
+      if (authMode === 'signup') {
+        const username = document.getElementById('authUsername').value.trim() || email.split('@')[0];
+        const sex = document.getElementById('authSex').value;
 
-    async function openUserProfile(userId) {
-      const { data: user } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
-      if (!user) return;
-      viewedUser = user;
-
-      const myFollowKey = `following_${currentUser.id}_${userId}`;
-      const theirFollowKey = `following_${userId}_${currentUser.id}`;
-      const iAmFollowing = localStorage.getItem(myFollowKey) === 'true';
-      const theyAreFollowing = localStorage.getItem(theirFollowKey) === 'true';
-      const isMutual = iAmFollowing && theyAreFollowing;
-
-      const avatarImg = document.getElementById('extProfileAvatarImg');
-      const avatarPlaceholder = document.getElementById('extProfileAvatarPlaceholder');
-      if (user.avatar_url) {
-        avatarImg.src = user.avatar_url;
-        avatarImg.style.display = 'block';
-        avatarPlaceholder.style.display = 'none';
-      } else {
-        avatarImg.style.display = 'none';
-        avatarPlaceholder.style.display = 'flex';
-      }
-
-      document.getElementById('extUserNameDisplay').innerText = user.username;
-      const statsEl = document.getElementById('extUserFollowStats');
-      const bioContainer = document.getElementById('extBioContainer');
-      const followBtn = document.getElementById('extFollowBtn');
-
-      if (isMutual) {
-        statsEl.style.display = 'block';
-        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 1 &nbsp;|&nbsp; Likes: 0`;
-        bioContainer.style.display = 'block';
-        document.getElementById('extBioText').innerText = user.bio || 'No bio';
-        followBtn.innerText = 'Following';
-        followBtn.style.background = 'var(--card)';
-        followBtn.style.border = '1px solid var(--border)';
-      } else if (iAmFollowing) {
-        statsEl.style.display = 'block';
-        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 0 &nbsp;|&nbsp; Likes: 0`;
-        bioContainer.style.display = 'block';
-        document.getElementById('extBioText').innerText = user.bio || 'No bio';
-        followBtn.innerText = 'Requested / Followed';
-        followBtn.style.background = 'var(--card)';
-      } else {
-        statsEl.style.display = 'none';
-        bioContainer.style.display = 'none';
-        followBtn.innerText = 'Follow';
-        followBtn.style.background = 'var(--primary)';
-        followBtn.style.border = 'none';
-      }
-
-      switchTab('externalProfileTab');
-    }
-
-    function toggleFollowUser() {
-      if (!viewedUser) return;
-      const myFollowKey = `following_${currentUser.id}_${viewedUser.id}`;
-      const currentState = localStorage.getItem(myFollowKey) === 'true';
-
-      if (currentState) {
-        localStorage.setItem(myFollowKey, 'false');
-        alert(`Unfollowed ${viewedUser.username}`);
-      } else {
-        localStorage.setItem(myFollowKey, 'true');
-        alert(`Follow request sent to ${viewedUser.username}. Once they accept, you will be mutual followers.`);
-      }
-      openUserProfile(viewedUser.id);
-    }
-
-    function openChatFromProfile() {
-      if (!viewedUser) return;
-      openChat(viewedUser.id, viewedUser.username);
-    }
-
-    async function loadConversations() {
-      const { data: messages } = await supabaseClient
-        .from('messages')
-        .select('sender_id, receiver_id, message, created_at, is_call_log')
-        .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-        .order('created_at', { ascending: false });
-
-      const partnerMap = new Map();
-      if (messages && messages.length > 0) {
-        messages.forEach(m => {
-          const partnerId = (m.sender_id === currentUser.id) ? m.receiver_id : m.sender_id;
-          if (!partnerMap.has(partnerId)) {
-            partnerMap.set(partnerId, m);
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { username, sex }
           }
         });
-      }
 
-      const { data: profilesData } = await supabaseClient.from('profiles').select('*').limit(20);
-      if (!profilesData || profilesData.length === 0) {
-        document.getElementById('conversationsList').innerHTML = '<p style="color:var(--text-dim); font-size:0.85rem;">No users found.</p>';
-        return;
-      }
-
-      let html = '';
-      profilesData.forEach(p => {
-        if (p.id === currentUser.id) return;
-        const lastMsg = partnerMap.get(p.id);
-        const subtitle = lastMsg ? (lastMsg.is_call_log ? '📞 ' + lastMsg.message : lastMsg.message) : 'Tap to start conversation';
-        const timeStr = lastMsg ? new Date(lastMsg.created_at).toLocaleDateString([], { month:'short', day:'numeric' }) : '';
-
-        html += `
-          <div class="user-item" onclick="openChat('${p.id}', '${p.username}')">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="width:38px; height:38px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                ${p.avatar_url ? `<img src="${p.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
-              </div>
-              <div>
-                <b style="font-size:0.85rem;">${p.username}</b>
-                <p style="font-size:0.7rem; color:var(--text-dim);">${subtitle}</p>
-              </div>
-            </div>
-            <span style="font-size:0.65rem; color:var(--text-dim);">${timeStr || '→'}</span>
-          </div>`;
-      });
-      document.getElementById('conversationsList').innerHTML = html;
-    }
-
-    async function openChat(userId, username) {
-      currentChatUser = { id: userId, username };
-      document.getElementById('chatUser').innerText = username;
-      document.getElementById('chatWindow').style.display = 'flex';
-      await loadMessages();
-      setupMessageListener();
-    }
-
-    function closeChat() {
-      document.getElementById('chatWindow').style.display = 'none';
-      if (messagesSub) supabaseClient.removeChannel(messagesSub);
-      currentChatUser = null;
-      loadConversations();
-    }
-
-    async function loadMessages() {
-      if (!currentChatUser) return;
-      const { data } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentChatUser.id}),and(sender_id.eq.${currentChatUser.id},receiver_id.eq.${currentUser.id})`)
-        .order('created_at', { ascending: true });
-
-      renderMessages(data || []);
-    }
-
-    function setupMessageListener() {
-      if (messagesSub) supabaseClient.removeChannel(messagesSub);
-      messagesSub = supabaseClient
-        .channel(`public:messages:${currentUser.id}-${currentChatUser.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-          const m = payload.new;
-          if ((m.sender_id === currentUser.id && m.receiver_id === currentChatUser.id) ||
-              (m.sender_id === currentChatUser.id && m.receiver_id === currentUser.id)) {
-            appendMessageToDOM(m);
-          }
-        })
-        .subscribe();
-    }
-
-    function renderMessages(msgs) {
-      const container = document.getElementById('chatMessages');
-      let html = '';
-      msgs.forEach(m => {
-        const isSent = m.sender_id === currentUser.id;
-        const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        if (m.is_call_log) {
-          html += `<div class="msg call-log">${m.message}</div>`;
+        if (error) {
+          showAuthError(error.message);
+        } else if (data.user && data.session) {
+          // Direct login after signup (if email confirmation is disabled)
+          currentUser = data.user;
+          window.location.reload();
         } else {
-          html += `
-            <div class="msg-wrapper ${isSent ? 'sent' : 'received'}">
-              <div class="msg ${isSent ? 'sent' : 'received'}">${m.message}</div>
-              <div class="msg-timestamp">${timeStr}</div>
-            </div>`;
+          alert('Sign up successful! Please check your email to confirm your account.');
+          setAuthMode('login');
         }
-      });
-      container.innerHTML = html;
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function appendMessageToDOM(m) {
-      const container = document.getElementById('chatMessages');
-      const isSent = m.sender_id === currentUser.id;
-      const timeStr = new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      if (m.is_call_log) {
-        container.innerHTML += `<div class="msg call-log">${m.message}</div>`;
       } else {
-        container.innerHTML += `
-          <div class="msg-wrapper ${isSent ? 'sent' : 'received'}">
-            <div class="msg ${isSent ? 'sent' : 'received'}">${m.message}</div>
-            <div class="msg-timestamp">${timeStr}</div>
-          </div>`;
-      }
-      container.scrollTop = container.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const input = document.getElementById('chatInputText');
-      const text = input.value.trim();
-      if (!text || !currentChatUser) return;
-      input.value = '';
-
-      await supabaseClient.from('messages').insert({
-        sender_id: currentUser.id,
-        receiver_id: currentChatUser.id,
-        message: text,
-        is_call_log: false
-      });
-    }
-
-    async function shareCoinsPrompt() {
-      const amountStr = prompt('Enter number of coins to send:');
-      const amount = parseInt(amountStr);
-      if (isNaN(amount) || amount <= 0) return;
-
-      if ((currentUser.profile.coins || 0) < amount) {
-        alert('Insufficient coins balance.');
-        return;
-      }
-
-      const newSenderCoins = currentUser.profile.coins - amount;
-      await supabaseClient.from('profiles').update({ coins: newSenderCoins }).eq('id', currentUser.id);
-
-      const { data: recData } = await supabaseClient.from('profiles').select('coins').eq('id', currentChatUser.id).single();
-      const newRecCoins = (recData?.coins || 0) + amount;
-      await supabaseClient.from('profiles').update({ coins: newRecCoins }).eq('id', currentChatUser.id);
-
-      await supabaseClient.from('messages').insert({
-        sender_id: currentUser.id,
-        receiver_id: currentChatUser.id,
-        message: `🎁 Sent ${amount} coins gift!`,
-        is_call_log: false
-      });
-
-      await loadUserProfile();
-      toggleChatMenu();
-    }
-
-    // Camera Flip Functionality
-    async function switchCamera(mode) {
-      currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-      if (mode === 'stream' && isStreaming) {
-        if (myStream) myStream.getTracks().forEach(t => t.stop());
-        myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
-        document.getElementById('hostVideo').srcObject = myStream;
-      } else if (mode === 'call' && localStream) {
-        if (localStream) localStream.getTracks().forEach(t => t.stop());
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: currentFacingMode } });
-        document.getElementById('localVideo').srcObject = localStream;
-        if (peerConnection) {
-          const videoTrack = localStream.getVideoTracks()[0];
-          const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-          if (sender && videoTrack) sender.replaceTrack(videoTrack);
-        }
-      }
-    }
-
-    // TURNIX.IO Integration & WebRTC Calling
-    const TURNIX_API_KEY = '3f7ca9043d6300ef12b0736952c7275a';
-    let cachedIceServers = null;
-
-    async function getIceServers() {
-      if (cachedIceServers) return cachedIceServers;
-      let servers = [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ];
-      try {
-        const res = await fetch(`https://api.turnix.io/v1/turn/credentials?apiKey=${TURNIX_API_KEY}`);
-        const data = await res.json();
-        if (data && Array.isArray(data.iceServers)) {
-          servers = servers.concat(data.iceServers);
-        } else if (Array.isArray(data)) {
-          servers = servers.concat(data);
-        }
-      } catch (e) {
-        console.warn('Failed to fetch Turnix credentials, falling back to STUN:', e);
-      }
-      cachedIceServers = servers;
-      return servers;
-    }
-
-    async function startCall(type) {
-      if (!currentChatUser) return;
-      activeCall = { type, peerId: currentChatUser.id, isCaller: true };
-      showCallModal(type);
-
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (type === 'video' ? { facingMode: currentFacingMode } : false) });
-        document.getElementById('localVideo').srcObject = localStream;
-
-        const iceServers = await getIceServers();
-        peerConnection = new RTCPeerConnection({ iceServers });
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-        peerConnection.ontrack = event => {
-          remoteStream = event.streams[0];
-          document.getElementById('remoteVideo').srcObject = remoteStream;
-          document.getElementById('remoteAudioPlayer').srcObject = remoteStream;
-        };
-
-        peerConnection.onicecandidate = event => {
-          if (event.candidate) {
-            supabaseClient.from('signals').insert({
-              sender_id: currentUser.id,
-              receiver_id: currentChatUser.id,
-              candidate: event.candidate
-            });
-          }
-        };
-
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-
-        await supabaseClient.from('calls').insert({
-          caller_id: currentUser.id,
-          receiver_id: currentChatUser.id,
-          call_type: type,
-          offer: offer,
-          status: 'ringing'
-        });
-
-        await supabaseClient.from('messages').insert({
-          sender_id: currentUser.id,
-          receiver_id: currentChatUser.id,
-          message: `${type.toUpperCase()} call initiated`,
-          is_call_log: true
-        });
-
-        setupSignalingListener(currentChatUser.id);
-      } catch (err) {
-        console.error(err);
-        alert('Could not access media devices for calling.');
-        endCall();
-      }
-    }
-
-    let incomingCallPayload = null;
-    function showIncomingCallModal(call) {
-      incomingCallPayload = call;
-      document.getElementById('incomingCallerName').innerText = 'Incoming ' + call.call_type + ' call';
-      document.getElementById('incomingCallType').innerText = 'Tap Accept to answer';
-      document.getElementById('incomingCallBox').style.display = 'block';
-    }
-
-    async function acceptCall() {
-      document.getElementById('incomingCallBox').style.display = 'none';
-      if (!incomingCallPayload) return;
-
-      activeCall = { type: incomingCallPayload.call_type, peerId: incomingCallPayload.caller_id, isCaller: false };
-      showCallModal(incomingCallPayload.call_type);
-
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (incomingCallPayload.call_type === 'video' ? { facingMode: currentFacingMode } : false) });
-        document.getElementById('localVideo').srcObject = localStream;
-
-        const iceServers = await getIceServers();
-        peerConnection = new RTCPeerConnection({ iceServers });
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-        peerConnection.ontrack = event => {
-          remoteStream = event.streams[0];
-          document.getElementById('remoteVideo').srcObject = remoteStream;
-          document.getElementById('remoteAudioPlayer').srcObject = remoteStream;
-        };
-
-        peerConnection.onicecandidate = event => {
-          if (event.candidate) {
-            supabaseClient.from('signals').insert({
-              sender_id: currentUser.id,
-              receiver_id: incomingCallPayload.caller_id,
-              candidate: event.candidate
-            });
-          }
-        };
-
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingCallPayload.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        await supabaseClient.from('calls').update({ answer: answer, status: 'answered' }).eq('id', incomingCallPayload.id);
-
-        setupSignalingListener(incomingCallPayload.caller_id);
-      } catch (err) {
-        console.error(err);
-        endCall();
-      }
-    }
-
-    function declineCall() {
-      document.getElementById('incomingCallBox').style.display = 'none';
-      if (incomingCallPayload) {
-        supabaseClient.from('calls').update({ status: 'declined' }).eq('id', incomingCallPayload.id);
-      }
-      incomingCallPayload = null;
-    }
-
-    function setupSignalingListener(peerId) {
-      if (window.signalChannel) supabaseClient.removeChannel(window.signalChannel);
-
-      window.signalChannel = supabaseClient
-        .channel(`public:signals:${currentUser.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals', filter: `receiver_id=eq.${currentUser.id}` }, async payload => {
-          const sig = payload.new;
-          if (sig.sender_id === peerId && sig.candidate && peerConnection) {
-            try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(sig.candidate));
-            } catch (e) {
-              console.error('Error adding received ice candidate', e);
-            }
-          }
-        })
-        .subscribe();
-
-      if (activeCall && activeCall.isCaller) {
-        if (window.callAnswerChannel) supabaseClient.removeChannel(window.callAnswerChannel);
-
-        window.callAnswerChannel = supabaseClient
-          .channel(`public:calls:answer:${currentUser.id}`)
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `caller_id=eq.${currentUser.id}` }, async payload => {
-            if (payload.new.answer && peerConnection && !peerConnection.remoteDescription) {
-              try {
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
-              } catch (e) {
-                console.error('Error setting remote description from answer', e);
-              }
-            }
-          })
-          .subscribe();
-      }
-    }
-
-    function showCallModal(type) {
-      let modal = document.getElementById('activeCallModal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'activeCallModal';
-        modal.className = 'call-modal';
-        modal.innerHTML = `
-          <div class="video-box" style="position:relative;">
-            <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
-            <div id="remoteAvatarPlaceholder" class="avatar-placeholder" style="display:none;">
-              <div style="font-size:2rem;">👤</div>
-              <p style="font-size:0.7rem;">Peer Camera Off</p>
-            </div>
-            <video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:8px; right:8px; width:75px; height:100px; object-fit:cover; border-radius:8px; border:2px solid white; z-index:10;"></video>
-            <div id="localAvatarPlaceholder" class="avatar-placeholder" style="position:absolute; bottom:8px; right:8px; width:75px; height:100px; border-radius:8px; border:2px solid white; display:none; z-index:10;">
-              <div style="font-size:1.2rem;">👤</div>
-            </div>
-          </div>
-          <p id="callStatusText" style="color:white; margin-bottom:10px; font-size:0.85rem; min-height:1.2em;"></p>
-          <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
-            <button id="callFlipCameraBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:6px 10px; width:auto; font-size:0.75rem;" onclick="switchCamera('call')">📸 Flip</button>
-            <button id="callMuteBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:6px 10px; width:auto; font-size:0.75rem;" onclick="toggleCallAudio()">🎤 Mute</button>
-            <button id="callCamBtn" class="btn-main" style="background:var(--card); border:1px solid var(--border); padding:6px 10px; width:auto; font-size:0.75rem;" onclick="toggleCallCamera()">📹 Camera Off</button>
-            <button class="btn-main" style="background:var(--danger); width:auto; padding:6px 12px; font-size:0.75rem;" onclick="endCall()">End Call</button>
-          </div>
-        `;
-        document.body.appendChild(modal);
-      }
-      modal.style.display = 'flex';
-
-      const flipBtn = document.getElementById('callFlipCameraBtn');
-      const camBtn = document.getElementById('callCamBtn');
-      const localVid = document.getElementById('localVideo');
-      if (type === 'audio') {
-        if (localVid) localVid.style.display = 'none';
-        if (flipBtn) flipBtn.style.display = 'none';
-        if (camBtn) camBtn.style.display = 'none';
-      } else {
-        if (localVid) localVid.style.display = 'block';
-        if (flipBtn) flipBtn.style.display = 'inline-block';
-        if (camBtn) camBtn.style.display = 'inline-block';
-      }
-    }
-
-    function toggleCallAudio() {
-      if (!localStream) return;
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        const btn = document.getElementById('callMuteBtn');
-        if (btn) btn.textContent = audioTrack.enabled ? "🎤 Mute" : "🎤 Unmute";
-      }
-    }
-
-    function toggleCallCamera() {
-      if (!localStream) return;
-      const videoTrack = localStream.getVideoTracks()[0];
-      const videoEl = document.getElementById('localVideo');
-      const placeholderEl = document.getElementById('localAvatarPlaceholder');
-      const btn = document.getElementById('callCamBtn');
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        if (videoTrack.enabled) {
-          if (videoEl) videoEl.style.display = 'block';
-          if (placeholderEl) placeholderEl.style.display = 'none';
-          if (btn) btn.textContent = "📹 Camera Off";
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          showAuthError(error.message);
         } else {
-          if (videoEl) videoEl.style.display = 'none';
-          if (placeholderEl) placeholderEl.style.display = 'flex';
-          if (btn) btn.textContent = "📹 Camera On";
+          window.location.reload();
         }
       }
-    }
-
-    function endCall() {
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      if (peerConnection) peerConnection.close();
-      peerConnection = null;
-      localStream = null;
-      remoteStream = null;
-      const modal = document.getElementById('activeCallModal');
-      if (modal) modal.style.display = 'none';
-      activeCall = null;
-    }
-
-    function toggleStreamAudio() {
-      if (!myStream) return;
-      const audioTrack = myStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        const btn = document.getElementById('streamMuteBtn');
-        if (btn) btn.textContent = audioTrack.enabled ? "🎤 Mute" : "🎤 Unmute";
-      }
-    }
-
-    function toggleStreamCamera() {
-      if (!myStream) return;
-      const videoTrack = myStream.getVideoTracks()[0];
-      const videoEl = document.getElementById('hostVideo');
-      const placeholderEl = document.getElementById('hostAvatarPlaceholder');
-      const btn = document.getElementById('streamCamBtn');
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        if (videoTrack.enabled) {
-          if (videoEl) videoEl.style.display = 'block';
-          if (placeholderEl) placeholderEl.style.display = 'none';
-          if (btn) btn.textContent = "📹 Camera Off";
-        } else {
-          if (videoEl) videoEl.style.display = 'none';
-          if (placeholderEl) placeholderEl.style.display = 'flex';
-          if (btn) btn.textContent = "📹 Camera On";
-        }
-      }
-    }
-
-    const livePeers = new Map();
-    let liveChannel = null;
-
-    async function openHostChannel() {
-      if (liveChannel) supabaseClient.removeChannel(liveChannel);
-      liveChannel = supabaseClient.channel('live-' + currentUser.id);
-      const iceServers = await getIceServers();
-      liveChannel
-        .on('broadcast', { event: 'viewer-join' }, async ({ payload }) => {
-          const viewerId = payload && payload.viewerId;
-          if (!myStream || !viewerId) return;
-          const old = livePeers.get(viewerId);
-          if (old) { old.close(); livePeers.delete(viewerId); }
-
-          const pc = new RTCPeerConnection({ iceServers });
-          livePeers.set(viewerId, pc);
-          myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          liveChannel.send({ type: 'broadcast', event: 'offer', payload: { to: viewerId, sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } } });
-        })
-        .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-          const pc = livePeers.get(payload.from);
-          if (pc && !pc.currentRemoteDescription) {
-            try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch (e) {}
-          }
-        })
-        .on('broadcast', { event: 'viewer-leave' }, ({ payload }) => {
-          const pc = livePeers.get(payload.viewerId);
-          if (pc) { pc.close(); livePeers.delete(payload.viewerId); }
-        })
-        .subscribe();
-    }
-
-    async function toggleGroupStream() {
-      const btn = document.getElementById('btnStreamToggle');
-      const giftBtn = document.getElementById('streamGiftBtn');
-      const badge = document.getElementById('liveBadgeEl');
-      const muteBtn = document.getElementById('streamMuteBtn');
-      const camBtn = document.getElementById('streamCamBtn');
-
-      if (!isStreaming) {
-        try {
-          myStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, 
-            video: { facingMode: currentFacingMode } 
-          });
-          const hostVideo = document.getElementById('hostVideo');
-          hostVideo.srcObject = myStream;
-          hostVideo.muted = true;
-
-          isStreaming = true;
-          btn.innerText = 'Stop Live';
-          btn.style.background = 'var(--danger)';
-          if (muteBtn) muteBtn.style.display = 'inline-block';
-          if (camBtn) camBtn.style.display = 'inline-block';
-
-          if (giftBtn) giftBtn.style.display = 'none';
-          if (badge) badge.style.display = 'none';
-
-          await supabaseClient.from('livestreams').upsert({
-            user_id: currentUser.id,
-            is_active: true
-          });
-          await openHostChannel();
-        } catch (err) {
-          alert('Could not access microphone and camera for live streaming.');
-        }
-      } else {
-        if (liveChannel) liveChannel.send({ type: 'broadcast', event: 'ended', payload: {} });
-        livePeers.forEach(pc => pc.close());
-        livePeers.clear();
-        if (liveChannel) { supabaseClient.removeChannel(liveChannel); liveChannel = null; }
-
-        if (myStream) myStream.getTracks().forEach(t => t.stop());
-        isStreaming = false;
-        btn.innerText = 'Start Live';
-        btn.style.background = 'var(--primary)';
-        if (muteBtn) muteBtn.style.display = 'none';
-        if (camBtn) camBtn.style.display = 'none';
-        const placeholder = document.getElementById('hostAvatarPlaceholder');
-        if (placeholder) placeholder.style.display = 'none';
-
-        if (giftBtn) giftBtn.style.display = 'flex';
-        if (badge) badge.style.display = 'none';
-
-        await supabaseClient.from('livestreams').update({ is_active: false }).eq('user_id', currentUser.id);
-      }
-    }
-
-    let viewerPc = null;
-    let watchingHostId = null;
-
-    function joinLiveStream(streamId) {
-      const item = (globalLiveStreams || []).find(s => String(s.id) === String(streamId));
-      const hostId = item && item.user_id;
-      const nav = document.querySelectorAll('.nav-item')[1];
-      if (!hostId) { alert('Stream not available.'); return; }
-      if (isStreaming || hostId === currentUser.id) { switchTab('liveTab', nav); return; }
-
-      const giftBtn = document.getElementById('streamGiftBtn');
-      const badge = document.getElementById('liveBadgeEl');
-      if (giftBtn) giftBtn.style.display = 'flex';
-      if (badge) badge.style.display = 'block';
-      switchTab('liveTab', nav);
-
-      if (watchingHostId) leaveLive();
-      watchingHostId = hostId;
-      const video = document.getElementById('hostVideo');
-      video.muted = false;
-
-      liveChannel = supabaseClient.channel('live-' + hostId);
-      liveChannel
-        .on('broadcast', { event: 'offer' }, async ({ payload }) => {
-          if (!payload || payload.to !== currentUser.id || watchingHostId !== hostId) return;
-          if (viewerPc) viewerPc.close();
-          const iceServers = await getIceServers();
-          viewerPc = new RTCPeerConnection({ iceServers });
-          viewerPc.ontrack = ev => {
-            video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
-            video.play().catch(() => {});
-          };
-          await viewerPc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-          const answer = await viewerPc.createAnswer();
-          await viewerPc.setLocalDescription(answer);
-          liveChannel.send({ type: 'broadcast', event: 'answer', payload: { from: currentUser.id, sdp: { type: viewerPc.localDescription.type, sdp: viewerPc.localDescription.sdp } } });
-        })
-        .on('broadcast', { event: 'ended' }, () => {
-          leaveLive();
-          alert('The live stream has ended.');
-        })
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            liveChannel.send({ type: 'broadcast', event: 'viewer-join', payload: { viewerId: currentUser.id } });
-          }
-        });
-    }
-
-    function leaveLive() {
-      if (watchingHostId && liveChannel) {
-        liveChannel.send({ type: 'broadcast', event: 'viewer-leave', payload: { viewerId: currentUser.id } });
-        supabaseClient.removeChannel(liveChannel);
-        liveChannel = null;
-      }
-      if (viewerPc) { viewerPc.close(); viewerPc = null; }
-      watchingHostId = null;
-      const v = document.getElementById('hostVideo');
-      if (v && !isStreaming) v.srcObject = null;
-    }
-
-    function handleLiveChatKey(e) {
-      if (e.key === 'Enter') {
-        const input = document.getElementById('liveChatInput');
-        input.value = '';
-      }
-    }
-
-    function triggerGiftModal() {
-      document.getElementById('giftCatalogModal').style.display = 'flex';
-    }
-
-    async function sendGroupGift(giftName, cost) {
-      const currentCoins = currentUser.profile?.coins || 0;
-      if (currentCoins < cost) {
-        alert('Insufficient coins! Please buy more coins.');
-        closeModal('giftCatalogModal');
-        openModal('coinModal');
-        return;
-      }
-
-      const newCoins = currentCoins - cost;
-      await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
-      await loadUserProfile();
-      closeModal('giftCatalogModal');
-      alert(`Sent ${giftName} successfully!`);
-    }
-
-    function selectPackage(naira, coins) {
-      document.getElementById('customNairaAmount').value = naira;
-    }
-
-    function payWithPaystack() {
-      const naira = parseInt(document.getElementById('customNairaAmount').value);
-      const email = document.getElementById('userEmail').value || currentUser.email;
-      if (isNaN(naira) || naira < 10) { alert('Minimum amount is ₦10'); return; }
-
-      const handler = PaystackPop.setup({
-        key: 'pk_live_YOUR_PAYSTACK_KEY',
-        email: email,
-        amount: naira * 100,
-        currency: 'NGN',
-        callback: async function(response) {
-          const coinsEarned = Math.floor(naira / 10);
-          const newCoins = (currentUser.profile.coins || 0) + coinsEarned;
-          await supabaseClient.from('profiles').update({ coins: newCoins }).eq('id', currentUser.id);
-          await loadUserProfile();
-          closeModal('coinModal');
-          alert(`Payment successful! Credited +${coinsEarned} coins.`);
-        },
-        onClose: function() {
-          alert('Transaction was closed.');
-        }
-      });
-      handler.openIframe();
-    }
-
-    function triggerAvatarUpload() {
-      document.getElementById('avatarFileInput').click();
-    }
-
-    async function handleAvatarFileSelect(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const filePath = `avatars/${currentUser.id}_${Date.now()}`;
-      const { error } = await supabaseClient.storage.from('media').upload(filePath, file);
-      if (error) {
-        alert('Error uploading avatar: ' + error.message);
-        return;
-      }
-
-      const { data: { publicUrl } } = supabaseClient.storage.from('media').getPublicUrl(filePath);
-      await supabaseClient.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
-      await loadUserProfile();
-      alert('Profile picture updated successfully!');
-    }
-
-    function openEditProfileModal() {
-      document.getElementById('editUsername').value = currentUser.profile.username || '';
-      document.getElementById('editBio').value = currentUser.profile.bio || '';
-      document.getElementById('editLinkTitle').value = currentUser.profile.link_title || '';
-      document.getElementById('editBusinessLink').value = currentUser.profile.business_link || '';
-      document.getElementById('editDob').value = currentUser.profile.dob || '';
-      document.getElementById('editSex').value = currentUser.profile.sex || 'Male';
-      document.getElementById('editProfileModal').style.display = 'flex';
-    }
-
-    async function saveProfileChanges() {
-      const username = document.getElementById('editUsername').value.trim();
-      const bio = document.getElementById('editBio').value.trim();
-      const link_title = document.getElementById('editLinkTitle').value.trim();
-      const business_link = document.getElementById('editBusinessLink').value.trim();
-      const dob = document.getElementById('editDob').value;
-      const sex = document.getElementById('editSex').value;
-
-      await supabaseClient.from('profiles').update({
-        username, bio, link_title, business_link, dob, sex
-      }).eq('id', currentUser.id);
-
-      closeModal('editProfileModal');
-      await loadUserProfile();
-      alert('Profile updated successfully!');
-    }
-
-    function openSettings(type) {
-      toggleHeaderMenu();
-      const title = document.getElementById('settingsTitle');
-      const body = document.getElementById('settingsBody');
-      document.getElementById('settingsModal').style.display = 'flex';
-
-      if (type === 'account') {
-        title.innerText = 'Manage Account';
-        body.innerHTML = `<p style="font-size:0.85rem; color:var(--text-dim);">Email: ${currentUser.email}</p><button class="btn-main" style="margin-top:12px; background:var(--danger); padding:10px; font-size:0.85rem;" onclick="handleLogout()">Logout</button>`;
-      } else if (type === 'privacy') {
-        title.innerText = 'Privacy Settings';
-        body.innerHTML = `
-          <div class="setting-row"><span>Private Account</span><input type="checkbox"></div>
-          <div class="setting-row"><span>Show Online Status</span><input type="checkbox" checked></div>
-          <div class="setting-row"><span>Hide Following List</span><input type="checkbox" id="hideFollowingCheck" onchange="toggleHideFollowing(this)"></div>`;
-        setTimeout(() => {
-          document.getElementById('hideFollowingCheck').checked = localStorage.getItem(`hide_following_${currentUser.id}`) === 'true';
-        }, 100);
-      } else if (type === 'notifications') {
-        title.innerText = 'Notifications';
-        body.innerHTML = `
-          <div class="setting-row"><span>Push Notifications</span><input type="checkbox" checked></div>
-          <div class="setting-row"><span>Live Stream Alerts</span><input type="checkbox" checked></div>`;
-      } else if (type === 'verification') {
-        title.innerText = 'Verification';
-        body.innerHTML = `<p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:12px;">Verify your account to earn the blue checkmark badge.</p><button class="btn-main" style="padding:10px; font-size:0.85rem;">Request Verification</button>`;
-      } else if (type === 'prefs') {
-        title.innerText = 'Preferences';
-        body.innerHTML = `<div class="setting-row"><span>Dark Mode</span><input type="checkbox" checked></div>`;
-      } else if (type === 'accessibility') {
-        title.innerText = 'Accessibility';
-        body.innerHTML = `<div class="setting-row"><span>High Contrast</span><input type="checkbox"></div>`;
-      }
-    }
-
-    function toggleHideFollowing(el) {
-      localStorage.setItem(`hide_following_${currentUser.id}`, el.checked);
-    }
-
-    function openModal(modalId) {
-      document.getElementById(modalId).style.display = 'flex';
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).style.display = 'none';
     }
 
     async function handleLogout() {
@@ -1681,62 +305,68 @@
       window.location.reload();
     }
 
-    function copyRefLink() {
-      const link = document.getElementById('userRefLink').innerText;
-      navigator.clipboard.writeText(link);
-      alert('Referral link copied to clipboard!');
-    }
-
-    async function claimWeeklyReward() {
-      const lastClaimed = currentUser.profile.last_claimed_at ? new Date(currentUser.profile.last_claimed_at).getTime() : 0;
-      const now = Date.now();
-      const sevenDays = 7 * 24 * 60 * 60 * 1000;
-
-      if (now < lastClaimed + sevenDays) {
-        alert('Reward is not available yet. Please wait until your 7-day countdown completes!');
-        return;
+    // Daily.co Video Implementations
+    function initDailyStream() {
+      if (!dailyStreamFrame) {
+        dailyStreamFrame = window.DailyIframe.createFrame(
+          document.getElementById('dailyStreamContainer'),
+          { showLeaveButton: true, iframeStyle: { width: '100%', height: '100%', border: '0', borderRadius: '12px' } }
+        );
       }
-
-      const newCoins = (currentUser.profile.coins || 0) + 5;
-      const newClaimTime = new Date().toISOString();
-
-      await supabaseClient.from('profiles').update({
-        coins: newCoins,
-        last_claimed_at: newClaimTime
-      }).eq('id', currentUser.id);
-
-      await loadUserProfile();
-      alert('Successfully claimed +5 reward coins!');
+      dailyStreamFrame.join({ url: LIVE_STREAM_URL });
     }
 
-    async function processReferral(refId) {
-      if (localStorage.getItem('referred_' + currentUser.id)) return;
-      const { data: refUser } = await supabaseClient.from('profiles').select('coins').eq('id', refId).single();
-      if (refUser) {
-        await supabaseClient.from('profiles').update({ coins: (refUser.coins || 0) + 10 }).eq('id', refId);
-        localStorage.setItem('referred_' + currentUser.id, 'true');
+    function startCall(type) {
+      document.getElementById('callModal').style.display = 'flex';
+      if (!dailyCallFrame) {
+        dailyCallFrame = window.DailyIframe.createFrame(
+          document.getElementById('dailyCallContainer'),
+          { showLeaveButton: false, iframeStyle: { width: '100%', height: '100%', border: '0', borderRadius: '12px' } }
+        );
       }
+      dailyCallFrame.join({ url: CALL_URL, videoSource: type === 'video' });
     }
 
-    async function loadUserPosts() {
-      document.getElementById('userPostsList').innerHTML = '<p style="color:var(--text-dim); font-size:0.8rem;">No posts created yet.</p>';
+    function endCall() {
+      if (dailyCallFrame) dailyCallFrame.leave();
+      document.getElementById('callModal').style.display = 'none';
     }
 
-    async function loadStreamActivity() {
-      document.getElementById('streamActivityList').innerHTML = '<p style="font-size:0.75rem;">No recent stream activity recorded.</p>';
+    // Paystack Integration
+    function payWithPaystack(coins, amountInNaira) {
+      let handler = PaystackPop.setup({
+        key: 'pk_test_YOUR_PAYSTACK_KEY', // Replace with your Public Paystack Key
+        email: currentUser ? currentUser.email : 'user@naijalite.app',
+        amount: amountInNaira * 100,
+        currency: 'NGN',
+        callback: function(response) {
+          alert('Payment complete! Reference: ' + response.reference);
+          closeModal('coinModal');
+        },
+        onClose: function() {
+          alert('Transaction canceled.');
+        }
+      });
+      handler.openIframe();
     }
 
-    function openWhatsApp() {
-      const phone = document.getElementById('waPhone').value.trim();
-      if (!phone) { alert('Please enter a WhatsApp phone number.'); return; }
-      window.open(`https://wa.me/${phone}`, '_blank');
+    // UI Tab Navigation
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      el.classList.add('active');
+      if (tabId === 'liveTab') initDailyStream();
     }
 
-    async function submitWithdrawal() {
-      const acc = document.getElementById('bankAcc').value.trim();
-      if (!acc) { alert('Please enter your account number.'); return; }
-      alert('Withdrawal request submitted successfully! Processing within 24 hours.');
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function toggleHeaderMenu() {
+      const menu = document.getElementById('headerMenu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     }
+
+    document.addEventListener('DOMContentLoaded', checkAuth);
   </script>
 </body>
 </html>
