@@ -16,8 +16,10 @@
 
   <style>
     :root {
-      --primary: #008751; --primary-dark: #006b40; --accent: #ffc107; --danger: #ff4757;
-      --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-dim: #94a3b8; --border: #334155;
+      --primary: #00C853; --primary-dark: #00953d; --secondary: #7C4DFF; --accent: #FFC107; --danger: #FF4757;
+      --gradient: linear-gradient(135deg, #00C853, #7C4DFF);
+      --bg: #0f172a; --card: #1a2235; --text: #f8fafc; --text-dim: #94a3b8; --border: #2c3650;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.25); --shadow-md: 0 8px 24px rgba(0,0,0,0.35);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
     
@@ -40,26 +42,29 @@
     .auth-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px; display: block; }
     .btn-auth { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.3s; margin-top: 4px; }
 
-    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 12px 16px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 3px 12px rgba(0,0,0,0.2); }
+    header { background: var(--gradient); color: white; padding: 14px 16px; border-bottom-left-radius: 22px; border-bottom-right-radius: 22px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-md); }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .header-top h1 { font-size: 1.15rem; font-weight: 800; }
-    .header-actions { display: flex; align-items: center; gap: 10px; }
-    .wallet-mini { background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 16px; font-size: 0.7rem; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
-    .menu-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
-    .menu-dropdown { position: absolute; top: 55px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; width: 200px; z-index: 1000; display: none; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+    .header-top h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.2px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .wallet-mini { background: rgba(255, 255, 255, 0.22); padding: 6px 12px; border-radius: 18px; font-size: 0.7rem; font-weight: bold; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.2); white-space: nowrap; }
+    .menu-btn { background: rgba(255,255,255,0.15); border: none; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+    .menu-btn:active { background: rgba(255,255,255,0.3); transform: scale(0.92); }
+    .menu-dropdown { position: absolute; top: 58px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 200px; z-index: 1000; display: none; overflow: hidden; box-shadow: var(--shadow-md); }
     .menu-item { padding: 12px 16px; font-size: 0.85rem; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+    .menu-item:active { background: rgba(255,255,255,0.05); }
     .menu-item.danger { color: var(--danger); }
 
     .container { padding: 12px; }
     .tab-content { display: none; animation: fadeIn 0.3s ease; }
     .tab-content.active { display: block; }
-    .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
-    .btn-main { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.3s; }
+    .card { background: var(--card); border-radius: 18px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+    .btn-main { width: 100%; padding: 13px; background: var(--gradient); color: white; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.2s; box-shadow: 0 4px 14px rgba(124,77,255,0.25); }
+    .btn-main:active { transform: scale(0.97); filter: brightness(0.95); }
 
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: var(--card); display: flex; border-top: 1px solid var(--border); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-    .nav-item { flex: 1; text-align: center; padding: 10px 0; font-size: 0.65rem; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
-    .nav-item.active { color: var(--primary); font-weight: bold; }
-    .nav-item div { font-size: 1.2rem; margin-bottom: 2px; }
+    .nav-bar { position: fixed; bottom: 10px; left: 10px; right: 10px; max-width: 460px; margin: 0 auto; background: var(--card); display: flex; border-radius: 20px; border: 1px solid var(--border); z-index: 1000; box-shadow: var(--shadow-md); padding: 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
+    .nav-item { flex: 1; text-align: center; padding: 8px 0; font-size: 0.62rem; color: var(--text-dim); cursor: pointer; transition: 0.2s; border-radius: 16px; }
+    .nav-item.active { color: white; font-weight: bold; background: var(--gradient); }
+    .nav-item svg { width: 20px; height: 20px; margin-bottom: 2px; display: block; margin-left: auto; margin-right: auto; }
 
     .profile-menu { display: flex; justify-content: space-around; margin-bottom: 16px; background: var(--card); padding: 8px; border-radius: 12px; border: 1px solid var(--border); }
     .profile-menu-item { font-size: 0.75rem; cursor: pointer; padding: 6px 10px; border-radius: 8px; color: var(--text-dim); }
