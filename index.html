@@ -1085,12 +1085,19 @@
       }
     }
 
-    // TURNIX.IO Integration & WebRTC Calling
+    // ===== TURN / ICE =====
+    // turnix.io is kept as a first attempt. If it fails (CORS, expired key, rate limit)
+    // this falls back to STATIC_TURN_SERVERS below, then to STUN-only (which usually
+    // means no audio/video between two different networks).
     const TURNIX_API_KEY = '3f7ca9043d6300ef12b0736952c7275a';
+    // Optional backup TURN servers, e.g. from ExpressTURN, used if turnix.io fails:
+    // { urls: 'turn:YOUR_HOST:3478', username: 'YOUR_USERNAME', credential: 'YOUR_PASSWORD' }
+    const STATIC_TURN_SERVERS = [];
     let cachedIceServers = null;
+    let cachedIceServersAt = 0;
 
     async function getIceServers() {
-      if (cachedIceServers) return cachedIceServers;
+      if (cachedIceServers && Date.now() - cachedIceServersAt < 9 * 60 * 1000) return cachedIceServers;
       let servers = [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' }
@@ -1098,22 +1105,71 @@
       try {
         const res = await fetch(`https://api.turnix.io/v1/turn/credentials?apiKey=${TURNIX_API_KEY}`);
         const data = await res.json();
-        if (data && Array.isArray(data.iceServers)) {
-          servers = servers.concat(data.iceServers);
-        } else if (Array.isArray(data)) {
-          servers = servers.concat(data);
-        }
+        if (data && Array.isArray(data.iceServers)) servers = servers.concat(data.iceServers);
+        else if (Array.isArray(data)) servers = servers.concat(data);
       } catch (e) {
-        console.warn('Failed to fetch Turnix credentials, falling back to STUN:', e);
+        console.warn('Failed to fetch Turnix credentials, falling back:', e);
+      }
+      servers = servers.concat(STATIC_TURN_SERVERS);
+      if (servers.filter(s => String(s.urls).startsWith('turn:') || String(s.urls).startsWith('turns:')).length === 0) {
+        console.warn('[ice] No TURN server available right now - calls/streams may have no audio or video across different networks.');
       }
       cachedIceServers = servers;
+      cachedIceServersAt = Date.now();
       return servers;
     }
 
+    // Console helper: run  await nlCheckIce()  — "relay" must appear in the list for TURN to be working
+    window.nlCheckIce = async function () {
+      const pc = new RTCPeerConnection({ iceServers: await getIceServers() });
+      const types = new Set();
+      pc.onicecandidate = e => { if (e.candidate) types.add(e.candidate.type); };
+      pc.createDataChannel('x');
+      await pc.setLocalDescription(await pc.createOffer());
+      await new Promise(r => setTimeout(r, 4000));
+      pc.close();
+      const out = Array.from(types);
+      console.log('ICE candidate types:', out, out.includes('relay') ? 'TURN works' : 'NO relay candidate - TURN is not working');
+      return out;
+    };
+
+    // ===== 1-to-1 CALLS =====
+    // Queue for ICE candidates that arrive before setRemoteDescription has run
+    // (this was the main reason calls connected with no audio/video: early
+    // candidates were received but rejected, so the connection fell back to
+    // nothing, or never finished connecting at all).
+    let pendingRemoteCandidates = [];
+
+    async function applyOrQueueCandidate(candidate) {
+      if (!peerConnection) return;
+      if (peerConnection.remoteDescription && peerConnection.remoteDescription.type) {
+        try { await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); }
+        catch (e) { console.error('[call] addIceCandidate failed', e); }
+      } else {
+        pendingRemoteCandidates.push(candidate);
+      }
+    }
+
+    async function flushPendingCandidates() {
+      const queued = pendingRemoteCandidates;
+      pendingRemoteCandidates = [];
+      for (const c of queued) {
+        try { await peerConnection.addIceCandidate(new RTCIceCandidate(c)); }
+        catch (e) { console.error('[call] addIceCandidate (flush) failed', e); }
+      }
+    }
+
+    function setStatus(text) {
+      const el = document.getElementById('callStatusText');
+      if (el) el.textContent = text || '';
+    }
+
     async function startCall(type) {
-      if (!currentChatUser) return;
-      activeCall = { type, peerId: currentChatUser.id, isCaller: true };
+      if (!currentChatUser || activeCall) return;
+      activeCall = { type, peerId: currentChatUser.id, isCaller: true, callId: null };
+      pendingRemoteCandidates = [];
       showCallModal(type);
+      setStatus('Calling...');
 
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (type === 'video' ? { facingMode: currentFacingMode } : false) });
@@ -1139,16 +1195,31 @@
           }
         };
 
+        peerConnection.onconnectionstatechange = () => {
+          if (peerConnection.connectionState === 'connected') setStatus('Connected');
+          if (peerConnection.connectionState === 'failed') {
+            setStatus('');
+            endCall(true, 'Call failed to connect. This usually means TURN is not working right now - run nlCheckIce() in the console to check.');
+          }
+        };
+
+        // Subscribe to signaling BEFORE creating the offer, so no early
+        // ICE candidate from the other side (once they answer) is missed.
+        setupSignalingListener(currentChatUser.id);
+
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
 
-        await supabaseClient.from('calls').insert({
+        const { data: call, error } = await supabaseClient.from('calls').insert({
           caller_id: currentUser.id,
           receiver_id: currentChatUser.id,
           call_type: type,
           offer: offer,
           status: 'ringing'
-        });
+        }).select().single();
+        if (error) throw error;
+        if (!activeCall) return; // user hung up while this was setting up
+        activeCall.callId = call.id;
 
         await supabaseClient.from('messages').insert({
           sender_id: currentUser.id,
@@ -1157,31 +1228,60 @@
           is_call_log: true
         });
 
-        setupSignalingListener(currentChatUser.id);
+        activeCall.ringTimeout = setTimeout(() => {
+          if (activeCall && peerConnection && !peerConnection.currentRemoteDescription) {
+            endCall(true, 'No answer');
+          }
+        }, 45000);
       } catch (err) {
         console.error(err);
-        alert('Could not access media devices for calling.');
-        endCall();
+        endCall(false, err && err.name === 'NotAllowedError'
+          ? 'Microphone/camera permission was denied.'
+          : 'Could not access media devices for calling.');
       }
     }
 
     let incomingCallPayload = null;
+    let ringTimeoutForIncoming = null;
+
     function showIncomingCallModal(call) {
+      if (activeCall) { // already in a call - decline automatically
+        supabaseClient.from('calls').update({ status: 'declined' }).eq('id', call.id).then(() => {});
+        return;
+      }
       incomingCallPayload = call;
       document.getElementById('incomingCallerName').innerText = 'Incoming ' + call.call_type + ' call';
       document.getElementById('incomingCallType').innerText = 'Tap Accept to answer';
       document.getElementById('incomingCallBox').style.display = 'block';
+      clearTimeout(ringTimeoutForIncoming);
+      ringTimeoutForIncoming = setTimeout(() => {
+        if (incomingCallPayload && incomingCallPayload.id === call.id) {
+          document.getElementById('incomingCallBox').style.display = 'none';
+          incomingCallPayload = null;
+        }
+      }, 45000);
     }
 
     async function acceptCall() {
+      const call = incomingCallPayload;
       document.getElementById('incomingCallBox').style.display = 'none';
-      if (!incomingCallPayload) return;
+      clearTimeout(ringTimeoutForIncoming);
+      incomingCallPayload = null;
+      if (!call || activeCall) return;
 
-      activeCall = { type: incomingCallPayload.call_type, peerId: incomingCallPayload.caller_id, isCaller: false };
-      showCallModal(incomingCallPayload.call_type);
+      activeCall = { type: call.call_type, peerId: call.caller_id, isCaller: false, callId: call.id };
+      pendingRemoteCandidates = [];
+      showCallModal(call.call_type);
+      setStatus('Connecting...');
 
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (incomingCallPayload.call_type === 'video' ? { facingMode: currentFacingMode } : false) });
+        const { data: fresh } = await supabaseClient.from('calls').select('status, offer').eq('id', call.id).single();
+        if (!fresh || fresh.status !== 'ringing') {
+          endCall(false, 'This call has already ended.');
+          return;
+        }
+
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: (call.call_type === 'video' ? { facingMode: currentFacingMode } : false) });
         document.getElementById('localVideo').srcObject = localStream;
 
         const iceServers = await getIceServers();
@@ -1198,31 +1298,64 @@
           if (event.candidate) {
             supabaseClient.from('signals').insert({
               sender_id: currentUser.id,
-              receiver_id: incomingCallPayload.caller_id,
+              receiver_id: call.caller_id,
               candidate: event.candidate
             });
           }
         };
 
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingCallPayload.offer));
+        peerConnection.onconnectionstatechange = () => {
+          if (peerConnection.connectionState === 'connected') setStatus('Connected');
+          if (peerConnection.connectionState === 'failed') {
+            setStatus('');
+            endCall(true, 'Call failed to connect. This usually means TURN is not working right now - run nlCheckIce() in the console to check.');
+          }
+        };
+
+        // Subscribe BEFORE applying the remote description, and immediately
+        // catch up on any ICE candidates the caller already sent while we
+        // were asking for camera/mic permission.
+        setupSignalingListener(call.caller_id);
+        await catchUpSignals(call.caller_id);
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(fresh.offer));
+        await flushPendingCandidates();
+
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
 
-        await supabaseClient.from('calls').update({ answer: answer, status: 'answered' }).eq('id', incomingCallPayload.id);
-
-        setupSignalingListener(incomingCallPayload.caller_id);
+        await supabaseClient.from('calls').update({ answer: answer, status: 'answered' }).eq('id', call.id);
       } catch (err) {
         console.error(err);
-        endCall();
+        endCall(true, err && err.name === 'NotAllowedError'
+          ? 'Microphone/camera permission was denied.'
+          : 'Could not access media devices for calling.');
       }
     }
 
     function declineCall() {
+      const call = incomingCallPayload;
       document.getElementById('incomingCallBox').style.display = 'none';
-      if (incomingCallPayload) {
-        supabaseClient.from('calls').update({ status: 'declined' }).eq('id', incomingCallPayload.id);
-      }
+      clearTimeout(ringTimeoutForIncoming);
       incomingCallPayload = null;
+      if (call) supabaseClient.from('calls').update({ status: 'declined' }).eq('id', call.id);
+    }
+
+    // Picks up any signaling rows inserted before we were subscribed
+    // (closes the race that was dropping the caller's early ICE candidates).
+    async function catchUpSignals(peerId) {
+      const { data } = await supabaseClient
+        .from('signals')
+        .select('*')
+        .eq('sender_id', peerId)
+        .eq('receiver_id', currentUser.id)
+        .order('created_at', { ascending: true })
+        .limit(50);
+      if (data) {
+        for (const sig of data) {
+          if (sig.candidate) await applyOrQueueCandidate(sig.candidate);
+        }
+      }
     }
 
     function setupSignalingListener(peerId) {
@@ -1232,12 +1365,8 @@
         .channel(`public:signals:${currentUser.id}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals', filter: `receiver_id=eq.${currentUser.id}` }, async payload => {
           const sig = payload.new;
-          if (sig.sender_id === peerId && sig.candidate && peerConnection) {
-            try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(sig.candidate));
-            } catch (e) {
-              console.error('Error adding received ice candidate', e);
-            }
+          if (sig.sender_id === peerId && sig.candidate) {
+            await applyOrQueueCandidate(sig.candidate);
           }
         })
         .subscribe();
@@ -1248,13 +1377,26 @@
         window.callAnswerChannel = supabaseClient
           .channel(`public:calls:answer:${currentUser.id}`)
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `caller_id=eq.${currentUser.id}` }, async payload => {
-            if (payload.new.answer && peerConnection && !peerConnection.remoteDescription) {
+            if (!activeCall || payload.new.id !== activeCall.callId) return;
+            if (payload.new.answer && peerConnection && !peerConnection.currentRemoteDescription) {
+              clearTimeout(activeCall.ringTimeout);
+              setStatus('Connecting...');
               try {
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.new.answer));
-              } catch (e) {
-                console.error('Error setting remote description from answer', e);
-              }
+                await flushPendingCandidates();
+              } catch (e) { console.error('Error setting remote description from answer', e); }
             }
+            if (payload.new.status === 'declined') endCall(false, 'Call declined');
+            else if (payload.new.status === 'ended') endCall(false);
+          })
+          .subscribe();
+      } else {
+        if (window.callStatusChannel) supabaseClient.removeChannel(window.callStatusChannel);
+        window.callStatusChannel = supabaseClient
+          .channel(`public:calls:status:${currentUser.id}`)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
+            if (!activeCall || payload.new.id !== activeCall.callId) return;
+            if (payload.new.status === 'ended') endCall(false);
           })
           .subscribe();
       }
@@ -1334,15 +1476,27 @@
       }
     }
 
-    function endCall() {
+    // notifyPeer = true -> tell the other side the call has ended
+    function endCall(notifyPeer, message) {
+      if (notifyPeer === undefined) notifyPeer = true;
+      const call = activeCall;
+      if (call && call.ringTimeout) clearTimeout(call.ringTimeout);
+      if (notifyPeer && call && call.callId) {
+        supabaseClient.from('calls').update({ status: 'ended' }).eq('id', call.callId).then(() => {});
+      }
+      if (window.signalChannel) { supabaseClient.removeChannel(window.signalChannel); window.signalChannel = null; }
+      if (window.callAnswerChannel) { supabaseClient.removeChannel(window.callAnswerChannel); window.callAnswerChannel = null; }
+      if (window.callStatusChannel) { supabaseClient.removeChannel(window.callStatusChannel); window.callStatusChannel = null; }
       if (localStream) localStream.getTracks().forEach(t => t.stop());
-      if (peerConnection) peerConnection.close();
+      if (peerConnection) { peerConnection.ontrack = null; peerConnection.onconnectionstatechange = null; peerConnection.close(); }
       peerConnection = null;
       localStream = null;
       remoteStream = null;
+      pendingRemoteCandidates = [];
+      activeCall = null;
       const modal = document.getElementById('activeCallModal');
       if (modal) modal.style.display = 'none';
-      activeCall = null;
+      if (typeof message === 'string' && message) alert(message);
     }
 
     function toggleStreamAudio() {
@@ -1375,7 +1529,12 @@
       }
     }
 
-    const livePeers = new Map();
+    // ===== LIVE STREAMING =====
+    // The previous version never exchanged ICE candidates for the live stream
+    // (only the initial offer/answer), so viewers almost never actually
+    // received audio or video. This version trickles ICE both ways and
+    // queues any candidate that arrives before the remote description is set.
+    const livePeers = new Map(); // host: viewerId -> { pc, pending: [] }
     let liveChannel = null;
 
     async function openHostChannel() {
@@ -1387,24 +1546,52 @@
           const viewerId = payload && payload.viewerId;
           if (!myStream || !viewerId) return;
           const old = livePeers.get(viewerId);
-          if (old) { old.close(); livePeers.delete(viewerId); }
+          if (old) { old.pc.close(); livePeers.delete(viewerId); }
 
           const pc = new RTCPeerConnection({ iceServers });
-          livePeers.set(viewerId, pc);
+          const entry = { pc, pending: [] };
+          livePeers.set(viewerId, entry);
           myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
+
+          pc.onicecandidate = e => {
+            if (e.candidate) {
+              liveChannel.send({ type: 'broadcast', event: 'ice', payload: { to: viewerId, from: currentUser.id, candidate: e.candidate } });
+            }
+          };
+          pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+              pc.close();
+              if (livePeers.get(viewerId) === entry) livePeers.delete(viewerId);
+            }
+          };
+
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           liveChannel.send({ type: 'broadcast', event: 'offer', payload: { to: viewerId, sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } } });
         })
         .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-          const pc = livePeers.get(payload.from);
-          if (pc && !pc.currentRemoteDescription) {
-            try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch (e) {}
+          const entry = livePeers.get(payload.from);
+          if (entry && !entry.pc.currentRemoteDescription) {
+            try {
+              await entry.pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+              for (const c of entry.pending) { try { await entry.pc.addIceCandidate(new RTCIceCandidate(c)); } catch (e) {} }
+              entry.pending = [];
+            } catch (e) { console.error('[live host] bad answer', e); }
+          }
+        })
+        .on('broadcast', { event: 'ice' }, async ({ payload }) => {
+          if (payload.to !== currentUser.id) return;
+          const entry = livePeers.get(payload.from);
+          if (!entry) return;
+          if (entry.pc.remoteDescription && entry.pc.remoteDescription.type) {
+            try { await entry.pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch (e) {}
+          } else {
+            entry.pending.push(payload.candidate);
           }
         })
         .on('broadcast', { event: 'viewer-leave' }, ({ payload }) => {
-          const pc = livePeers.get(payload.viewerId);
-          if (pc) { pc.close(); livePeers.delete(payload.viewerId); }
+          const entry = livePeers.get(payload.viewerId);
+          if (entry) { entry.pc.close(); livePeers.delete(payload.viewerId); }
         })
         .subscribe();
     }
@@ -1418,10 +1605,13 @@
 
       if (!isStreaming) {
         try {
-          myStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, 
-            video: { facingMode: currentFacingMode } 
+          myStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+            video: { facingMode: currentFacingMode }
           });
+          if (!myStream.getAudioTracks().length) {
+            alert('Warning: no microphone was captured - viewers will not hear you.');
+          }
           const hostVideo = document.getElementById('hostVideo');
           hostVideo.srcObject = myStream;
           hostVideo.muted = true;
@@ -1441,15 +1631,17 @@
           });
           await openHostChannel();
         } catch (err) {
+          console.error(err);
           alert('Could not access microphone and camera for live streaming.');
         }
       } else {
         if (liveChannel) liveChannel.send({ type: 'broadcast', event: 'ended', payload: {} });
-        livePeers.forEach(pc => pc.close());
+        livePeers.forEach(entry => entry.pc.close());
         livePeers.clear();
         if (liveChannel) { supabaseClient.removeChannel(liveChannel); liveChannel = null; }
 
         if (myStream) myStream.getTracks().forEach(t => t.stop());
+        myStream = null;
         isStreaming = false;
         btn.innerText = 'Start Live';
         btn.style.background = 'var(--primary)';
@@ -1457,6 +1649,7 @@
         if (camBtn) camBtn.style.display = 'none';
         const placeholder = document.getElementById('hostAvatarPlaceholder');
         if (placeholder) placeholder.style.display = 'none';
+        document.getElementById('hostVideo').srcObject = null;
 
         if (giftBtn) giftBtn.style.display = 'flex';
         if (badge) badge.style.display = 'none';
@@ -1466,7 +1659,30 @@
     }
 
     let viewerPc = null;
+    let viewerPendingCandidates = [];
     let watchingHostId = null;
+
+    function removeUnmuteButton() { const b = document.getElementById('liveUnmuteBtn'); if (b) b.remove(); }
+    function playLiveVideo() {
+      const v = document.getElementById('hostVideo');
+      v.muted = false;
+      v.play().then(removeUnmuteButton).catch(() => {
+        v.muted = true; // browsers block unmuted autoplay without a tap
+        v.play().catch(() => {});
+        if (!document.getElementById('liveUnmuteBtn')) {
+          const box = document.querySelector('.live-container');
+          if (box) {
+            const b = document.createElement('button');
+            b.id = 'liveUnmuteBtn';
+            b.className = 'btn-main';
+            b.textContent = '🔊 Tap to hear';
+            b.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:auto; padding:10px 16px; z-index:20; background:var(--accent); color:black;';
+            b.onclick = () => { v.muted = false; v.play().catch(() => {}); removeUnmuteButton(); };
+            box.appendChild(b);
+          }
+        }
+      });
+    }
 
     function joinLiveStream(streamId) {
       const item = (globalLiveStreams || []).find(s => String(s.id) === String(streamId));
@@ -1483,6 +1699,7 @@
 
       if (watchingHostId) leaveLive();
       watchingHostId = hostId;
+      viewerPendingCandidates = [];
       const video = document.getElementById('hostVideo');
       video.muted = false;
 
@@ -1495,12 +1712,34 @@
           viewerPc = new RTCPeerConnection({ iceServers });
           viewerPc.ontrack = ev => {
             video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
-            video.play().catch(() => {});
+            playLiveVideo();
+          };
+          viewerPc.onicecandidate = e => {
+            if (e.candidate) {
+              liveChannel.send({ type: 'broadcast', event: 'ice', payload: { to: hostId, from: currentUser.id, candidate: e.candidate } });
+            }
+          };
+          viewerPc.onconnectionstatechange = () => {
+            if (viewerPc && viewerPc.connectionState === 'failed') {
+              alert('Could not connect to the live stream. This usually means TURN is not working right now.');
+              leaveLive();
+            }
           };
           await viewerPc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          for (const c of viewerPendingCandidates) { try { await viewerPc.addIceCandidate(new RTCIceCandidate(c)); } catch (e) {} }
+          viewerPendingCandidates = [];
+
           const answer = await viewerPc.createAnswer();
           await viewerPc.setLocalDescription(answer);
           liveChannel.send({ type: 'broadcast', event: 'answer', payload: { from: currentUser.id, sdp: { type: viewerPc.localDescription.type, sdp: viewerPc.localDescription.sdp } } });
+        })
+        .on('broadcast', { event: 'ice' }, async ({ payload }) => {
+          if (payload.to !== currentUser.id) return;
+          if (viewerPc && viewerPc.remoteDescription && viewerPc.remoteDescription.type) {
+            try { await viewerPc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch (e) {}
+          } else {
+            viewerPendingCandidates.push(payload.candidate);
+          }
         })
         .on('broadcast', { event: 'ended' }, () => {
           leaveLive();
@@ -1520,7 +1759,9 @@
         liveChannel = null;
       }
       if (viewerPc) { viewerPc.close(); viewerPc = null; }
+      viewerPendingCandidates = [];
       watchingHostId = null;
+      removeUnmuteButton();
       const v = document.getElementById('hostVideo');
       if (v && !isStreaming) v.srcObject = null;
     }
