@@ -197,10 +197,21 @@
       <h1>🇳🇬 NAIJALITE</h1>
       <div class="header-actions">
         <div class="wallet-mini"><span id="walletBalance">₦0.00</span> | 🟡 <span id="userCoins">0</span></div>
+        <button class="menu-btn" style="position:relative;" onclick="toggleNotifPanel()">
+          🔔<span id="notifBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:var(--danger); color:white; font-size:0.55rem; font-weight:bold; border-radius:8px; padding:1px 5px; line-height:1.2;">0</span>
+        </button>
         <button class="menu-btn" onclick="toggleHeaderMenu()">⋮</button>
       </div>
     </div>
   </header>
+
+  <div id="notifPanel" class="menu-dropdown" style="width:280px; right:16px; max-height:360px; overflow-y:auto;">
+    <div style="padding:10px 14px; font-weight:bold; font-size:0.85rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      Notifications
+      <span style="font-size:0.7rem; color:var(--text-dim); cursor:pointer; font-weight:normal;" onclick="markAllNotificationsRead()">Mark all read</span>
+    </div>
+    <div id="notifList"><p style="padding:14px; font-size:0.8rem; color:var(--text-dim);">No notifications yet.</p></div>
+  </div>
 
   <div id="headerMenu" class="menu-dropdown">
     <div class="menu-item" onclick="openSettings('account')">Manage account</div>
@@ -230,7 +241,10 @@
         <div class="live-overlay" id="liveOverlayBox">
           <div class="overlay-top">
             <div class="live-badge" id="liveBadgeEl">🔴 LIVE</div>
-            <button style="background:var(--accent); border:none; padding:6px 10px; border-radius:10px; font-weight:bold; font-size:0.65rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
+            <div style="display:flex; gap:6px;">
+              <button style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.3); width:32px; height:32px; border-radius:50%; font-size:0.95rem; cursor:pointer; color:white;" onclick="switchCamera('stream')" title="Flip camera">📸</button>
+              <button style="background:var(--accent); border:none; padding:6px 10px; border-radius:10px; font-weight:bold; font-size:0.65rem; cursor:pointer; color:black;" onclick="openModal('coinModal')">+ Buy Coins</button>
+            </div>
           </div>
           <div class="overlay-bottom" id="liveOverlayBottom">
             <input type="text" id="liveChatInput" placeholder="Say something..." onkeydown="handleLiveChatKey(event)">
@@ -239,10 +253,9 @@
         </div>
       </div>
 
-      <!-- Restored Flip Camera Button + Stream Control Buttons -->
+      <!-- Stream Control Buttons -->
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
         <button class="btn-main" id="btnStreamToggle" onclick="toggleGroupStream()">Start Live</button>
-        <button class="btn-main" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem;" onclick="switchCamera('stream')">📸 Flip</button>
         <button class="btn-main" id="streamMuteBtn" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem; display:none;" onclick="toggleStreamAudio()">🎤 Mute</button>
         <button class="btn-main" id="streamCamBtn" style="background:var(--card); border:1px solid var(--border); width:auto; padding:10px 12px; font-size:0.85rem; display:none;" onclick="toggleStreamCamera()">📹 Camera Off</button>
       </div>
@@ -667,6 +680,7 @@
       loadConversations();
       loadUserPosts();
       loadStreamActivity();
+      loadNotifications();
 
       const urlParams = new URLSearchParams(window.location.search);
       const refId = urlParams.get('ref');
@@ -677,11 +691,31 @@
 
     async function loadUserProfile() {
       if (!currentUser) return;
-      const { data } = await supabaseClient
+      let { data } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
         .single();
+
+      // Self-heal: if the profile is missing, or its username is empty / an
+      // auto-generated placeholder, refill it from what was entered at signup
+      // (always available on the logged-in user, regardless of email
+      // confirmation timing issues).
+      const meta = (await supabaseClient.auth.getUser()).data?.user?.user_metadata || {};
+      const looksPlaceholder = !data || !data.username || /^User_\d+$/.test(data.username);
+      if (looksPlaceholder && meta.username) {
+        const repaired = {
+          id: currentUser.id,
+          username: meta.username,
+          dob: meta.dob || (data && data.dob) || null,
+          sex: meta.sex || (data && data.sex) || 'Male',
+          coins: (data && data.coins) ?? 10,
+          wallet: (data && data.wallet) ?? 0.00,
+          last_claimed_at: (data && data.last_claimed_at) || new Date().toISOString()
+        };
+        const { data: fixed } = await supabaseClient.from('profiles').upsert(repaired).select().single();
+        if (fixed) data = fixed;
+      }
 
       if (data) {
         currentUser.profile = data;
@@ -750,6 +784,121 @@
           loadHomeFeed();
         })
         .subscribe();
+
+      supabaseClient
+        .channel(`public:notifications:${currentUser.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUser.id}` }, () => {
+          loadNotifications();
+        })
+        .subscribe();
+
+      // Global message listener: shows a notification for a new message even
+      // when that chat isn't currently open.
+      supabaseClient
+        .channel(`public:inbox:${currentUser.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
+          const m = payload.new;
+          if (m.is_call_log) return;
+          if (currentChatUser && currentChatUser.id === m.sender_id) return; // already seeing it live in the open chat
+          supabaseClient.from('notifications').insert({
+            user_id: currentUser.id,
+            type: 'message',
+            actor_id: m.sender_id,
+            data: { preview: (m.message || '').slice(0, 60) }
+          });
+          loadConversations();
+        })
+        .subscribe();
+    }
+
+    // ===== NOTIFICATIONS =====
+    async function loadNotifications() {
+      const { data } = await supabaseClient
+        .from('notifications')
+        .select('*, actor:actor_id(username, avatar_url)')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      const list = data || [];
+      const unread = list.filter(n => !n.is_read).length;
+      const badge = document.getElementById('notifBadge');
+      if (unread > 0) { badge.style.display = 'block'; badge.textContent = unread > 9 ? '9+' : unread; }
+      else { badge.style.display = 'none'; }
+
+      const container = document.getElementById('notifList');
+      if (list.length === 0) {
+        container.innerHTML = '<p style="padding:14px; font-size:0.8rem; color:var(--text-dim);">No notifications yet.</p>';
+        return;
+      }
+
+      let html = '';
+      list.forEach(n => {
+        const name = n.actor?.username || 'Someone';
+        const timeStr = new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const unreadStyle = n.is_read ? '' : 'background:rgba(0,135,81,0.1);';
+        let body = '';
+        if (n.type === 'follow_request') {
+          body = `<b style="font-size:0.8rem;">${name}</b> wants to follow you.
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem;" onclick="event.stopPropagation(); respondFollowRequest('${n.actor_id}', '${n.id}', true)">Accept</button>
+              <button class="btn-main" style="width:auto; padding:5px 10px; font-size:0.7rem; background:var(--card); border:1px solid var(--border);" onclick="event.stopPropagation(); respondFollowRequest('${n.actor_id}', '${n.id}', false)">Decline</button>
+            </div>`;
+        } else if (n.type === 'follow_accepted') {
+          body = `<b style="font-size:0.8rem;">${name}</b> accepted your follow request.`;
+        } else if (n.type === 'message') {
+          body = `<b style="font-size:0.8rem;">${name}</b> sent you a message: <span style="color:var(--text-dim);">${(n.data && n.data.preview) || ''}</span>`;
+        } else if (n.type === 'live') {
+          body = `<b style="font-size:0.8rem;">${name}</b> just went live.`;
+        } else {
+          body = `<b style="font-size:0.8rem;">${name}</b>`;
+        }
+        html += `
+          <div style="padding:10px 14px; border-bottom:1px solid var(--border); font-size:0.8rem; cursor:pointer; ${unreadStyle}" onclick="handleNotificationClick('${n.id}', '${n.type}', '${n.actor_id}')">
+            ${body}
+            <div style="font-size:0.65rem; color:var(--text-dim); margin-top:4px;">${timeStr}</div>
+          </div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function toggleNotifPanel() {
+      const panel = document.getElementById('notifPanel');
+      const opening = panel.style.display !== 'block';
+      panel.style.display = opening ? 'block' : 'none';
+      document.getElementById('headerMenu').style.display = 'none';
+      if (opening) loadNotifications();
+    }
+
+    async function handleNotificationClick(notifId, type, actorId) {
+      await supabaseClient.from('notifications').update({ is_read: true }).eq('id', notifId);
+      if (type === 'message' && actorId) {
+        const { data: user } = await supabaseClient.from('profiles').select('username').eq('id', actorId).single();
+        document.getElementById('notifPanel').style.display = 'none';
+        openChat(actorId, user?.username || 'User');
+      }
+      loadNotifications();
+    }
+
+    async function markAllNotificationsRead() {
+      await supabaseClient.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
+      loadNotifications();
+    }
+
+    async function respondFollowRequest(followerId, notifId, accept) {
+      if (accept) {
+        await supabaseClient.from('follows').update({ status: 'accepted' }).eq('follower_id', followerId).eq('following_id', currentUser.id);
+        await supabaseClient.from('notifications').insert({
+          user_id: followerId,
+          type: 'follow_accepted',
+          actor_id: currentUser.id,
+          data: { username: currentUser.profile?.username || 'Someone' }
+        });
+      } else {
+        await supabaseClient.from('follows').delete().eq('follower_id', followerId).eq('following_id', currentUser.id);
+      }
+      await supabaseClient.from('notifications').update({ is_read: true }).eq('id', notifId);
+      loadNotifications();
     }
 
     function switchTab(tabId, el) {
@@ -772,6 +921,7 @@
     function toggleHeaderMenu() {
       const menu = document.getElementById('headerMenu');
       menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+      document.getElementById('notifPanel').style.display = 'none';
     }
 
     function toggleChatMenu() {
@@ -809,23 +959,35 @@
         return;
       }
 
+      const { data: myFollows } = await supabaseClient.from('follows').select('following_id, status').eq('follower_id', currentUser.id);
+      const followMap = new Map((myFollows || []).map(f => [f.following_id, f.status]));
+
       let html = '';
       usersData.forEach(u => {
         if (u.id === currentUser.id) return;
+        const status = followMap.get(u.id);
+        const followLabel = status === 'accepted' ? 'Following' : (status === 'pending' ? 'Requested' : 'Follow');
         html += `
-          <div class="user-item" onclick="openUserProfile('${u.id}')">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="width:38px; height:38px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          <div class="user-item">
+            <div style="display:flex; align-items:center; gap:10px; cursor:pointer; flex:1; min-width:0;" onclick="openUserProfile('${u.id}')">
+              <div style="width:38px; height:38px; border-radius:50%; background:var(--primary); overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                 ${u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
               </div>
-              <div>
-                <b style="font-size:0.85rem;">${u.username}</b>
-              </div>
+              <b style="font-size:0.85rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${u.username}</b>
             </div>
-            <span style="font-size:0.8rem;">→</span>
+            <div style="display:flex; gap:6px; flex-shrink:0;">
+              <button class="btn-main" style="width:auto; padding:6px 10px; font-size:0.7rem; ${status === 'pending' ? 'background:var(--card); border:1px solid var(--border);' : ''}" onclick="event.stopPropagation(); quickFollow('${u.id}', '${(u.username || '').replace(/'/g, "\\'")}')">${followLabel}</button>
+              <button class="btn-main" style="width:auto; padding:6px 10px; font-size:0.7rem; background:var(--card); border:1px solid var(--border);" onclick="event.stopPropagation(); openChat('${u.id}', '${(u.username || '').replace(/'/g, "\\'")}')">💬</button>
+            </div>
           </div>`;
       });
       feedContainer.innerHTML = html;
+    }
+
+    async function quickFollow(userId, username) {
+      viewedUser = { id: userId, username };
+      await toggleFollowUser(true);
+      loadHomeFeed();
     }
 
     async function openUserProfile(userId) {
@@ -833,11 +995,9 @@
       if (!user) return;
       viewedUser = user;
 
-      const myFollowKey = `following_${currentUser.id}_${userId}`;
-      const theirFollowKey = `following_${userId}_${currentUser.id}`;
-      const iAmFollowing = localStorage.getItem(myFollowKey) === 'true';
-      const theyAreFollowing = localStorage.getItem(theirFollowKey) === 'true';
-      const isMutual = iAmFollowing && theyAreFollowing;
+      const { data: myRow } = await supabaseClient.from('follows').select('status').eq('follower_id', currentUser.id).eq('following_id', userId).maybeSingle();
+      const { count: followerCount } = await supabaseClient.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId).eq('status', 'accepted');
+      const { count: followingCount } = await supabaseClient.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId).eq('status', 'accepted');
 
       const avatarImg = document.getElementById('extProfileAvatarImg');
       const avatarPlaceholder = document.getElementById('extProfileAvatarPlaceholder');
@@ -855,24 +1015,21 @@
       const bioContainer = document.getElementById('extBioContainer');
       const followBtn = document.getElementById('extFollowBtn');
 
-      if (isMutual) {
-        statsEl.style.display = 'block';
-        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 1 &nbsp;|&nbsp; Likes: 0`;
-        bioContainer.style.display = 'block';
-        document.getElementById('extBioText').innerText = user.bio || 'No bio';
+      statsEl.style.display = 'block';
+      statsEl.innerHTML = `Following: ${followingCount || 0} &nbsp;|&nbsp; Followers: ${followerCount || 0}`;
+      bioContainer.style.display = 'block';
+      document.getElementById('extBioText').innerText = user.bio || 'No bio';
+
+      const status = myRow && myRow.status;
+      if (status === 'accepted') {
         followBtn.innerText = 'Following';
         followBtn.style.background = 'var(--card)';
         followBtn.style.border = '1px solid var(--border)';
-      } else if (iAmFollowing) {
-        statsEl.style.display = 'block';
-        statsEl.innerHTML = `Following: 1 &nbsp;|&nbsp; Followers: 0 &nbsp;|&nbsp; Likes: 0`;
-        bioContainer.style.display = 'block';
-        document.getElementById('extBioText').innerText = user.bio || 'No bio';
-        followBtn.innerText = 'Requested / Followed';
+      } else if (status === 'pending') {
+        followBtn.innerText = 'Requested';
         followBtn.style.background = 'var(--card)';
+        followBtn.style.border = '1px solid var(--border)';
       } else {
-        statsEl.style.display = 'none';
-        bioContainer.style.display = 'none';
         followBtn.innerText = 'Follow';
         followBtn.style.background = 'var(--primary)';
         followBtn.style.border = 'none';
@@ -881,19 +1038,27 @@
       switchTab('externalProfileTab');
     }
 
-    function toggleFollowUser() {
+    async function toggleFollowUser(silent) {
       if (!viewedUser) return;
-      const myFollowKey = `following_${currentUser.id}_${viewedUser.id}`;
-      const currentState = localStorage.getItem(myFollowKey) === 'true';
+      const { data: existing } = await supabaseClient.from('follows').select('status').eq('follower_id', currentUser.id).eq('following_id', viewedUser.id).maybeSingle();
 
-      if (currentState) {
-        localStorage.setItem(myFollowKey, 'false');
-        alert(`Unfollowed ${viewedUser.username}`);
+      if (existing) {
+        // Already following or requested -> unfollow / cancel request
+        await supabaseClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', viewedUser.id);
+        if (!silent) alert(existing.status === 'accepted' ? `Unfollowed ${viewedUser.username}` : 'Follow request cancelled.');
       } else {
-        localStorage.setItem(myFollowKey, 'true');
-        alert(`Follow request sent to ${viewedUser.username}. Once they accept, you will be mutual followers.`);
+        await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: viewedUser.id, status: 'pending' });
+        await supabaseClient.from('notifications').insert({
+          user_id: viewedUser.id,
+          type: 'follow_request',
+          actor_id: currentUser.id,
+          data: { username: currentUser.profile?.username || 'Someone' }
+        });
+        if (!silent) alert(`Follow request sent to ${viewedUser.username}.`);
       }
-      openUserProfile(viewedUser.id);
+      if (document.getElementById('externalProfileTab').classList.contains('active')) {
+        openUserProfile(viewedUser.id);
+      }
     }
 
     function openChatFromProfile() {
@@ -1797,13 +1962,24 @@
       document.getElementById('customNairaAmount').value = naira;
     }
 
+    // >>> PASTE YOUR REAL PAYSTACK PUBLIC KEY HERE (Paystack dashboard -> Settings -> API Keys & Webhooks) <<<
+    const PAYSTACK_PUBLIC_KEY = 'pk_live_YOUR_PAYSTACK_KEY';
+
     function payWithPaystack() {
+      if (typeof PaystackPop === 'undefined') {
+        alert('Payment service failed to load. Check your internet connection and try again.');
+        return;
+      }
+      if (PAYSTACK_PUBLIC_KEY === 'pk_live_YOUR_PAYSTACK_KEY') {
+        alert('Paystack is not set up yet: the app is still using a placeholder key. Open the code and paste your real Paystack public key into PAYSTACK_PUBLIC_KEY.');
+        return;
+      }
       const naira = parseInt(document.getElementById('customNairaAmount').value);
       const email = document.getElementById('userEmail').value || currentUser.email;
       if (isNaN(naira) || naira < 10) { alert('Minimum amount is ₦10'); return; }
 
       const handler = PaystackPop.setup({
-        key: 'pk_live_YOUR_PAYSTACK_KEY',
+        key: PAYSTACK_PUBLIC_KEY,
         email: email,
         amount: naira * 100,
         currency: 'NGN',
